@@ -8,13 +8,39 @@
 import SwiftUI
 
 struct ContentView: View {
+
+    private enum AppFlow {
+        case splash
+        case onboarding
+    }
+
+    @State private var currentFlow: AppFlow = .splash
+
     var body: some View {
-        SplashView {
-                    print("Continue tapped")
+        Group {
+            switch currentFlow {
+
+            case .splash:
+                SplashView {
+                    currentFlow = .onboarding
                 }
+
+            case .onboarding:
+                OnboardingView(
+                    onSkip: {
+                        print("Onboarding finished")
+                    },
+                    onFinished: {
+                        print("Onboarding finished")
+                    }
+                )
             }
         }
+    }
+}
 
-#Preview {
-    ContentView()
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+    }
 }
