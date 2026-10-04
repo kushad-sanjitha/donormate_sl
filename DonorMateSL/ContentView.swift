@@ -13,6 +13,9 @@ struct ContentView: View {
         case splash
         case onboarding
         case accountAccess
+        case signIn
+        case createAccount
+        case resetPassword
     }
 
     @State private var currentFlow: AppFlow = .splash
@@ -39,10 +42,49 @@ struct ContentView: View {
             case .accountAccess:
                 AccountAccessView(
                     onSignIn: {
-                        print("Sign In tapped")
+                        currentFlow = .signIn
                     },
                     onCreateAccount: {
-                        print("Create Account tapped")
+                        currentFlow = .createAccount
+                    }
+                )
+
+            case .signIn:
+                SignInView(
+                    onBack: {
+                        currentFlow = .accountAccess
+                    },
+                    onForgotPassword: {
+                        currentFlow = .resetPassword
+                    },
+                    onCreateAccount: {
+                        currentFlow = .createAccount
+                    },
+                    onSignIn: {
+                        print("Sign In tapped")
+                    }
+                )
+
+            case .createAccount:
+                CreateAccountView(
+                    onBack: {
+                        currentFlow = .accountAccess
+                    },
+                    onCreateAccount: {
+                        print("Create Account submitted")
+                    }
+                )
+
+            case .resetPassword:
+                ResetPasswordView(
+                    onBack: {
+                        currentFlow = .signIn
+                    },
+                    onSendResetLink: {
+                        print("Reset link requested")
+                    },
+                    onBackToSignIn: {
+                        currentFlow = .signIn
                     }
                 )
             }
