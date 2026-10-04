@@ -15,6 +15,7 @@ struct ContentView: View {
         case accountAccess
         case signIn
         case createAccount
+        case resetPassword
     }
 
     @State private var currentFlow: AppFlow = .splash
@@ -54,7 +55,7 @@ struct ContentView: View {
                         currentFlow = .accountAccess
                     },
                     onForgotPassword: {
-                        print("Forgot password tapped")
+                        currentFlow = .resetPassword
                     },
                     onCreateAccount: {
                         currentFlow = .createAccount
@@ -71,6 +72,19 @@ struct ContentView: View {
                     },
                     onCreateAccount: {
                         print("Create Account submitted")
+                    }
+                )
+
+            case .resetPassword:
+                ResetPasswordView(
+                    onBack: {
+                        currentFlow = .signIn
+                    },
+                    onSendResetLink: {
+                        print("Reset link requested")
+                    },
+                    onBackToSignIn: {
+                        currentFlow = .signIn
                     }
                 )
             }
