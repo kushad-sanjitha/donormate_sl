@@ -12,6 +12,7 @@ struct ContentView: View {
     private enum AppFlow {
         case splash
         case onboarding
+        case accountAccess
     }
 
     @State private var currentFlow: AppFlow = .splash
@@ -28,10 +29,20 @@ struct ContentView: View {
             case .onboarding:
                 OnboardingView(
                     onSkip: {
-                        print("Onboarding finished")
+                        currentFlow = .accountAccess
                     },
                     onFinished: {
-                        print("Onboarding finished")
+                        currentFlow = .accountAccess
+                    }
+                )
+
+            case .accountAccess:
+                AccountAccessView(
+                    onSignIn: {
+                        print("Sign In tapped")
+                    },
+                    onCreateAccount: {
+                        print("Create Account tapped")
                     }
                 )
             }
@@ -39,8 +50,6 @@ struct ContentView: View {
     }
 }
 
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
-    }
+#Preview {
+    ContentView()
 }
