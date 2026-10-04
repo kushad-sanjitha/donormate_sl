@@ -10,63 +10,74 @@ import SwiftUI
 struct ContentView: View {
 
     private enum AppFlow {
-           case splash
-           case onboarding
-           case accountAccess
-           case signIn
-       }
+        case splash
+        case onboarding
+        case accountAccess
+        case signIn
+        case createAccount
+    }
 
-       @State private var currentFlow: AppFlow = .splash
+    @State private var currentFlow: AppFlow = .splash
 
-       var body: some View {
-           Group {
-               switch currentFlow {
+    var body: some View {
+        Group {
+            switch currentFlow {
 
-               case .splash:
-                   SplashView {
-                       currentFlow = .onboarding
-                   }
+            case .splash:
+                SplashView {
+                    currentFlow = .onboarding
+                }
 
-               case .onboarding:
-                   OnboardingView(
-                       onSkip: {
-                           currentFlow = .accountAccess
-                       },
-                       onFinished: {
-                           currentFlow = .accountAccess
-                       }
-                   )
+            case .onboarding:
+                OnboardingView(
+                    onSkip: {
+                        currentFlow = .accountAccess
+                    },
+                    onFinished: {
+                        currentFlow = .accountAccess
+                    }
+                )
 
-               case .accountAccess:
-                   AccountAccessView(
-                       onSignIn: {
-                           currentFlow = .signIn
-                       },
-                       onCreateAccount: {
-                           print("Create Account tapped")
-                       }
-                   )
+            case .accountAccess:
+                AccountAccessView(
+                    onSignIn: {
+                        currentFlow = .signIn
+                    },
+                    onCreateAccount: {
+                        currentFlow = .createAccount
+                    }
+                )
 
-               case .signIn:
-                   SignInView(
-                       onBack: {
-                           currentFlow = .accountAccess
-                       },
-                       onForgotPassword: {
-                           print("Forgot password tapped")
-                       },
-                       onCreateAccount: {
-                           print("Create account tapped")
-                       },
-                       onSignIn: {
-                           print("Sign In tapped")
-                       }
-                   )
-               }
-           }
-       }
-   }
+            case .signIn:
+                SignInView(
+                    onBack: {
+                        currentFlow = .accountAccess
+                    },
+                    onForgotPassword: {
+                        print("Forgot password tapped")
+                    },
+                    onCreateAccount: {
+                        currentFlow = .createAccount
+                    },
+                    onSignIn: {
+                        print("Sign In tapped")
+                    }
+                )
 
-   #Preview {
-       ContentView()
-   }
+            case .createAccount:
+                CreateAccountView(
+                    onBack: {
+                        currentFlow = .accountAccess
+                    },
+                    onCreateAccount: {
+                        print("Create Account submitted")
+                    }
+                )
+            }
+        }
+    }
+}
+
+#Preview {
+    ContentView()
+}
