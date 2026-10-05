@@ -20,6 +20,7 @@ struct ContentView: View {
             case donorRecordLinked
             case permissionSetup
             case faceIDSetup
+            case faceIDUnavailable
         }
 
         private enum PermissionSetupSource {
@@ -148,10 +149,23 @@ struct ContentView: View {
                             currentFlow = .permissionSetup
                         },
                         onEnableFaceID: {
-                            print("Enable Face ID tapped")
+                            currentFlow = .faceIDUnavailable
                         },
                         onNotNow: {
                             print("Face ID skipped")
+                        }
+                    )
+
+                case .faceIDUnavailable:
+                    FaceIDUnavailableView(
+                        onBack: {
+                            currentFlow = .faceIDSetup
+                        },
+                        onContinueWithPassword: {
+                            print("Continue with password tapped")
+                        },
+                        onTryAgain: {
+                            currentFlow = .faceIDSetup
                         }
                     )
                 }
