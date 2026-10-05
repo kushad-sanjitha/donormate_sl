@@ -10,180 +10,206 @@ import SwiftUI
 struct ContentView: View {
 
     private enum AppFlow {
-            case splash
-            case onboarding
-            case accountAccess
-            case signIn
-            case createAccount
-            case resetPassword
-            case connectDonorRecord
-            case donorRecordLinked
-            case permissionSetup
-            case faceIDSetup
-            case faceIDUnavailable
-        }
+        case splash
+        case onboarding
+        case accountAccess
+        case signIn
+        case createAccount
+        case resetPassword
+        case connectDonorRecord
+        case donorRecordLinked
+        case permissionSetup
+        case faceIDSetup
+        case faceIDUnavailable
+    }
 
-        private enum PermissionSetupSource {
-            case donorRecordLinked
-            case connectDonorRecord
-        }
+    private enum PermissionSetupSource {
+        case donorRecordLinked
+        case connectDonorRecord
+    }
 
-        @State private var currentFlow: AppFlow = .splash
-        @State private var permissionSetupSource: PermissionSetupSource = .donorRecordLinked
+    @State private var currentFlow: AppFlow = .splash
 
-        var body: some View {
-            Group {
-                switch currentFlow {
+    @State private var permissionSetupSource:
+        PermissionSetupSource = .donorRecordLinked
 
-                case .splash:
-                    SplashView {
-                        currentFlow = .onboarding
-                    }
+    @StateObject private var locationPermissionService =
+        LocationPermissionService()
 
-                case .onboarding:
-                    OnboardingView(
-                        onSkip: {
-                            currentFlow = .accountAccess
-                        },
-                        onFinished: {
-                            currentFlow = .accountAccess
-                        }
-                    )
+    var body: some View {
+        Group {
 
-                case .accountAccess:
-                    AccountAccessView(
-                        onSignIn: {
-                            currentFlow = .signIn
-                        },
-                        onCreateAccount: {
-                            currentFlow = .createAccount
-                        }
-                    )
+            switch currentFlow {
 
-                case .signIn:
-                    SignInView(
-                        onBack: {
-                            currentFlow = .accountAccess
-                        },
-                        onForgotPassword: {
-                            currentFlow = .resetPassword
-                        },
-                        onCreateAccount: {
-                            currentFlow = .createAccount
-                        },
-                        onSignIn: {
-                            currentFlow = .connectDonorRecord
-                        }
-                    )
 
-                case .createAccount:
-                    CreateAccountView(
-                        onBack: {
-                            currentFlow = .accountAccess
-                        },
-                        onCreateAccount: {
-                            currentFlow = .connectDonorRecord
-                        }
-                    )
-
-                case .resetPassword:
-                    ResetPasswordView(
-                        onBack: {
-                            currentFlow = .signIn
-                        },
-                        onSendResetLink: {
-                            print("Reset link requested")
-                        },
-                        onBackToSignIn: {
-                            currentFlow = .signIn
-                        }
-                    )
-
-                case .connectDonorRecord:
-                    ConnectDonorRecordView(
-                        onBack: {
-                            currentFlow = .signIn
-                        },
-                        onFindRecord: {
-                            currentFlow = .donorRecordLinked
-                        },
-                        onLinkLater: {
-                            permissionSetupSource = .connectDonorRecord
-                            currentFlow = .permissionSetup
-                        },
-                        onNeedHelp: {
-                            print("Need help tapped")
-                        }
-                    )
-
-                case .donorRecordLinked:
-                    DonorRecordLinkedView(
-                        name: "Sample Donor",
-                        bloodGroup: "A+",
-                        donationCount: 6,
-                        onContinue: {
-                            permissionSetupSource = .donorRecordLinked
-                            currentFlow = .permissionSetup
-                        }
-                    )
-
-                case .permissionSetup:
-                    PermissionSetupView(
-                        onBack: {
-                            handlePermissionSetupBack()
-                        },
-                        onAllowLocation: {
-                            print("Location permission requested")
-                        },
-                        onAllowNotifications: {
-                            print("Notification permission requested")
-                        },
-                        onContinue: {
-                            currentFlow = .faceIDSetup
-                        }
-                    )
-
-                case .faceIDSetup:
-                    FaceIDSetupView(
-                        onBack: {
-                            currentFlow = .permissionSetup
-                        },
-                        onEnableFaceID: {
-                            currentFlow = .faceIDUnavailable
-                        },
-                        onNotNow: {
-                            print("Face ID skipped")
-                        }
-                    )
-
-                case .faceIDUnavailable:
-                    FaceIDUnavailableView(
-                        onBack: {
-                            currentFlow = .faceIDSetup
-                        },
-                        onContinueWithPassword: {
-                            print("Continue with password tapped")
-                        },
-                        onTryAgain: {
-                            currentFlow = .faceIDSetup
-                        }
-                    )
+            case .splash:
+                SplashView {
+                    currentFlow = .onboarding
                 }
-            }
-        }
 
-        private func handlePermissionSetupBack() {
-            switch permissionSetupSource {
+                
+            case .onboarding:
+                OnboardingView(
+                    onSkip: {
+                        currentFlow = .accountAccess
+                    },
+                    onFinished: {
+                        currentFlow = .accountAccess
+                    }
+                )
 
-            case .donorRecordLinked:
-                currentFlow = .donorRecordLinked
+
+            case .accountAccess:
+                AccountAccessView(
+                    onSignIn: {
+                        currentFlow = .signIn
+                    },
+                    onCreateAccount: {
+                        currentFlow = .createAccount
+                    }
+                )
+
+
+            case .signIn:
+                SignInView(
+                    onBack: {
+                        currentFlow = .accountAccess
+                    },
+                    onForgotPassword: {
+                        currentFlow = .resetPassword
+                    },
+                    onCreateAccount: {
+                        currentFlow = .createAccount
+                    },
+                    onSignIn: {
+                        currentFlow = .connectDonorRecord
+                    }
+                )
+
+
+            case .createAccount:
+                CreateAccountView(
+                    onBack: {
+                        currentFlow = .accountAccess
+                    },
+                    onCreateAccount: {
+                        currentFlow = .connectDonorRecord
+                    }
+                )
+
+
+            case .resetPassword:
+                ResetPasswordView(
+                    onBack: {
+                        currentFlow = .signIn
+                    },
+                    onSendResetLink: {
+                        print("Reset link requested")
+                    },
+                    onBackToSignIn: {
+                        currentFlow = .signIn
+                    }
+                )
+
 
             case .connectDonorRecord:
-                currentFlow = .connectDonorRecord
+                ConnectDonorRecordView(
+                    onBack: {
+                        currentFlow = .signIn
+                    },
+                    onFindRecord: {
+                        currentFlow = .donorRecordLinked
+                    },
+                    onLinkLater: {
+                        permissionSetupSource = .connectDonorRecord
+                        currentFlow = .permissionSetup
+                    },
+                    onNeedHelp: {
+                        print("Need help tapped")
+                    }
+                )
+
+
+            case .donorRecordLinked:
+                DonorRecordLinkedView(
+                    name: "Sample Donor",
+                    bloodGroup: "A+",
+                    donationCount: 6,
+                    onContinue: {
+                        permissionSetupSource = .donorRecordLinked
+                        currentFlow = .permissionSetup
+                    }
+                )
+
+
+            case .permissionSetup:
+                PermissionSetupView(
+                    locationStatus:
+                        locationPermissionService.status,
+                    onBack: {
+                        handlePermissionSetupBack()
+                    },
+                    onAllowLocation: {
+                        locationPermissionService
+                            .requestWhenInUsePermission()
+                    },
+                    onAllowNotifications: {
+                        print(
+                            "Notification permission requested"
+                        )
+                    },
+                    onContinue: {
+                        currentFlow = .faceIDSetup
+                    }
+                )
+                
+
+            case .faceIDSetup:
+                FaceIDSetupView(
+                    onBack: {
+                        currentFlow = .permissionSetup
+                    },
+                    onEnableFaceID: {
+                        currentFlow = .faceIDUnavailable
+                    },
+                    onNotNow: {
+                        print("Face ID skipped")
+                    }
+                )
+
+
+            case .faceIDUnavailable:
+                FaceIDUnavailableView(
+                    onBack: {
+                        currentFlow = .faceIDSetup
+                    },
+                    onContinueWithPassword: {
+                        print(
+                            "Continue with password tapped"
+                        )
+                    },
+                    onTryAgain: {
+                        currentFlow = .faceIDSetup
+                    }
+                )
             }
         }
     }
 
-    #Preview {
-        ContentView()
+
+    private func handlePermissionSetupBack() {
+
+        switch permissionSetupSource {
+
+        case .donorRecordLinked:
+            currentFlow = .donorRecordLinked
+
+        case .connectDonorRecord:
+            currentFlow = .connectDonorRecord
+        }
     }
+}
+
+#Preview {
+    ContentView()
+}
