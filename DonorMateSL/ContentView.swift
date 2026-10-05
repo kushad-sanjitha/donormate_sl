@@ -10,105 +10,116 @@ import SwiftUI
 struct ContentView: View {
 
     private enum AppFlow {
-        case splash
-        case onboarding
-        case accountAccess
-        case signIn
-        case createAccount
-        case resetPassword
-        case connectDonorRecord
-    }
+            case splash
+            case onboarding
+            case accountAccess
+            case signIn
+            case createAccount
+            case resetPassword
+            case connectDonorRecord
+            case donorRecordLinked
+        }
 
-    @State private var currentFlow: AppFlow = .splash
+        @State private var currentFlow: AppFlow = .splash
 
-    var body: some View {
-        Group {
-            switch currentFlow {
+        var body: some View {
+            Group {
+                switch currentFlow {
 
-            case .splash:
-                SplashView {
-                    currentFlow = .onboarding
+                case .splash:
+                    SplashView {
+                        currentFlow = .onboarding
+                    }
+
+                case .onboarding:
+                    OnboardingView(
+                        onSkip: {
+                            currentFlow = .accountAccess
+                        },
+                        onFinished: {
+                            currentFlow = .accountAccess
+                        }
+                    )
+
+                case .accountAccess:
+                    AccountAccessView(
+                        onSignIn: {
+                            currentFlow = .signIn
+                        },
+                        onCreateAccount: {
+                            currentFlow = .createAccount
+                        }
+                    )
+
+                case .signIn:
+                    SignInView(
+                        onBack: {
+                            currentFlow = .accountAccess
+                        },
+                        onForgotPassword: {
+                            currentFlow = .resetPassword
+                        },
+                        onCreateAccount: {
+                            currentFlow = .createAccount
+                        },
+                        onSignIn: {
+                            currentFlow = .connectDonorRecord
+                        }
+                    )
+
+                case .createAccount:
+                    CreateAccountView(
+                        onBack: {
+                            currentFlow = .accountAccess
+                        },
+                        onCreateAccount: {
+                            currentFlow = .connectDonorRecord
+                        }
+                    )
+
+                case .resetPassword:
+                    ResetPasswordView(
+                        onBack: {
+                            currentFlow = .signIn
+                        },
+                        onSendResetLink: {
+                            print("Reset link requested")
+                        },
+                        onBackToSignIn: {
+                            currentFlow = .signIn
+                        }
+                    )
+
+                case .connectDonorRecord:
+                    ConnectDonorRecordView(
+                        onBack: {
+                            currentFlow = .signIn
+                        },
+                        onFindRecord: {
+                            currentFlow = .donorRecordLinked
+                        },
+                        onLinkLater: {
+                            print("Link later tapped")
+                        },
+                        onNeedHelp: {
+                            print("Need help tapped")
+                        }
+                    )
+
+                case .donorRecordLinked:
+                    DonorRecordLinkedView(
+                        name: "Sample Donor",
+                        bloodGroup: "A+",
+                        donationCount: 6,
+                        onContinue: {
+                            print("Donor record flow complete")
+                        }
+                    )
                 }
-
-            case .onboarding:
-                OnboardingView(
-                    onSkip: {
-                        currentFlow = .accountAccess
-                    },
-                    onFinished: {
-                        currentFlow = .accountAccess
-                    }
-                )
-
-            case .accountAccess:
-                AccountAccessView(
-                    onSignIn: {
-                        currentFlow = .signIn
-                    },
-                    onCreateAccount: {
-                        currentFlow = .createAccount
-                    }
-                )
-
-            case .signIn:
-                SignInView(
-                    onBack: {
-                        currentFlow = .accountAccess
-                    },
-                    onForgotPassword: {
-                        currentFlow = .resetPassword
-                    },
-                    onCreateAccount: {
-                        currentFlow = .createAccount
-                    },
-                    onSignIn: {
-                        currentFlow = .connectDonorRecord
-                    }
-                )
-
-            case .createAccount:
-                CreateAccountView(
-                    onBack: {
-                        currentFlow = .accountAccess
-                    },
-                    onCreateAccount: {
-                        currentFlow = .connectDonorRecord
-                    }
-                )
-
-            case .resetPassword:
-                ResetPasswordView(
-                    onBack: {
-                        currentFlow = .signIn
-                    },
-                    onSendResetLink: {
-                        print("Reset link requested")
-                    },
-                    onBackToSignIn: {
-                        currentFlow = .signIn
-                    }
-                )
-
-            case .connectDonorRecord:
-                ConnectDonorRecordView(
-                    onBack: {
-                        currentFlow = .signIn
-                    },
-                    onFindRecord: {
-                        print("Find record tapped")
-                    },
-                    onLinkLater: {
-                        print("Link later tapped")
-                    },
-                    onNeedHelp: {
-                        print("Need help tapped")
-                    }
-                )
             }
         }
     }
-}
 
-#Preview {
-    ContentView()
-}
+    #Preview {
+        ContentView()
+    }
