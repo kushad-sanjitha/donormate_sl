@@ -7,7 +7,18 @@
 
 import SwiftUI
 
+enum FaceIDSetupStatus {
+    case optional
+    case enabled
+    case unavailable
+}
+
 struct PermissionSetupView: View {
+
+    let locationStatus: LocationPermissionStatus
+    let notificationStatus: NotificationPermissionStatus
+    let faceIDStatus: FaceIDSetupStatus
+
     var onBack: () -> Void = {}
     var onAllowLocation: () -> Void = {}
     var onAllowNotifications: () -> Void = {}
@@ -96,7 +107,10 @@ struct PermissionSetupView: View {
                         iconBackground: Color("InfoBlueSoft"),
                         title: "Location",
                         description: "Nearby discovery, distance and location-aware alerts.",
-                        actionTitle: "Allow",
+                        actionTitle: locationActionTitle,
+                        actionForeground: locationActionForeground,
+                        actionBackground: locationActionBackground,
+                        actionEnabled: locationStatus == .notDetermined,
                         action: onAllowLocation
                     )
 
@@ -106,17 +120,23 @@ struct PermissionSetupView: View {
                         iconBackground: Color("DonorRedSoft"),
                         title: "Notifications",
                         description: "Donation reminders, campaign reminders and urgent needs.",
-                        actionTitle: "Allow",
+                        actionTitle: notificationActionTitle,
+                        actionForeground: notificationActionForeground,
+                        actionBackground: notificationActionBackground,
+                        actionEnabled: notificationStatus == .notDetermined,
                         action: onAllowNotifications
                     )
 
                     permissionCard(
                         icon: "faceid",
-                        iconForeground: Color("TextPrimary"),
-                        iconBackground: Color("NeutralSoft"),
+                        iconForeground: faceIDIconForeground,
+                        iconBackground: faceIDIconBackground,
                         title: "Face ID",
                         description: "Protect access to personal donor information.",
-                        actionTitle: "Optional",
+                        actionTitle: faceIDActionTitle,
+                        actionForeground: faceIDActionForeground,
+                        actionBackground: faceIDActionBackground,
+                        actionEnabled: false,
                         action: nil
                     )
                 }
@@ -202,6 +222,147 @@ struct PermissionSetupView: View {
         .background(Color("BackgroundPrimary"))
     }
 
+    private var locationActionTitle: String {
+        switch locationStatus {
+        case .notDetermined:
+            return "Allow"
+        case .authorized:
+            return "Allowed ✓"
+        case .denied:
+            return "Denied"
+        case .restricted:
+            return "Restricted"
+        }
+    }
+
+    private var locationActionForeground: Color {
+        switch locationStatus {
+        case .authorized:
+            return Color("SuccessGreen")
+
+        case .denied,
+             .restricted:
+            return Color("TextSecondary")
+
+        case .notDetermined:
+            return Color("DonorRed")
+        }
+    }
+
+    private var locationActionBackground: Color {
+        switch locationStatus {
+        case .authorized:
+            return Color("SuccessGreenSoft")
+
+        case .denied,
+             .restricted:
+            return Color("NeutralSoft")
+
+        case .notDetermined:
+            return Color("DonorRedSoft")
+        }
+    }
+
+    private var notificationActionTitle: String {
+        switch notificationStatus {
+        case .notDetermined:
+            return "Allow"
+        case .authorized:
+            return "Allowed ✓"
+        case .denied:
+            return "Denied"
+        case .provisional:
+            return "Provisional ✓"
+        }
+    }
+
+    private var notificationActionForeground: Color {
+        switch notificationStatus {
+        case .authorized,
+             .provisional:
+            return Color("SuccessGreen")
+
+        case .denied:
+            return Color("TextSecondary")
+
+        case .notDetermined:
+            return Color("DonorRed")
+        }
+    }
+
+    private var notificationActionBackground: Color {
+        switch notificationStatus {
+        case .authorized,
+             .provisional:
+            return Color("SuccessGreenSoft")
+
+        case .denied:
+            return Color("NeutralSoft")
+
+        case .notDetermined:
+            return Color("DonorRedSoft")
+        }
+    }
+
+    private var faceIDActionTitle: String {
+        switch faceIDStatus {
+        case .optional:
+            return "Optional"
+        case .enabled:
+            return "Enabled ✓"
+        case .unavailable:
+            return "Unavailable"
+        }
+    }
+
+    private var faceIDActionForeground: Color {
+        switch faceIDStatus {
+        case .enabled:
+            return Color("SuccessGreen")
+
+        case .optional,
+             .unavailable:
+            return Color("TextSecondary")
+        }
+    }
+
+    private var faceIDActionBackground: Color {
+        switch faceIDStatus {
+        case .enabled:
+            return Color("SuccessGreenSoft")
+
+        case .optional,
+             .unavailable:
+            return Color("NeutralSoft")
+        }
+    }
+
+    private var faceIDIconForeground: Color {
+        switch faceIDStatus {
+        case .enabled:
+            return Color("SuccessGreen")
+
+        case .unavailable:
+            return Color("InfoBlue")
+
+        case .optional:
+            return Color("TextPrimary")
+        }
+    }
+
+    private var faceIDIconBackground: Color {
+        switch faceIDStatus {
+        case .enabled:
+            return Color("SuccessGreenSoft")
+
+        case .unavailable:
+            return Color("InfoBlueSoft")
+
+        case .optional:
+            return Color("NeutralSoft")
+        }
+    }
+
     private func permissionCard(
         icon: String,
         iconForeground: Color,
@@ -209,6 +370,9 @@ struct PermissionSetupView: View {
         title: String,
         description: String,
         actionTitle: String,
+        actionForeground: Color,
+        actionBackground: Color,
+        actionEnabled: Bool,
         action: (() -> Void)?
     ) -> some View {
 
@@ -261,29 +425,30 @@ struct PermissionSetupView: View {
 
             if let action {
                 Button {
-                    action()
+                    if actionEnabled {
+                        action()
+                    }
                 } label: {
                     Text(actionTitle)
                         .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(Color("DonorRed"))
+                        .foregroundStyle(actionForeground)
                         .padding(.horizontal, 12)
                         .frame(height: 34)
-                        .background(Color("DonorRedSoft"))
-                        .clipShape(
-                            Capsule()
-                        )
+                        .background(actionBackground)
+                        .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
+                .disabled(!actionEnabled)
+
             } else {
+
                 Text(actionTitle)
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(Color("TextSecondary"))
+                    .foregroundStyle(actionForeground)
                     .padding(.horizontal, 10)
                     .frame(height: 34)
-                    .background(Color("NeutralSoft"))
-                    .clipShape(
-                        Capsule()
-                    )
+                    .background(actionBackground)
+                    .clipShape(Capsule())
             }
         }
         .padding(14)
@@ -303,14 +468,17 @@ struct PermissionSetupView: View {
 
 #Preview {
     PermissionSetupView(
+        locationStatus: .authorized,
+        notificationStatus: .authorized,
+        faceIDStatus: .enabled,
         onBack: {
             print("Back tapped")
         },
         onAllowLocation: {
-            print("Location permission requested")
+            print("Location requested")
         },
         onAllowNotifications: {
-            print("Notification permission requested")
+            print("Notifications requested")
         },
         onContinue: {
             print("Continue tapped")

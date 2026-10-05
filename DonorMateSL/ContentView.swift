@@ -29,10 +29,24 @@ struct ContentView: View {
         }
 
         @State private var currentFlow: AppFlow = .splash
-        @State private var permissionSetupSource: PermissionSetupSource = .donorRecordLinked
+
+        @State private var permissionSetupSource:
+            PermissionSetupSource = .donorRecordLinked
+
+        @StateObject private var locationPermissionService =
+            LocationPermissionService()
+
+        @StateObject private var notificationPermissionService =
+            NotificationPermissionService()
+
+        @StateObject private var biometricAuthenticationService =
+            BiometricAuthenticationService()
+
+        @State private var faceIDStatus: FaceIDSetupStatus = .optional
 
         var body: some View {
             Group {
+
                 switch currentFlow {
 
                 case .splash:
@@ -129,16 +143,27 @@ struct ContentView: View {
 
                 case .permissionSetup:
                     PermissionSetupView(
+                        locationStatus:
+                            locationPermissionService.status,
+                        notificationStatus:
+                            notificationPermissionService.status,
+                        faceIDStatus:
+                            faceIDStatus,
                         onBack: {
                             handlePermissionSetupBack()
                         },
                         onAllowLocation: {
-                            print("Location permission requested")
+                            locationPermissionService
+                                .requestWhenInUsePermission()
                         },
                         onAllowNotifications: {
-                            print("Notification permission requested")
+                            notificationPermissionService
+                                .requestPermission()
                         },
                         onContinue: {
+                            biometricAuthenticationService
+                                .refreshAvailability()
+
                             currentFlow = .faceIDSetup
                         }
                     )
@@ -149,9 +174,31 @@ struct ContentView: View {
                             currentFlow = .permissionSetup
                         },
                         onEnableFaceID: {
-                            currentFlow = .faceIDUnavailable
+                            Task {
+                                let result =
+                                    await biometricAuthenticationService
+                                        .authenticateWithFaceID()
+
+                                switch result {
+
+                                case .authenticationSucceeded:
+                                    faceIDStatus = .enabled
+                                    print("Face ID enabled")
+
+                                case .unavailable:
+                                    faceIDStatus = .unavailable
+                                    currentFlow = .faceIDUnavailable
+
+                                case .authenticationFailed:
+                                    print("Face ID authentication failed")
+
+                                case .available:
+                                    break
+                                }
+                            }
                         },
                         onNotNow: {
+                            faceIDStatus = .optional
                             print("Face ID skipped")
                         }
                     )
@@ -162,6 +209,7 @@ struct ContentView: View {
                             currentFlow = .faceIDSetup
                         },
                         onContinueWithPassword: {
+                            faceIDStatus = .unavailable
                             print("Continue with password tapped")
                         },
                         onTryAgain: {
@@ -173,6 +221,7 @@ struct ContentView: View {
         }
 
         private func handlePermissionSetupBack() {
+
             switch permissionSetupSource {
 
             case .donorRecordLinked:
