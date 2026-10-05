@@ -9,6 +9,7 @@ import SwiftUI
 
 struct PermissionSetupView: View {
     let locationStatus: LocationPermissionStatus
+        let notificationStatus: NotificationPermissionStatus
 
         var onBack: () -> Void = {}
         var onAllowLocation: () -> Void = {}
@@ -111,10 +112,10 @@ struct PermissionSetupView: View {
                             iconBackground: Color("DonorRedSoft"),
                             title: "Notifications",
                             description: "Donation reminders, campaign reminders and urgent needs.",
-                            actionTitle: "Allow",
-                            actionForeground: Color("DonorRed"),
-                            actionBackground: Color("DonorRedSoft"),
-                            actionEnabled: true,
+                            actionTitle: notificationActionTitle,
+                            actionForeground: notificationActionForeground,
+                            actionBackground: notificationActionBackground,
+                            actionEnabled: notificationStatus == .notDetermined,
                             action: onAllowNotifications
                         )
 
@@ -214,7 +215,6 @@ struct PermissionSetupView: View {
         }
 
         private var locationActionTitle: String {
-
             switch locationStatus {
 
             case .notDetermined:
@@ -232,7 +232,6 @@ struct PermissionSetupView: View {
         }
 
         private var locationActionForeground: Color {
-
             switch locationStatus {
 
             case .authorized:
@@ -248,7 +247,6 @@ struct PermissionSetupView: View {
         }
 
         private var locationActionBackground: Color {
-
             switch locationStatus {
 
             case .authorized:
@@ -263,6 +261,52 @@ struct PermissionSetupView: View {
             }
         }
 
+        private var notificationActionTitle: String {
+            switch notificationStatus {
+
+            case .notDetermined:
+                return "Allow"
+
+            case .authorized:
+                return "Allowed ✓"
+
+            case .denied:
+                return "Denied"
+
+            case .provisional:
+                return "Provisional ✓"
+            }
+        }
+
+        private var notificationActionForeground: Color {
+            switch notificationStatus {
+
+            case .authorized,
+                 .provisional:
+                return Color("SuccessGreen")
+
+            case .denied:
+                return Color("TextSecondary")
+
+            case .notDetermined:
+                return Color("DonorRed")
+            }
+        }
+
+        private var notificationActionBackground: Color {
+            switch notificationStatus {
+
+            case .authorized,
+                 .provisional:
+                return Color("SuccessGreenSoft")
+
+            case .denied:
+                return Color("NeutralSoft")
+
+            case .notDetermined:
+                return Color("DonorRedSoft")
+            }
+        }
 
         private func permissionCard(
             icon: String,
@@ -371,6 +415,7 @@ struct PermissionSetupView: View {
     #Preview {
         PermissionSetupView(
             locationStatus: .notDetermined,
+            notificationStatus: .notDetermined,
             onBack: {
                 print("Back tapped")
             },
@@ -378,7 +423,7 @@ struct PermissionSetupView: View {
                 print("Location requested")
             },
             onAllowNotifications: {
-                print("Notification permission requested")
+                print("Notifications requested")
             },
             onContinue: {
                 print("Continue tapped")

@@ -36,18 +36,19 @@ struct ContentView: View {
     @StateObject private var locationPermissionService =
         LocationPermissionService()
 
+    @StateObject private var notificationPermissionService =
+        NotificationPermissionService()
+
     var body: some View {
         Group {
 
             switch currentFlow {
-
 
             case .splash:
                 SplashView {
                     currentFlow = .onboarding
                 }
 
-                
             case .onboarding:
                 OnboardingView(
                     onSkip: {
@@ -58,7 +59,6 @@ struct ContentView: View {
                     }
                 )
 
-
             case .accountAccess:
                 AccountAccessView(
                     onSignIn: {
@@ -68,7 +68,6 @@ struct ContentView: View {
                         currentFlow = .createAccount
                     }
                 )
-
 
             case .signIn:
                 SignInView(
@@ -86,7 +85,6 @@ struct ContentView: View {
                     }
                 )
 
-
             case .createAccount:
                 CreateAccountView(
                     onBack: {
@@ -96,7 +94,6 @@ struct ContentView: View {
                         currentFlow = .connectDonorRecord
                     }
                 )
-
 
             case .resetPassword:
                 ResetPasswordView(
@@ -110,7 +107,6 @@ struct ContentView: View {
                         currentFlow = .signIn
                     }
                 )
-
 
             case .connectDonorRecord:
                 ConnectDonorRecordView(
@@ -129,7 +125,6 @@ struct ContentView: View {
                     }
                 )
 
-
             case .donorRecordLinked:
                 DonorRecordLinkedView(
                     name: "Sample Donor",
@@ -141,11 +136,12 @@ struct ContentView: View {
                     }
                 )
 
-
             case .permissionSetup:
                 PermissionSetupView(
                     locationStatus:
                         locationPermissionService.status,
+                    notificationStatus:
+                        notificationPermissionService.status,
                     onBack: {
                         handlePermissionSetupBack()
                     },
@@ -154,15 +150,13 @@ struct ContentView: View {
                             .requestWhenInUsePermission()
                     },
                     onAllowNotifications: {
-                        print(
-                            "Notification permission requested"
-                        )
+                        notificationPermissionService
+                            .requestPermission()
                     },
                     onContinue: {
                         currentFlow = .faceIDSetup
                     }
                 )
-                
 
             case .faceIDSetup:
                 FaceIDSetupView(
@@ -176,7 +170,6 @@ struct ContentView: View {
                         print("Face ID skipped")
                     }
                 )
-
 
             case .faceIDUnavailable:
                 FaceIDUnavailableView(
@@ -195,7 +188,6 @@ struct ContentView: View {
             }
         }
     }
-
 
     private func handlePermissionSetupBack() {
 
