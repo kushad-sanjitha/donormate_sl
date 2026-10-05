@@ -18,9 +18,18 @@ struct ContentView: View {
             case resetPassword
             case connectDonorRecord
             case donorRecordLinked
+            case permissionSetup
+            case faceIDSetup
+            case faceIDUnavailable
+        }
+
+        private enum PermissionSetupSource {
+            case donorRecordLinked
+            case connectDonorRecord
         }
 
         @State private var currentFlow: AppFlow = .splash
+        @State private var permissionSetupSource: PermissionSetupSource = .donorRecordLinked
 
         var body: some View {
             Group {
@@ -99,7 +108,8 @@ struct ContentView: View {
                             currentFlow = .donorRecordLinked
                         },
                         onLinkLater: {
-                            print("Link later tapped")
+                            permissionSetupSource = .connectDonorRecord
+                            currentFlow = .permissionSetup
                         },
                         onNeedHelp: {
                             print("Need help tapped")
@@ -112,10 +122,64 @@ struct ContentView: View {
                         bloodGroup: "A+",
                         donationCount: 6,
                         onContinue: {
-                            print("Donor record flow complete")
+                            permissionSetupSource = .donorRecordLinked
+                            currentFlow = .permissionSetup
+                        }
+                    )
+
+                case .permissionSetup:
+                    PermissionSetupView(
+                        onBack: {
+                            handlePermissionSetupBack()
+                        },
+                        onAllowLocation: {
+                            print("Location permission requested")
+                        },
+                        onAllowNotifications: {
+                            print("Notification permission requested")
+                        },
+                        onContinue: {
+                            currentFlow = .faceIDSetup
+                        }
+                    )
+
+                case .faceIDSetup:
+                    FaceIDSetupView(
+                        onBack: {
+                            currentFlow = .permissionSetup
+                        },
+                        onEnableFaceID: {
+                            currentFlow = .faceIDUnavailable
+                        },
+                        onNotNow: {
+                            print("Face ID skipped")
+                        }
+                    )
+
+                case .faceIDUnavailable:
+                    FaceIDUnavailableView(
+                        onBack: {
+                            currentFlow = .faceIDSetup
+                        },
+                        onContinueWithPassword: {
+                            print("Continue with password tapped")
+                        },
+                        onTryAgain: {
+                            currentFlow = .faceIDSetup
                         }
                     )
                 }
+            }
+        }
+
+        private func handlePermissionSetupBack() {
+            switch permissionSetupSource {
+
+            case .donorRecordLinked:
+                currentFlow = .donorRecordLinked
+
+            case .connectDonorRecord:
+                currentFlow = .connectDonorRecord
             }
         }
     }
