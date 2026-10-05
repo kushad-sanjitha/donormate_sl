@@ -19,6 +19,7 @@ struct ContentView: View {
             case connectDonorRecord
             case donorRecordLinked
             case permissionSetup
+            case faceIDSetup
         }
 
         private enum PermissionSetupSource {
@@ -137,7 +138,20 @@ struct ContentView: View {
                             print("Notification permission requested")
                         },
                         onContinue: {
-                            print("Permission setup complete")
+                            currentFlow = .faceIDSetup
+                        }
+                    )
+
+                case .faceIDSetup:
+                    FaceIDSetupView(
+                        onBack: {
+                            currentFlow = .permissionSetup
+                        },
+                        onEnableFaceID: {
+                            print("Enable Face ID tapped")
+                        },
+                        onNotNow: {
+                            print("Face ID skipped")
                         }
                     )
                 }
