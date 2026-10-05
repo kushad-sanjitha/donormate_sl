@@ -16,6 +16,7 @@ struct ContentView: View {
         case signIn
         case createAccount
         case resetPassword
+        case connectDonorRecord
     }
 
     @State private var currentFlow: AppFlow = .splash
@@ -61,7 +62,7 @@ struct ContentView: View {
                         currentFlow = .createAccount
                     },
                     onSignIn: {
-                        print("Sign In tapped")
+                        currentFlow = .connectDonorRecord
                     }
                 )
 
@@ -71,7 +72,7 @@ struct ContentView: View {
                         currentFlow = .accountAccess
                     },
                     onCreateAccount: {
-                        print("Create Account submitted")
+                        currentFlow = .connectDonorRecord
                     }
                 )
 
@@ -85,6 +86,22 @@ struct ContentView: View {
                     },
                     onBackToSignIn: {
                         currentFlow = .signIn
+                    }
+                )
+
+            case .connectDonorRecord:
+                ConnectDonorRecordView(
+                    onBack: {
+                        currentFlow = .signIn
+                    },
+                    onFindRecord: {
+                        print("Find record tapped")
+                    },
+                    onLinkLater: {
+                        print("Link later tapped")
+                    },
+                    onNeedHelp: {
+                        print("Need help tapped")
                     }
                 )
             }
