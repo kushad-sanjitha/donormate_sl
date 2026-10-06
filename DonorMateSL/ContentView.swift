@@ -28,6 +28,8 @@ struct ContentView: View {
             case connectDonorRecord
         }
 
+        @Environment(\.scenePhase) private var scenePhase
+
         @State private var currentFlow: AppFlow = .splash
 
         @State private var permissionSetupSource:
@@ -42,11 +44,26 @@ struct ContentView: View {
         @StateObject private var biometricAuthenticationService =
             BiometricAuthenticationService()
 
-        @State private var faceIDStatus: FaceIDSetupStatus = .optional
+        @AppStorage("faceIDProtectionEnabled")
+        private var faceIDProtectionEnabled = false
+
+        @State private var faceIDUnavailable = false
+
+        private var faceIDStatus: FaceIDSetupStatus {
+
+            if faceIDUnavailable {
+                return .unavailable
+            }
+
+            if faceIDProtectionEnabled {
+                return .enabled
+            }
+
+            return .optional
+        }
 
         var body: some View {
             Group {
-
                 switch currentFlow {
 
                 case .splash:
@@ -161,9 +178,7 @@ struct ContentView: View {
                                 .requestPermission()
                         },
                         onContinue: {
-                            biometricAuthenticationService
-                                .refreshAvailability()
-
+                            refreshBiometricAvailability()
                             currentFlow = .faceIDSetup
                         }
                     )
@@ -182,15 +197,19 @@ struct ContentView: View {
                                 switch result {
 
                                 case .authenticationSucceeded:
-                                    faceIDStatus = .enabled
+                                    faceIDProtectionEnabled = true
+                                    faceIDUnavailable = false
+
                                     print("Face ID enabled")
 
                                 case .unavailable:
-                                    faceIDStatus = .unavailable
+                                    faceIDUnavailable = true
                                     currentFlow = .faceIDUnavailable
 
                                 case .authenticationFailed:
-                                    print("Face ID authentication failed")
+                                    print(
+                                        "Face ID authentication failed"
+                                    )
 
                                 case .available:
                                     break
@@ -198,7 +217,9 @@ struct ContentView: View {
                             }
                         },
                         onNotNow: {
-                            faceIDStatus = .optional
+                            faceIDProtectionEnabled = false
+                            faceIDUnavailable = false
+
                             print("Face ID skipped")
                         }
                     )
@@ -209,19 +230,55 @@ struct ContentView: View {
                             currentFlow = .faceIDSetup
                         },
                         onContinueWithPassword: {
-                            faceIDStatus = .unavailable
-                            print("Continue with password tapped")
+                            faceIDProtectionEnabled = false
+
+                            print(
+                                "Continue with password tapped"
+                            )
                         },
                         onTryAgain: {
+                            refreshBiometricAvailability()
                             currentFlow = .faceIDSetup
                         }
                     )
                 }
             }
+            .onAppear {
+                refreshSetupStatuses()
+            }
+            .onChange(of: scenePhase) { _, newPhase in
+                if newPhase == .active {
+                    refreshSetupStatuses()
+                }
+            }
+        }
+
+        private func refreshSetupStatuses() {
+            locationPermissionService.refreshStatus()
+            notificationPermissionService.refreshStatus()
+            refreshBiometricAvailability()
+        }
+
+        private func refreshBiometricAvailability() {
+            biometricAuthenticationService.refreshAvailability()
+
+            switch biometricAuthenticationService.state {
+
+            case .available:
+                faceIDUnavailable = false
+
+            case .unavailable:
+                faceIDUnavailable = true
+
+            case .authenticationSucceeded:
+                faceIDUnavailable = false
+
+            case .authenticationFailed:
+                break
+            }
         }
 
         private func handlePermissionSetupBack() {
-
             switch permissionSetupSource {
 
             case .donorRecordLinked:
