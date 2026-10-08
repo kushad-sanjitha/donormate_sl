@@ -21,6 +21,7 @@ struct ContentView: View {
             case permissionSetup
             case faceIDSetup
             case faceIDUnavailable
+            case mainApp
         }
 
         private enum PermissionSetupSource {
@@ -199,8 +200,7 @@ struct ContentView: View {
                                 case .authenticationSucceeded:
                                     faceIDProtectionEnabled = true
                                     faceIDUnavailable = false
-
-                                    print("Face ID enabled")
+                                    currentFlow = .mainApp
 
                                 case .unavailable:
                                     faceIDUnavailable = true
@@ -219,8 +219,7 @@ struct ContentView: View {
                         onNotNow: {
                             faceIDProtectionEnabled = false
                             faceIDUnavailable = false
-
-                            print("Face ID skipped")
+                            currentFlow = .mainApp
                         }
                     )
 
@@ -231,16 +230,16 @@ struct ContentView: View {
                         },
                         onContinueWithPassword: {
                             faceIDProtectionEnabled = false
-
-                            print(
-                                "Continue with password tapped"
-                            )
+                            currentFlow = .mainApp
                         },
                         onTryAgain: {
                             refreshBiometricAvailability()
                             currentFlow = .faceIDSetup
                         }
                     )
+
+                case .mainApp:
+                    MainTabView()
                 }
             }
             .onAppear {
