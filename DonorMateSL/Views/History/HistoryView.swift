@@ -1,0 +1,42 @@
+//
+//  HistoryView.swift
+//  DonorMateSL
+//
+//  Created by user300742 on 10/8/26.
+//
+
+import SwiftUI
+
+struct HistoryView: View {
+    var body: some View {
+        NavigationStack {
+            VStack(
+                alignment: .leading,
+                spacing: 10
+            ) {
+
+                Text("History")
+                    .font(.system(size: 28, weight: .heavy))
+                    .foregroundStyle(Color("TextPrimary"))
+
+                Text("Your donation history")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color("TextSecondary"))
+
+                Spacer()
+            }
+            .padding(.horizontal, 18)
+            .padding(.top, 18)
+            .frame(
+                maxWidth: .infinity,
+                maxHeight: .infinity,
+                alignment: .topLeading
+            )
+            .background(Color("BackgroundPrimary"))
+        }
+    }
+}
+
+#Preview {
+    HistoryView()
+}
