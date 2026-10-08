@@ -10,59 +10,80 @@ import SwiftUI
 struct HomeView: View {
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 0) {
+            NavigationStack {
+                ScrollView {
+                    VStack(spacing: 0) {
 
-                    HStack(alignment: .center) {
+                        HStack(alignment: .center) {
 
-                        VStack(
-                            alignment: .leading,
-                            spacing: 4
-                        ) {
+                            VStack(
+                                alignment: .leading,
+                                spacing: 4
+                            ) {
 
-                            Text("Good morning")
-                                .font(.system(size: 12))
-                                .foregroundStyle(Color("TextSecondary"))
+                                Text("Good morning")
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(Color("TextSecondary"))
 
-                            Text("Hi, Kushad")
-                                .font(.system(size: 20, weight: .heavy))
-                                .foregroundStyle(Color("TextPrimary"))
+                                Text("Hi, Kushad")
+                                    .font(.system(size: 20, weight: .heavy))
+                                    .foregroundStyle(Color("TextPrimary"))
+                            }
+
+                            Spacer()
+
+                            ZStack {
+                                Circle()
+                                    .fill(Color("DonorRedSoft"))
+                                    .frame(width: 40, height: 40)
+
+                                Text("KD")
+                                    .font(.system(size: 13, weight: .heavy))
+                                    .foregroundStyle(Color("DonorRed"))
+                            }
                         }
 
                         Spacer()
+                            .frame(height: 16)
 
-                        ZStack {
-                            Circle()
-                                .fill(Color("DonorRedSoft"))
-                                .frame(width: 40, height: 40)
+                        DonationCountdownCard(
+                            daysRemaining: 24,
+                            nextPossibleDate: "18 September 2026",
+                            progress: 0.72
+                        )
 
-                            Text("KD")
-                                .font(.system(size: 13, weight: .heavy))
-                                .foregroundStyle(Color("DonorRed"))
+                        Spacer()
+                            .frame(height: 14)
+
+                        HStack(
+                            alignment: .top,
+                            spacing: 10
+                        ) {
+
+                            HomeMetricCard(
+                                title: "Last donation",
+                                value: "18 May",
+                                detail: "Matara"
+                            )
+
+                            HomeMetricCard(
+                                title: "Recorded donations",
+                                value: "6",
+                                detail: "Blood-bank records"
+                            )
                         }
+
+                        Spacer()
+                            .frame(height: 28)
                     }
-
-                    Spacer()
-                        .frame(height: 16)
-
-                    DonationCountdownCard(
-                        daysRemaining: 24,
-                        nextPossibleDate: "18 September 2026",
-                        progress: 0.72
-                    )
-
-                    Spacer()
-                        .frame(height: 28)
+                    .padding(.horizontal, 18)
+                    .padding(.top, 18)
                 }
-                .padding(.horizontal, 18)
-                .padding(.top, 18)
+                .background(Color("BackgroundPrimary"))
             }
-            .background(Color("BackgroundPrimary"))
         }
     }
-}
 
-#Preview {
-    HomeView()
-}
+    #Preview {
+        HomeView()
+    }
