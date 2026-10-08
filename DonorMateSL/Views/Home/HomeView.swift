@@ -8,35 +8,61 @@
 import SwiftUI
 
 struct HomeView: View {
+
     var body: some View {
-           NavigationStack {
-               VStack(
-                   alignment: .leading,
-                   spacing: 10
-               ) {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 0) {
 
-                   Text("Home")
-                       .font(.system(size: 28, weight: .heavy))
-                       .foregroundStyle(Color("TextPrimary"))
+                    HStack(alignment: .center) {
 
-                   Text("Donor dashboard")
-                       .font(.system(size: 14))
-                       .foregroundStyle(Color("TextSecondary"))
+                        VStack(
+                            alignment: .leading,
+                            spacing: 4
+                        ) {
 
-                   Spacer()
-               }
-               .padding(.horizontal, 18)
-               .padding(.top, 18)
-               .frame(
-                   maxWidth: .infinity,
-                   maxHeight: .infinity,
-                   alignment: .topLeading
-               )
-               .background(Color("BackgroundPrimary"))
-           }
-       }
-   }
+                            Text("Good morning")
+                                .font(.system(size: 12))
+                                .foregroundStyle(Color("TextSecondary"))
 
-   #Preview {
-       HomeView()
-   }
+                            Text("Hi, Kushad")
+                                .font(.system(size: 20, weight: .heavy))
+                                .foregroundStyle(Color("TextPrimary"))
+                        }
+
+                        Spacer()
+
+                        ZStack {
+                            Circle()
+                                .fill(Color("DonorRedSoft"))
+                                .frame(width: 40, height: 40)
+
+                            Text("KD")
+                                .font(.system(size: 13, weight: .heavy))
+                                .foregroundStyle(Color("DonorRed"))
+                        }
+                    }
+
+                    Spacer()
+                        .frame(height: 16)
+
+                    DonationCountdownCard(
+                        daysRemaining: 24,
+                        nextPossibleDate: "18 September 2026",
+                        progress: 0.72
+                    )
+
+                    Spacer()
+                        .frame(height: 28)
+                }
+                .padding(.horizontal, 18)
+                .padding(.top, 18)
+            }
+            .background(Color("BackgroundPrimary"))
+        }
+    }
+}
+
+#Preview {
+    HomeView()
+}
