@@ -14,7 +14,7 @@ struct HomeView: View {
             case ready
         }
 
-        @State private var homeState: HomeState = .ready
+        @State private var homeState: HomeState = .notReady
 
         var body: some View {
             NavigationStack {
