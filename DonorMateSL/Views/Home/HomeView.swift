@@ -12,6 +12,7 @@ struct HomeView: View {
     private enum HomeState {
             case notReady
             case ready
+            case urgent
         }
 
         @State private var homeState: HomeState = .notReady
@@ -54,6 +55,7 @@ struct HomeView: View {
                             .frame(height: 16)
 
                         switch homeState {
+
                         case .notReady:
                             DonationCountdownCard(
                                 daysRemaining: 24,
@@ -67,27 +69,48 @@ struct HomeView: View {
                                     print("Find opportunity tapped")
                                 }
                             )
+
+                        case .urgent:
+                            HomeUrgentCard(
+                                matchText: "A+ match",
+                                title: "A+ blood urgently needed nearby",
+                                detail: "Matara Blood Bank · 2.8 km",
+                                onViewAlert: {
+                                    print("View alert tapped")
+                                },
+                                onSave: {
+                                    print("Save tapped")
+                                }
+                            )
                         }
 
-                        Spacer()
-                            .frame(height: 14)
+                        switch homeState {
 
-                        HStack(
-                            alignment: .top,
-                            spacing: 10
-                        ) {
+                        case .notReady, .ready:
 
-                            HomeMetricCard(
-                                title: "Last donation",
-                                value: "18 May",
-                                detail: "Matara"
-                            )
+                            Spacer()
+                                .frame(height: 14)
 
-                            HomeMetricCard(
-                                title: "Recorded donations",
-                                value: "6",
-                                detail: "Blood-bank records"
-                            )
+                            HStack(
+                                alignment: .top,
+                                spacing: 10
+                            ) {
+
+                                HomeMetricCard(
+                                    title: "Last donation",
+                                    value: "18 May",
+                                    detail: "Matara"
+                                )
+
+                                HomeMetricCard(
+                                    title: "Recorded donations",
+                                    value: "6",
+                                    detail: "Blood-bank records"
+                                )
+                            }
+
+                        case .urgent:
+                            EmptyView()
                         }
 
                         switch homeState {
@@ -118,9 +141,12 @@ struct HomeView: View {
                             Spacer()
                                 .frame(height: 8)
 
-                            HomeOpportunityRow(
+                            HomeInfoRow(
                                 title: "Matara Donation Camp",
-                                detail: "Sat · 9:00 AM · 2.4 km"
+                                detail: "Sat · 9:00 AM · 2.4 km",
+                                systemImage: "location.fill",
+                                iconBackground: Color("InfoBlueSoft"),
+                                iconForeground: Color("InfoBlue")
                             )
 
                             Spacer()
@@ -183,9 +209,12 @@ struct HomeView: View {
                             Spacer()
                                 .frame(height: 8)
 
-                            HomeOpportunityRow(
+                            HomeInfoRow(
                                 title: "Matara Blood Bank",
-                                detail: "Open today · 2.1 km"
+                                detail: "Open today · 2.1 km",
+                                systemImage: "location.fill",
+                                iconBackground: Color("InfoBlueSoft"),
+                                iconForeground: Color("InfoBlue")
                             )
 
                             Spacer()
@@ -250,6 +279,103 @@ struct HomeView: View {
                             }
                             .clipShape(
                                 RoundedRectangle(cornerRadius: 16)
+                            )
+
+                        case .urgent:
+
+                            Spacer()
+                                .frame(height: 14)
+
+                            HStack(
+                                alignment: .top,
+                                spacing: 10
+                            ) {
+
+                                ZStack {
+                                    Circle()
+                                        .fill(Color("SuccessGreenSoft"))
+                                        .frame(width: 22, height: 22)
+
+                                    Image(systemName: "checkmark")
+                                        .font(.system(size: 11, weight: .bold))
+                                        .foregroundStyle(Color("SuccessGreen"))
+                                }
+                                .accessibilityHidden(true)
+
+                                VStack(
+                                    alignment: .leading,
+                                    spacing: 4
+                                ) {
+
+                                    Text("Your waiting period has passed")
+                                        .font(.system(size: 15, weight: .bold))
+                                        .foregroundStyle(Color("TextPrimary"))
+                                        .fixedSize(
+                                            horizontal: false,
+                                            vertical: true
+                                        )
+
+                                    Text("Normal donor screening still applies.")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(Color("TextSecondary"))
+                                        .fixedSize(
+                                            horizontal: false,
+                                            vertical: true
+                                        )
+                                }
+                                .frame(
+                                    maxWidth: .infinity,
+                                    alignment: .leading
+                                )
+                            }
+                            .padding(14)
+                            .frame(
+                                maxWidth: .infinity,
+                                alignment: .leading
+                            )
+                            .background(Color("SuccessGreenSoft"))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(
+                                        Color("SuccessGreenBorder"),
+                                        lineWidth: 1
+                                    )
+                            }
+                            .clipShape(
+                                RoundedRectangle(cornerRadius: 16)
+                            )
+
+                            Spacer()
+                                .frame(height: 16)
+
+                            Text("Today")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundStyle(Color("TextPrimary"))
+                                .frame(
+                                    maxWidth: .infinity,
+                                    alignment: .leading
+                                )
+
+                            Spacer()
+                                .frame(height: 8)
+
+                            HomeInfoRow(
+                                title: "Matara Donation Camp",
+                                detail: "9:00 AM – 3:00 PM · 2.4 km",
+                                systemImage: "location.fill",
+                                iconBackground: Color("InfoBlueSoft"),
+                                iconForeground: Color("InfoBlue")
+                            )
+
+                            Spacer()
+                                .frame(height: 12)
+
+                            HomeInfoRow(
+                                title: "Donation reminder",
+                                detail: "Your interval was completed today.",
+                                systemImage: "bell.fill",
+                                iconBackground: Color("NeutralSoft"),
+                                iconForeground: Color("ReminderAmber")
                             )
                         }
 
