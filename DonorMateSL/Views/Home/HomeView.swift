@@ -74,6 +74,35 @@ struct HomeView: View {
                         }
 
                         Spacer()
+                            .frame(height: 16)
+
+                        HStack(alignment: .center) {
+
+                            Text("Nearby this week")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundStyle(Color("TextPrimary"))
+
+                            Spacer()
+
+                            Button {
+                                print("See all tapped")
+                            } label: {
+                                Text("See all")
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundStyle(Color("DonorRed"))
+                            }
+                            .buttonStyle(.plain)
+                        }
+
+                        Spacer()
+                            .frame(height: 8)
+
+                        HomeOpportunityRow(
+                            title: "Matara Donation Camp",
+                            detail: "Sat · 9:00 AM · 2.4 km"
+                        )
+
+                        Spacer()
                             .frame(height: 28)
                     }
                     .padding(.horizontal, 18)
