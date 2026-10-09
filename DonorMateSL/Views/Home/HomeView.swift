@@ -336,6 +336,25 @@ struct HomeView: View {
                             .clipShape(
                                 RoundedRectangle(cornerRadius: 16)
                             )
+
+                            Spacer()
+                                .frame(height: 16)
+
+                            Text("Today")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundStyle(Color("TextPrimary"))
+                                .frame(
+                                    maxWidth: .infinity,
+                                    alignment: .leading
+                                )
+
+                            Spacer()
+                                .frame(height: 8)
+
+                            HomeOpportunityRow(
+                                title: "Matara Donation Camp",
+                                detail: "9:00 AM – 3:00 PM · 2.4 km"
+                            )
                         }
 
                         Spacer()
