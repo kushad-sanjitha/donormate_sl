@@ -9,7 +9,14 @@ import SwiftUI
 
 struct HomeView: View {
 
-    var body: some View {
+    private enum HomeState {
+            case notReady
+            case ready
+        }
+
+        @State private var homeState: HomeState = .ready
+
+        var body: some View {
             NavigationStack {
                 ScrollView {
                     VStack(spacing: 0) {
@@ -46,11 +53,21 @@ struct HomeView: View {
                         Spacer()
                             .frame(height: 16)
 
-                        DonationCountdownCard(
-                            daysRemaining: 24,
-                            nextPossibleDate: "18 September 2026",
-                            progress: 0.72
-                        )
+                        switch homeState {
+                        case .notReady:
+                            DonationCountdownCard(
+                                daysRemaining: 24,
+                                nextPossibleDate: "18 September 2026",
+                                progress: 0.72
+                            )
+
+                        case .ready:
+                            HomeReadyCard(
+                                onFindOpportunity: {
+                                    print("Find opportunity tapped")
+                                }
+                            )
+                        }
 
                         Spacer()
                             .frame(height: 14)
@@ -73,66 +90,166 @@ struct HomeView: View {
                             )
                         }
 
-                        Spacer()
-                            .frame(height: 16)
+                        switch homeState {
 
-                        HStack(alignment: .center) {
-
-                            Text("Nearby this week")
-                                .font(.system(size: 15, weight: .bold))
-                                .foregroundStyle(Color("TextPrimary"))
+                        case .notReady:
 
                             Spacer()
+                                .frame(height: 16)
 
-                            Button {
-                                print("See all tapped")
-                            } label: {
-                                Text("See all")
-                                    .font(.system(size: 13, weight: .bold))
-                                    .foregroundStyle(Color("DonorRed"))
+                            HStack(alignment: .center) {
+
+                                Text("Nearby this week")
+                                    .font(.system(size: 15, weight: .bold))
+                                    .foregroundStyle(Color("TextPrimary"))
+
+                                Spacer()
+
+                                Button {
+                                    print("See all tapped")
+                                } label: {
+                                    Text("See all")
+                                        .font(.system(size: 13, weight: .bold))
+                                        .foregroundStyle(Color("DonorRed"))
+                                }
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
-                        }
 
-                        Spacer()
-                            .frame(height: 8)
+                            Spacer()
+                                .frame(height: 8)
 
-                        HomeOpportunityRow(
-                            title: "Matara Donation Camp",
-                            detail: "Sat · 9:00 AM · 2.4 km"
-                        )
+                            HomeOpportunityRow(
+                                title: "Matara Donation Camp",
+                                detail: "Sat · 9:00 AM · 2.4 km"
+                            )
 
-                        Spacer()
-                            .frame(height: 16)
+                            Spacer()
+                                .frame(height: 16)
 
-                        Text("Quick actions")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundStyle(Color("TextPrimary"))
+                            Text("Quick actions")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundStyle(Color("TextPrimary"))
+                                .frame(
+                                    maxWidth: .infinity,
+                                    alignment: .leading
+                                )
+
+                            Spacer()
+                                .frame(height: 8)
+
+                            HStack(
+                                alignment: .top,
+                                spacing: 10
+                            ) {
+
+                                HomeQuickActionCard(
+                                    title: "View Readiness",
+                                    systemImage: "checkmark.circle.fill",
+                                    iconBackground: Color("SuccessGreenSoft"),
+                                    iconForeground: Color("SuccessGreen")
+                                )
+
+                                HomeQuickActionCard(
+                                    title: "Find Nearby",
+                                    systemImage: "map.fill",
+                                    iconBackground: Color("InfoBlueSoft"),
+                                    iconForeground: Color("InfoBlue")
+                                )
+                            }
+
+                        case .ready:
+
+                            Spacer()
+                                .frame(height: 16)
+
+                            HStack(alignment: .center) {
+
+                                Text("Closest opportunity")
+                                    .font(.system(size: 15, weight: .bold))
+                                    .foregroundStyle(Color("TextPrimary"))
+
+                                Spacer()
+
+                                Button {
+                                    print("View map tapped")
+                                } label: {
+                                    Text("View map")
+                                        .font(.system(size: 13, weight: .bold))
+                                        .foregroundStyle(Color("DonorRed"))
+                                }
+                                .buttonStyle(.plain)
+                            }
+
+                            Spacer()
+                                .frame(height: 8)
+
+                            HomeOpportunityRow(
+                                title: "Matara Blood Bank",
+                                detail: "Open today · 2.1 km"
+                            )
+
+                            Spacer()
+                                .frame(height: 14)
+
+                            HStack(
+                                alignment: .top,
+                                spacing: 10
+                            ) {
+
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(Color("NeutralSoft"))
+                                        .frame(width: 34, height: 34)
+
+                                    Image(systemName: "info.circle.fill")
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundStyle(Color("TextSecondary"))
+                                }
+                                .accessibilityHidden(true)
+
+                                VStack(
+                                    alignment: .leading,
+                                    spacing: 4
+                                ) {
+
+                                    Text("Final eligibility is confirmed by staff.")
+                                        .font(.system(size: 15, weight: .bold))
+                                        .foregroundStyle(Color("TextPrimary"))
+                                        .fixedSize(
+                                            horizontal: false,
+                                            vertical: true
+                                        )
+
+                                    Text(
+                                        "DonorMate only tracks the recorded waiting period."
+                                    )
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(Color("TextSecondary"))
+                                    .fixedSize(
+                                        horizontal: false,
+                                        vertical: true
+                                    )
+                                }
+                                .frame(
+                                    maxWidth: .infinity,
+                                    alignment: .leading
+                                )
+                            }
+                            .padding(14)
                             .frame(
                                 maxWidth: .infinity,
                                 alignment: .leading
                             )
-
-                        Spacer()
-                            .frame(height: 8)
-
-                        HStack(
-                            alignment: .top,
-                            spacing: 10
-                        ) {
-
-                            HomeQuickActionCard(
-                                title: "View Readiness",
-                                systemImage: "checkmark.circle.fill",
-                                iconBackground: Color("SuccessGreenSoft"),
-                                iconForeground: Color("SuccessGreen")
-                            )
-
-                            HomeQuickActionCard(
-                                title: "Find Nearby",
-                                systemImage: "map.fill",
-                                iconBackground: Color("InfoBlueSoft"),
-                                iconForeground: Color("InfoBlue")
+                            .background(Color("SurfaceSecondary"))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(
+                                        Color("BorderPrimary"),
+                                        lineWidth: 1
+                                    )
+                            }
+                            .clipShape(
+                                RoundedRectangle(cornerRadius: 16)
                             )
                         }
 
