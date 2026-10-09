@@ -103,6 +103,40 @@ struct HomeView: View {
                         )
 
                         Spacer()
+                            .frame(height: 16)
+
+                        Text("Quick actions")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(Color("TextPrimary"))
+                            .frame(
+                                maxWidth: .infinity,
+                                alignment: .leading
+                            )
+
+                        Spacer()
+                            .frame(height: 8)
+
+                        HStack(
+                            alignment: .top,
+                            spacing: 10
+                        ) {
+
+                            HomeQuickActionCard(
+                                title: "View Readiness",
+                                systemImage: "checkmark.circle.fill",
+                                iconBackground: Color("SuccessGreenSoft"),
+                                iconForeground: Color("SuccessGreen")
+                            )
+
+                            HomeQuickActionCard(
+                                title: "Find Nearby",
+                                systemImage: "map.fill",
+                                iconBackground: Color("InfoBlueSoft"),
+                                iconForeground: Color("InfoBlue")
+                            )
+                        }
+
+                        Spacer()
                             .frame(height: 28)
                     }
                     .padding(.horizontal, 18)
