@@ -15,7 +15,7 @@ struct HomeView: View {
             case urgent
         }
 
-        @State private var homeState: HomeState = .urgent
+        @State private var homeState: HomeState = .notReady
 
         var body: some View {
             NavigationStack {
@@ -55,6 +55,7 @@ struct HomeView: View {
                             .frame(height: 16)
 
                         switch homeState {
+
                         case .notReady:
                             DonationCountdownCard(
                                 daysRemaining: 24,
@@ -84,6 +85,7 @@ struct HomeView: View {
                         }
 
                         switch homeState {
+
                         case .notReady, .ready:
 
                             Spacer()
@@ -139,9 +141,12 @@ struct HomeView: View {
                             Spacer()
                                 .frame(height: 8)
 
-                            HomeOpportunityRow(
+                            HomeInfoRow(
                                 title: "Matara Donation Camp",
-                                detail: "Sat · 9:00 AM · 2.4 km"
+                                detail: "Sat · 9:00 AM · 2.4 km",
+                                systemImage: "location.fill",
+                                iconBackground: Color("InfoBlueSoft"),
+                                iconForeground: Color("InfoBlue")
                             )
 
                             Spacer()
@@ -204,9 +209,12 @@ struct HomeView: View {
                             Spacer()
                                 .frame(height: 8)
 
-                            HomeOpportunityRow(
+                            HomeInfoRow(
                                 title: "Matara Blood Bank",
-                                detail: "Open today · 2.1 km"
+                                detail: "Open today · 2.1 km",
+                                systemImage: "location.fill",
+                                iconBackground: Color("InfoBlueSoft"),
+                                iconForeground: Color("InfoBlue")
                             )
 
                             Spacer()
@@ -351,9 +359,23 @@ struct HomeView: View {
                             Spacer()
                                 .frame(height: 8)
 
-                            HomeOpportunityRow(
+                            HomeInfoRow(
                                 title: "Matara Donation Camp",
-                                detail: "9:00 AM – 3:00 PM · 2.4 km"
+                                detail: "9:00 AM – 3:00 PM · 2.4 km",
+                                systemImage: "location.fill",
+                                iconBackground: Color("InfoBlueSoft"),
+                                iconForeground: Color("InfoBlue")
+                            )
+
+                            Spacer()
+                                .frame(height: 12)
+
+                            HomeInfoRow(
+                                title: "Donation reminder",
+                                detail: "Your interval was completed today.",
+                                systemImage: "bell.fill",
+                                iconBackground: Color("NeutralSoft"),
+                                iconForeground: Color("ReminderAmber")
                             )
                         }
 
