@@ -137,6 +137,40 @@ struct HistoryView: View {
                         }
 
                         Spacer()
+                            .frame(height: 16)
+
+                        VStack(spacing: 0) {
+
+                            DonationHistoryRow(
+                                date: "18 May 2026",
+                                locationAndType: "Matara Blood Bank · Whole blood",
+                                recordLabel: "Blood-bank record",
+                                isLast: false
+                            )
+
+                            DonationHistoryRow(
+                                date: "16 January 2026",
+                                locationAndType: "Matara · Whole blood",
+                                recordLabel: "Blood-bank record",
+                                isLast: false
+                            )
+
+                            DonationHistoryRow(
+                                date: "12 September 2025",
+                                locationAndType: "Matara · Whole blood",
+                                recordLabel: "Blood-bank record",
+                                isLast: false
+                            )
+
+                            DonationHistoryRow(
+                                date: "06 May 2025",
+                                locationAndType: "Matara · Whole blood",
+                                recordLabel: "Blood-bank record",
+                                isLast: true
+                            )
+                        }
+
+                        Spacer()
                             .frame(height: 28)
                     }
                     .padding(.horizontal, 18)
