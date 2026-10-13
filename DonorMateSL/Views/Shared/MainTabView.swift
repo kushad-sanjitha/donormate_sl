@@ -7,16 +7,18 @@
 
 import SwiftUI
 
+enum MainTab: Hashable {
+    case home
+    case nearby
+    case history
+    case profile
+}
+
 struct MainTabView: View {
 
-    private enum MainTab: Hashable {
-        case home
-        case nearby
-        case history
-        case profile
-    }
+    @Binding var selectedTab: MainTab
 
-    @State private var selectedTab: MainTab = .home
+    var onConnectDonorRecord: () -> Void = {}
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -39,14 +41,16 @@ struct MainTabView: View {
                 }
                 .tag(MainTab.nearby)
 
-            HistoryView()
-                .tabItem {
-                    Label(
-                        "History",
-                        systemImage: "clock.arrow.circlepath"
-                    )
-                }
-                .tag(MainTab.history)
+            HistoryView(
+                onConnectDonorRecord: onConnectDonorRecord
+            )
+            .tabItem {
+                Label(
+                    "History",
+                    systemImage: "clock.arrow.circlepath"
+                )
+            }
+            .tag(MainTab.history)
 
             ProfileView()
                 .tabItem {
@@ -62,5 +66,7 @@ struct MainTabView: View {
 }
 
 #Preview {
-    MainTabView()
+    MainTabView(
+        selectedTab: .constant(.home)
+    )
 }
