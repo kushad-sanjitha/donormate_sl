@@ -220,65 +220,11 @@ struct HomeView: View {
                             Spacer()
                                 .frame(height: 14)
 
-                            HStack(
-                                alignment: .top,
-                                spacing: 10
-                            ) {
-
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .fill(Color("NeutralSoft"))
-                                        .frame(width: 34, height: 34)
-
-                                    Image(systemName: "info.circle.fill")
-                                        .font(.system(size: 15, weight: .semibold))
-                                        .foregroundStyle(Color("TextSecondary"))
-                                }
-                                .accessibilityHidden(true)
-
-                                VStack(
-                                    alignment: .leading,
-                                    spacing: 4
-                                ) {
-
-                                    Text("Final eligibility is confirmed by staff.")
-                                        .font(.system(size: 15, weight: .bold))
-                                        .foregroundStyle(Color("TextPrimary"))
-                                        .fixedSize(
-                                            horizontal: false,
-                                            vertical: true
-                                        )
-
-                                    Text(
-                                        "DonorMate only tracks the recorded waiting period."
-                                    )
-                                    .font(.system(size: 12))
-                                    .foregroundStyle(Color("TextSecondary"))
-                                    .fixedSize(
-                                        horizontal: false,
-                                        vertical: true
-                                    )
-                                }
-                                .frame(
-                                    maxWidth: .infinity,
-                                    alignment: .leading
-                                )
-                            }
-                            .padding(14)
-                            .frame(
-                                maxWidth: .infinity,
-                                alignment: .leading
-                            )
-                            .background(Color("SurfaceSecondary"))
-                            .overlay {
-                                RoundedRectangle(cornerRadius: 16)
-                                    .stroke(
-                                        Color("BorderPrimary"),
-                                        lineWidth: 1
-                                    )
-                            }
-                            .clipShape(
-                                RoundedRectangle(cornerRadius: 16)
+                            NeutralMessageCard(
+                                systemImage: "info.circle.fill",
+                                title: "Final eligibility is confirmed by staff.",
+                                detail: "DonorMate only tracks the recorded waiting period.",
+                                style: .compact
                             )
 
                         case .urgent:
