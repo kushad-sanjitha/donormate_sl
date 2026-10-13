@@ -12,17 +12,20 @@ struct DetailInfoRow: View {
         let label: String
         let value: String
         let supportingText: String?
+        let iconForeground: Color
 
         init(
             systemImage: String,
             label: String,
             value: String,
-            supportingText: String? = nil
+            supportingText: String? = nil,
+            iconForeground: Color = Color("TextSecondary")
         ) {
             self.systemImage = systemImage
             self.label = label
             self.value = value
             self.supportingText = supportingText
+            self.iconForeground = iconForeground
         }
 
         var body: some View {
@@ -38,7 +41,7 @@ struct DetailInfoRow: View {
 
                     Image(systemName: systemImage)
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(Color("TextSecondary"))
+                        .foregroundStyle(iconForeground)
                 }
                 .accessibilityHidden(true)
 
@@ -97,20 +100,28 @@ struct DetailInfoRow: View {
             DetailInfoRow(
                 systemImage: "location.fill",
                 label: "Location",
-                value: "Matara Blood Bank"
+                value: "Matara Blood Bank",
+                iconForeground: Color("DonorRed")
             )
 
             DetailInfoRow(
                 systemImage: "building.2.fill",
                 label: "Recorded by",
-                value: "Blood-bank staff"
+                value: "Blood-bank staff",
+                iconForeground: Color("DonorPurple")
             )
 
             DetailInfoRow(
-                systemImage: "number.square.fill",
+                systemImage: "number",
                 label: "Record reference",
                 value: "DB-2026-0518-006",
-                supportingText: "Example supporting information"
+                iconForeground: Color("TextPrimary")
+            )
+
+            DetailInfoRow(
+                systemImage: "mappin",
+                label: "Example default",
+                value: "Neutral icon"
             )
         }
         .padding(18)

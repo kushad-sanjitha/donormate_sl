@@ -17,17 +17,20 @@ struct NeutralMessageCard: View {
         let title: String
         let detail: String
         let style: Style
+        let iconForeground: Color
 
         init(
             systemImage: String,
             title: String,
             detail: String,
-            style: Style = .standard
+            style: Style = .standard,
+            iconForeground: Color = Color("TextSecondary")
         ) {
             self.systemImage = systemImage
             self.title = title
             self.detail = detail
             self.style = style
+            self.iconForeground = iconForeground
         }
 
         private var iconSize: CGFloat {
@@ -64,7 +67,7 @@ struct NeutralMessageCard: View {
 
                     Image(systemName: systemImage)
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(Color("TextSecondary"))
+                        .foregroundStyle(iconForeground)
                 }
                 .accessibilityHidden(true)
 
@@ -120,7 +123,8 @@ struct NeutralMessageCard: View {
                 systemImage: "lock.fill",
                 title: "View-only record",
                 detail: "This donation cannot be changed in DonorMate.",
-                style: .standard
+                style: .standard,
+                iconForeground: Color("ReminderAmber")
             )
 
             NeutralMessageCard(

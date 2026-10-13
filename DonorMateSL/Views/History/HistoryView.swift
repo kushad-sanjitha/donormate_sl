@@ -15,7 +15,44 @@ struct HistoryView: View {
     }
 
     @State private var historyState: HistoryState = .populated
+
     var onConnectDonorRecord: () -> Void = {}
+
+    private let mayRecord = DonationRecord(
+        date: "18 May 2026",
+        location: "Matara Blood Bank",
+        donationType: "Whole blood",
+        recordLabel: "Blood-bank record",
+        recordReference: "DB-2026-0518-006",
+        nextPossibleDonationDate: "18 September 2026"
+    )
+
+    private let januaryRecord = DonationRecord(
+        date: "16 January 2026",
+        location: "Matara",
+        donationType: "Whole blood",
+        recordLabel: "Blood-bank record",
+        recordReference: nil,
+        nextPossibleDonationDate: nil
+    )
+
+    private let septemberRecord = DonationRecord(
+        date: "12 September 2025",
+        location: "Matara",
+        donationType: "Whole blood",
+        recordLabel: "Blood-bank record",
+        recordReference: nil,
+        nextPossibleDonationDate: nil
+    )
+
+    private let previousMayRecord = DonationRecord(
+        date: "06 May 2025",
+        location: "Matara",
+        donationType: "Whole blood",
+        recordLabel: "Blood-bank record",
+        recordReference: nil,
+        nextPossibleDonationDate: nil
+    )
 
     var body: some View {
         NavigationStack {
@@ -98,31 +135,31 @@ struct HistoryView: View {
 
                         VStack(spacing: 0) {
 
+                            NavigationLink {
+                                DonationDetailView(
+                                    record: mayRecord
+                                )
+                            } label: {
+                                DonationHistoryRow(
+                                    record: mayRecord,
+                                    isLast: false
+                                )
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+
                             DonationHistoryRow(
-                                date: "18 May 2026",
-                                locationAndType: "Matara Blood Bank · Whole blood",
-                                recordLabel: "Blood-bank record",
+                                record: januaryRecord,
                                 isLast: false
                             )
 
                             DonationHistoryRow(
-                                date: "16 January 2026",
-                                locationAndType: "Matara · Whole blood",
-                                recordLabel: "Blood-bank record",
+                                record: septemberRecord,
                                 isLast: false
                             )
 
                             DonationHistoryRow(
-                                date: "12 September 2025",
-                                locationAndType: "Matara · Whole blood",
-                                recordLabel: "Blood-bank record",
-                                isLast: false
-                            )
-
-                            DonationHistoryRow(
-                                date: "06 May 2025",
-                                locationAndType: "Matara · Whole blood",
-                                recordLabel: "Blood-bank record",
+                                record: previousMayRecord,
                                 isLast: true
                             )
                         }
