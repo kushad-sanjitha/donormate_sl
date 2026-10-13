@@ -96,13 +96,13 @@ struct HomeView: View {
                                 spacing: 10
                             ) {
 
-                                HomeMetricCard(
+                                SummaryMetricCard(
                                     title: "Last donation",
                                     value: "18 May",
                                     detail: "Matara"
                                 )
 
-                                HomeMetricCard(
+                                SummaryMetricCard(
                                     title: "Recorded donations",
                                     value: "6",
                                     detail: "Blood-bank records"
