@@ -147,6 +147,49 @@ struct DonationDetailView: View {
                        )
 
                        Spacer()
+                           .frame(height: 14)
+
+                       VStack(
+                           alignment: .leading,
+                           spacing: 4
+                       ) {
+
+                           Text("Next possible donation date")
+                               .font(.system(size: 12))
+                               .foregroundStyle(Color("TextSecondary"))
+
+                           Text("18 September 2026")
+                               .font(.system(size: 20, weight: .heavy))
+                               .foregroundStyle(Color("TextPrimary"))
+                       }
+                       .padding(14)
+                       .frame(
+                           maxWidth: .infinity,
+                           alignment: .leading
+                       )
+                       .background(Color("SuccessGreenSoft"))
+                       .overlay {
+                           RoundedRectangle(cornerRadius: 16)
+                               .stroke(
+                                   Color("SuccessGreenBorder"),
+                                   lineWidth: 1
+                               )
+                       }
+                       .clipShape(
+                           RoundedRectangle(cornerRadius: 16)
+                       )
+
+                       Spacer()
+                           .frame(height: 14)
+
+                       NeutralMessageCard(
+                           systemImage: "lock.fill",
+                           title: "View-only record",
+                           detail: "This donation cannot be changed in DonorMate.",
+                           style: .standard
+                       )
+
+                       Spacer()
                            .frame(height: 28)
                    }
                    .padding(.horizontal, 18)
