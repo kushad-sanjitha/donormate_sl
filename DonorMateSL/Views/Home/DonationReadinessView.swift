@@ -9,6 +9,8 @@ import SwiftUI
 
 struct DonationReadinessView: View {
 
+    @Environment(\.dismiss) private var dismiss
+
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
@@ -19,7 +21,7 @@ struct DonationReadinessView: View {
                 ) {
 
                     Button {
-                        print("Back tapped")
+                        dismiss()
                     } label: {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 16, weight: .bold))
@@ -182,9 +184,13 @@ struct DonationReadinessView: View {
             .padding(.top, 18)
         }
         .background(Color("BackgroundPrimary"))
+        .toolbar(.hidden, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
     }
 }
 
 #Preview {
-    DonationReadinessView()
+    NavigationStack {
+        DonationReadinessView()
+    }
 }
