@@ -116,6 +116,27 @@ struct HistoryView: View {
                         )
 
                         Spacer()
+                            .frame(height: 14)
+
+                        HStack(
+                            alignment: .top,
+                            spacing: 10
+                        ) {
+
+                            SummaryMetricCard(
+                                title: "Total donations",
+                                value: "6",
+                                detail: "Linked record"
+                            )
+
+                            SummaryMetricCard(
+                                title: "Latest donation",
+                                value: "18 May",
+                                detail: "2026"
+                            )
+                        }
+
+                        Spacer()
                             .frame(height: 28)
                     }
                     .padding(.horizontal, 18)
