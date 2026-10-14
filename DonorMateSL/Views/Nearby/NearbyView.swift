@@ -123,21 +123,33 @@ struct NearbyView: View {
                 Spacer()
                     .frame(height: 10)
 
-                Map(position: $cameraPosition)
-                    .frame(
-                        maxWidth: .infinity,
-                        maxHeight: .infinity
-                    )
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(
-                                Color("NeutralBorderStrong"),
-                                lineWidth: 1
+                Map(position: $cameraPosition) {
+                    ForEach(locations) { location in
+                        Annotation(
+                            location.name,
+                            coordinate: CLLocationCoordinate2D(
+                                latitude: location.latitude,
+                                longitude: location.longitude
                             )
+                        ) {
+                            locationMarker(for: location)
+                        }
                     }
-                    .clipShape(
-                        RoundedRectangle(cornerRadius: 20)
-                    )
+                }
+                .frame(
+                    maxWidth: .infinity,
+                    maxHeight: .infinity
+                )
+                .overlay {
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(
+                            Color("NeutralBorderStrong"),
+                            lineWidth: 1
+                        )
+                }
+                .clipShape(
+                    RoundedRectangle(cornerRadius: 20)
+                )
             }
             .padding(.horizontal, 18)
             .padding(.top, 18)
@@ -189,6 +201,37 @@ struct NearbyView: View {
                 )
         }
         .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func locationMarker(
+        for location: DonationLocation
+    ) -> some View {
+
+        switch location.type {
+
+        case .camp:
+            ZStack {
+                Circle()
+                    .fill(Color("DonorRed"))
+                    .frame(width: 34, height: 34)
+
+                Image(systemName: "drop.fill")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+
+        case .bloodBank:
+            ZStack {
+                Circle()
+                    .fill(Color("InfoBlue"))
+                    .frame(width: 34, height: 34)
+
+                Image(systemName: "cross.case.fill")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+        }
     }
 }
 
