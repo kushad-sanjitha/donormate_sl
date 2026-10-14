@@ -51,6 +51,8 @@ struct NearbyView: View {
     @StateObject private var currentLocationService =
         CurrentLocationService()
 
+    @State private var hasCenteredOnUser = false
+
     @State private var cameraPosition: MapCameraPosition = .region(
         MKCoordinateRegion(
             center: CLLocationCoordinate2D(
@@ -214,6 +216,22 @@ struct NearbyView: View {
                     newLocation.coordinate.latitude,
                     newLocation.coordinate.longitude
                 )
+
+                guard hasCenteredOnUser == false else {
+                    return
+                }
+
+                cameraPosition = .region(
+                    MKCoordinateRegion(
+                        center: newLocation.coordinate,
+                        span: MKCoordinateSpan(
+                            latitudeDelta: 0.08,
+                            longitudeDelta: 0.08
+                        )
+                    )
+                )
+
+                hasCenteredOnUser = true
             }
         }
     }
