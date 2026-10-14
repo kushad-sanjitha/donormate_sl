@@ -9,7 +9,7 @@ import Foundation
 
 struct DonationLocation: Identifiable {
 
-    enum LocationType {
+    enum LocationType: Equatable {
         case camp
         case bloodBank
     }

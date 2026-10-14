@@ -58,6 +58,24 @@ struct NearbyView: View {
         )
     )
 
+    private var filteredLocations: [DonationLocation] {
+        switch selectedFilter {
+
+        case .all:
+            return locations
+
+        case .camps:
+            return locations.filter {
+                $0.type == .camp
+            }
+
+        case .bloodBanks:
+            return locations.filter {
+                $0.type == .bloodBank
+            }
+        }
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -124,7 +142,7 @@ struct NearbyView: View {
                     .frame(height: 10)
 
                 Map(position: $cameraPosition) {
-                    ForEach(locations) { location in
+                    ForEach(filteredLocations) { location in
                         Annotation(
                             location.name,
                             coordinate: CLLocationCoordinate2D(
