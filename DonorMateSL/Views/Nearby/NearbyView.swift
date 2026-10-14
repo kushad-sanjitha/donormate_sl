@@ -148,6 +148,9 @@ struct NearbyView: View {
                     .frame(height: 10)
 
                 Map(position: $cameraPosition) {
+
+                    UserAnnotation()
+
                     ForEach(filteredLocations) { location in
                         Annotation(
                             location.name,
