@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import MapKit
 
 struct NearbyView: View {
 
@@ -16,6 +17,19 @@ struct NearbyView: View {
     }
 
     @State private var selectedFilter: NearbyFilter = .all
+
+    @State private var cameraPosition: MapCameraPosition = .region(
+        MKCoordinateRegion(
+            center: CLLocationCoordinate2D(
+                latitude: 5.9549,
+                longitude: 80.5550
+            ),
+            span: MKCoordinateSpan(
+                latitudeDelta: 0.08,
+                longitudeDelta: 0.08
+            )
+        )
+    )
 
     var body: some View {
         NavigationStack {
@@ -81,6 +95,22 @@ struct NearbyView: View {
 
                 Spacer()
                     .frame(height: 10)
+
+                Map(position: $cameraPosition)
+                    .frame(
+                        maxWidth: .infinity,
+                        maxHeight: .infinity
+                    )
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(
+                                Color("NeutralBorderStrong"),
+                                lineWidth: 1
+                            )
+                    }
+                    .clipShape(
+                        RoundedRectangle(cornerRadius: 20)
+                    )
             }
             .padding(.horizontal, 18)
             .padding(.top, 18)
