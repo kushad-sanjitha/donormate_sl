@@ -45,6 +45,14 @@ struct NearbyView: View {
 
     @State private var selectedFilter: NearbyFilter = .all
 
+    @StateObject private var locationPermissionService =
+        LocationPermissionService()
+
+    @StateObject private var currentLocationService =
+        CurrentLocationService()
+
+    @State private var hasCenteredOnUser = false
+
     @State private var cameraPosition: MapCameraPosition = .region(
         MKCoordinateRegion(
             center: CLLocationCoordinate2D(
@@ -142,6 +150,9 @@ struct NearbyView: View {
                     .frame(height: 10)
 
                 Map(position: $cameraPosition) {
+
+                    UserAnnotation()
+
                     ForEach(filteredLocations) { location in
                         Annotation(
                             location.name,
@@ -177,6 +188,51 @@ struct NearbyView: View {
                 alignment: .top
             )
             .background(Color("BackgroundPrimary"))
+            .onAppear {
+                locationPermissionService.refreshStatus()
+
+                if locationPermissionService.status == .authorized {
+                    currentLocationService.requestCurrentLocation()
+                }
+            }
+            .onChange(
+                of: locationPermissionService.status
+            ) { _, newStatus in
+
+                if newStatus == .authorized {
+                    currentLocationService.requestCurrentLocation()
+                }
+            }
+            .onChange(
+                of: currentLocationService.currentLocation
+            ) { _, newLocation in
+
+                guard let newLocation else {
+                    return
+                }
+
+                print(
+                    "Current location:",
+                    newLocation.coordinate.latitude,
+                    newLocation.coordinate.longitude
+                )
+
+                guard hasCenteredOnUser == false else {
+                    return
+                }
+
+                cameraPosition = .region(
+                    MKCoordinateRegion(
+                        center: newLocation.coordinate,
+                        span: MKCoordinateSpan(
+                            latitudeDelta: 0.08,
+                            longitudeDelta: 0.08
+                        )
+                    )
+                )
+
+                hasCenteredOnUser = true
+            }
         }
     }
 
