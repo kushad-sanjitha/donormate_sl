@@ -45,6 +45,7 @@ struct NearbyView: View {
     ]
 
     @State private var selectedFilter: NearbyFilter = .all
+    @State private var selectedLocation: DonationLocation?
 
     @StateObject private var locationPermissionService =
         LocationPermissionService()
@@ -162,7 +163,19 @@ struct NearbyView: View {
                                 longitude: location.longitude
                             )
                         ) {
-                            locationMarker(for: location)
+                            Button {
+                                selectedLocation = location
+
+                                print(
+                                    "Selected location:",
+                                    location.name
+                                )
+                            } label: {
+                                locationMarker(
+                                    for: location
+                                )
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
                 }
