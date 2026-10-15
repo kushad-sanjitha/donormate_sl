@@ -89,6 +89,7 @@ struct NearbyView: View {
 
     private var modeButtonTitle: String {
         switch selectedMode {
+
         case .map:
             return "List"
 
@@ -228,35 +229,26 @@ struct NearbyView: View {
                     )
 
                 case .list:
-                    VStack(
-                        alignment: .leading,
-                        spacing: 8
-                    ) {
+                    ScrollView {
+                        VStack(spacing: 10) {
 
-                        Text("Locations")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundStyle(Color("TextPrimary"))
-                        .font(.system(size: 13))
-                        .foregroundStyle(Color("TextSecondary"))
-
-                        Spacer()
+                            ForEach(filteredLocations) { location in
+                                NearbyLocationRow(
+                                    location: location,
+                                    distanceText: formattedDistance(
+                                        to: location
+                                    ),
+                                    onTap: {
+                                        detailsLocation = location
+                                    }
+                                )
+                            }
+                        }
+                        .padding(.bottom, 16)
                     }
-                    .padding(16)
                     .frame(
                         maxWidth: .infinity,
-                        maxHeight: .infinity,
-                        alignment: .topLeading
-                    )
-                    .background(Color("SurfacePrimary"))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(
-                                Color("BorderPrimary"),
-                                lineWidth: 1
-                            )
-                    }
-                    .clipShape(
-                        RoundedRectangle(cornerRadius: 20)
+                        maxHeight: .infinity
                     )
                 }
             }
