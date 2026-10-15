@@ -7,6 +7,7 @@
 
 import SwiftUI
 import MapKit
+import Foundation
 
 struct NearbyView: View {
 
@@ -217,6 +218,10 @@ struct NearbyView: View {
                     newLocation.coordinate.longitude
                 )
 
+                printDistances(
+                    from: newLocation
+                )
+
                 guard hasCenteredOnUser == false else {
                     return
                 }
@@ -305,6 +310,35 @@ struct NearbyView: View {
                     .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(.white)
             }
+        }
+    }
+
+    private func printDistances(
+        from userLocation: CLLocation
+    ) {
+        for location in locations {
+
+            let donationLocation = CLLocation(
+                latitude: location.latitude,
+                longitude: location.longitude
+            )
+
+            let distanceInMetres =
+                userLocation.distance(
+                    from: donationLocation
+                )
+
+            let distanceInKilometres =
+                distanceInMetres / 1000
+
+            let formattedDistance = String(
+                format: "%.1f km",
+                distanceInKilometres
+            )
+
+            print(
+                "\(location.name): \(formattedDistance)"
+            )
         }
     }
 }
