@@ -11,12 +11,6 @@ import Foundation
 
 struct NearbyView: View {
 
-    private enum NearbyFilter {
-        case all
-        case camps
-        case bloodBanks
-    }
-
     private let locations: [DonationLocation] = [
         DonationLocation(
             id: "matara-donation-camp",
@@ -139,27 +133,11 @@ struct NearbyView: View {
                 Spacer()
                     .frame(height: 10)
 
-                HStack(spacing: 3) {
-
-                    filterButton(
-                        title: "All",
-                        filter: .all
-                    )
-
-                    filterButton(
-                        title: "Camps",
-                        filter: .camps
-                    )
-
-                    filterButton(
-                        title: "Blood Banks",
-                        filter: .bloodBanks
-                    )
-                }
-                .padding(3)
-                .background(Color("NeutralSoft"))
-                .clipShape(
-                    RoundedRectangle(cornerRadius: 12)
+                NearbyFilterControl(
+                    selectedFilter: selectedFilter,
+                    onFilterChanged: { newFilter in
+                        applyFilter(newFilter)
+                    }
                 )
 
                 Spacer()
@@ -299,53 +277,18 @@ struct NearbyView: View {
         }
     }
 
-    private func filterButton(
-        title: String,
-        filter: NearbyFilter
-    ) -> some View {
+    private func applyFilter(
+        _ newFilter: NearbyFilter
+    ) {
+        selectedFilter = newFilter
 
-        let isSelected = selectedFilter == filter
-
-        return Button {
-            selectedFilter = filter
-
-            if let selectedLocation,
-               isLocation(
-                   selectedLocation,
-                   includedIn: filter
-               ) == false {
-                self.selectedLocation = nil
-            }
-        } label: {
-            Text(title)
-                .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(
-                    isSelected
-                        ? Color("TextPrimary")
-                        : Color("TextSecondary")
-                )
-                .frame(
-                    maxWidth: .infinity,
-                    minHeight: 34
-                )
-                .background(
-                    isSelected
-                        ? Color("SurfacePrimary")
-                        : Color.clear
-                )
-                .clipShape(
-                    RoundedRectangle(cornerRadius: 9)
-                )
-                .shadow(
-                    color: isSelected
-                        ? Color.black.opacity(0.06)
-                        : Color.clear,
-                    radius: 2,
-                    x: 0,
-                    y: 1
-                )
+        if let selectedLocation,
+           isLocation(
+               selectedLocation,
+               includedIn: newFilter
+           ) == false {
+            self.selectedLocation = nil
         }
-        .buttonStyle(.plain)
     }
 
     @ViewBuilder
