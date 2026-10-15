@@ -11,6 +11,11 @@ import Foundation
 
 struct NearbyView: View {
 
+    private enum NearbyMode {
+        case map
+        case list
+    }
+
     private let locations: [DonationLocation] = [
         DonationLocation(
             id: "matara-donation-camp",
@@ -38,6 +43,7 @@ struct NearbyView: View {
         )
     ]
 
+    @State private var selectedMode: NearbyMode = .map
     @State private var selectedFilter: NearbyFilter = .all
     @State private var selectedLocation: DonationLocation?
     @State private var detailsLocation: DonationLocation?
@@ -81,6 +87,16 @@ struct NearbyView: View {
         }
     }
 
+    private var modeButtonTitle: String {
+        switch selectedMode {
+        case .map:
+            return "List"
+
+        case .list:
+            return "Map"
+        }
+    }
+
     private var isShowingDetails: Binding<Bool> {
         Binding(
             get: {
@@ -110,9 +126,9 @@ struct NearbyView: View {
                     Spacer()
 
                     Button {
-                        print("Nearby list tapped")
+                        switchMode()
                     } label: {
-                        Text("List")
+                        Text(modeButtonTitle)
                             .font(.system(size: 12, weight: .bold))
                             .foregroundStyle(Color("TextPrimary"))
                             .padding(.horizontal, 12)
@@ -143,70 +159,106 @@ struct NearbyView: View {
                 Spacer()
                     .frame(height: 10)
 
-                ZStack(
-                    alignment: .bottom
-                ) {
+                switch selectedMode {
 
-                    Map(position: $cameraPosition) {
+                case .map:
+                    ZStack(
+                        alignment: .bottom
+                    ) {
 
-                        UserAnnotation()
+                        Map(position: $cameraPosition) {
 
-                        ForEach(filteredLocations) { location in
-                            Annotation(
-                                location.name,
-                                coordinate: CLLocationCoordinate2D(
-                                    latitude: location.latitude,
-                                    longitude: location.longitude
-                                )
-                            ) {
-                                Button {
-                                    selectedLocation = location
-                                } label: {
-                                    locationMarker(
-                                        for: location
+                            UserAnnotation()
+
+                            ForEach(filteredLocations) { location in
+                                Annotation(
+                                    location.name,
+                                    coordinate: CLLocationCoordinate2D(
+                                        latitude: location.latitude,
+                                        longitude: location.longitude
                                     )
+                                ) {
+                                    Button {
+                                        selectedLocation = location
+                                    } label: {
+                                        locationMarker(
+                                            for: location
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
+                        .frame(
+                            maxWidth: .infinity,
+                            maxHeight: .infinity
+                        )
+
+                        if let selectedLocation {
+                            NearbyLocationSummaryCard(
+                                name: selectedLocation.name,
+                                detail: selectedLocation.detail,
+                                distanceText: formattedDistance(
+                                    to: selectedLocation
+                                ),
+                                type: selectedLocation.type,
+                                onDetails: {
+                                    detailsLocation = selectedLocation
+                                },
+                                onDirections: {
+                                    print(
+                                        "Directions tapped:",
+                                        selectedLocation.name
+                                    )
+                                }
+                            )
+                            .padding(12)
+                        }
                     }
-                    .frame(
-                        maxWidth: .infinity,
-                        maxHeight: .infinity
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(
+                                Color("NeutralBorderStrong"),
+                                lineWidth: 1
+                            )
+                            .allowsHitTesting(false)
+                    }
+                    .clipShape(
+                        RoundedRectangle(cornerRadius: 20)
                     )
 
-                    if let selectedLocation {
-                        NearbyLocationSummaryCard(
-                            name: selectedLocation.name,
-                            detail: selectedLocation.detail,
-                            distanceText: formattedDistance(
-                                to: selectedLocation
-                            ),
-                            type: selectedLocation.type,
-                            onDetails: {
-                                detailsLocation = selectedLocation
-                            },
-                            onDirections: {
-                                print(
-                                    "Directions tapped:",
-                                    selectedLocation.name
-                                )
-                            }
-                        )
-                        .padding(12)
+                case .list:
+                    VStack(
+                        alignment: .leading,
+                        spacing: 8
+                    ) {
+
+                        Text("Locations")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundStyle(Color("TextPrimary"))
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color("TextSecondary"))
+
+                        Spacer()
                     }
+                    .padding(16)
+                    .frame(
+                        maxWidth: .infinity,
+                        maxHeight: .infinity,
+                        alignment: .topLeading
+                    )
+                    .background(Color("SurfacePrimary"))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(
+                                Color("BorderPrimary"),
+                                lineWidth: 1
+                            )
+                    }
+                    .clipShape(
+                        RoundedRectangle(cornerRadius: 20)
+                    )
                 }
-                .overlay {
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(
-                            Color("NeutralBorderStrong"),
-                            lineWidth: 1
-                        )
-                        .allowsHitTesting(false)
-                }
-                .clipShape(
-                    RoundedRectangle(cornerRadius: 20)
-                )
             }
             .padding(.horizontal, 18)
             .padding(.top, 18)
@@ -274,6 +326,18 @@ struct NearbyView: View {
                     }
                 }
             }
+        }
+    }
+
+    private func switchMode() {
+        switch selectedMode {
+
+        case .map:
+            selectedMode = .list
+            selectedLocation = nil
+
+        case .list:
+            selectedMode = .map
         }
     }
 
