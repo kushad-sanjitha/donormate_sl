@@ -46,6 +46,7 @@ struct NearbyView: View {
 
     @State private var selectedFilter: NearbyFilter = .all
     @State private var selectedLocation: DonationLocation?
+    @State private var detailsLocation: DonationLocation?
 
     @StateObject private var locationPermissionService =
         LocationPermissionService()
@@ -84,6 +85,19 @@ struct NearbyView: View {
                 $0.type == .bloodBank
             }
         }
+    }
+
+    private var isShowingDetails: Binding<Bool> {
+        Binding(
+            get: {
+                detailsLocation != nil
+            },
+            set: { isPresented in
+                if isPresented == false {
+                    detailsLocation = nil
+                }
+            }
+        )
     }
 
     var body: some View {
@@ -192,10 +206,7 @@ struct NearbyView: View {
                             ),
                             type: selectedLocation.type,
                             onDetails: {
-                                print(
-                                    "Details tapped:",
-                                    selectedLocation.name
-                                )
+                                detailsLocation = selectedLocation
                             },
                             onDirections: {
                                 print(
@@ -265,6 +276,25 @@ struct NearbyView: View {
                 )
 
                 hasCenteredOnUser = true
+            }
+            .navigationDestination(
+                isPresented: isShowingDetails
+            ) {
+                if let detailsLocation {
+
+                    switch detailsLocation.type {
+
+                    case .camp:
+                        CampaignDetailsView(
+                            location: detailsLocation
+                        )
+
+                    case .bloodBank:
+                        BloodBankDetailsView(
+                            location: detailsLocation
+                        )
+                    }
+                }
             }
         }
     }
