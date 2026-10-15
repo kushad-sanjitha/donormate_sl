@@ -151,44 +151,69 @@ struct NearbyView: View {
                 Spacer()
                     .frame(height: 10)
 
-                Map(position: $cameraPosition) {
+                ZStack(
+                    alignment: .bottom
+                ) {
 
-                    UserAnnotation()
+                    Map(position: $cameraPosition) {
 
-                    ForEach(filteredLocations) { location in
-                        Annotation(
-                            location.name,
-                            coordinate: CLLocationCoordinate2D(
-                                latitude: location.latitude,
-                                longitude: location.longitude
-                            )
-                        ) {
-                            Button {
-                                selectedLocation = location
+                        UserAnnotation()
 
-                                print(
-                                    "Selected location:",
-                                    location.name
+                        ForEach(filteredLocations) { location in
+                            Annotation(
+                                location.name,
+                                coordinate: CLLocationCoordinate2D(
+                                    latitude: location.latitude,
+                                    longitude: location.longitude
                                 )
-                            } label: {
-                                locationMarker(
-                                    for: location
-                                )
+                            ) {
+                                Button {
+                                    selectedLocation = location
+                                } label: {
+                                    locationMarker(
+                                        for: location
+                                    )
+                                }
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
                         }
                     }
+                    .frame(
+                        maxWidth: .infinity,
+                        maxHeight: .infinity
+                    )
+
+                    if let selectedLocation {
+                        NearbyLocationSummaryCard(
+                            name: selectedLocation.name,
+                            detail: selectedLocation.detail,
+                            distanceText: formattedDistance(
+                                to: selectedLocation
+                            ),
+                            type: selectedLocation.type,
+                            onDetails: {
+                                print(
+                                    "Details tapped:",
+                                    selectedLocation.name
+                                )
+                            },
+                            onDirections: {
+                                print(
+                                    "Directions tapped:",
+                                    selectedLocation.name
+                                )
+                            }
+                        )
+                        .padding(12)
+                    }
                 }
-                .frame(
-                    maxWidth: .infinity,
-                    maxHeight: .infinity
-                )
                 .overlay {
                     RoundedRectangle(cornerRadius: 20)
                         .stroke(
                             Color("NeutralBorderStrong"),
                             lineWidth: 1
                         )
+                        .allowsHitTesting(false)
                 }
                 .clipShape(
                     RoundedRectangle(cornerRadius: 20)
@@ -225,16 +250,6 @@ struct NearbyView: View {
                     return
                 }
 
-                print(
-                    "Current location:",
-                    newLocation.coordinate.latitude,
-                    newLocation.coordinate.longitude
-                )
-
-                printDistances(
-                    from: newLocation
-                )
-
                 guard hasCenteredOnUser == false else {
                     return
                 }
@@ -263,6 +278,14 @@ struct NearbyView: View {
 
         return Button {
             selectedFilter = filter
+
+            if let selectedLocation,
+               isLocation(
+                   selectedLocation,
+                   includedIn: filter
+               ) == false {
+                self.selectedLocation = nil
+            }
         } label: {
             Text(title)
                 .font(.system(size: 12, weight: .bold))
@@ -326,32 +349,49 @@ struct NearbyView: View {
         }
     }
 
-    private func printDistances(
-        from userLocation: CLLocation
-    ) {
-        for location in locations {
+    private func formattedDistance(
+        to location: DonationLocation
+    ) -> String? {
 
-            let donationLocation = CLLocation(
-                latitude: location.latitude,
-                longitude: location.longitude
+        guard let userLocation =
+                currentLocationService.currentLocation else {
+            return nil
+        }
+
+        let donationLocation = CLLocation(
+            latitude: location.latitude,
+            longitude: location.longitude
+        )
+
+        let distanceInMetres =
+            userLocation.distance(
+                from: donationLocation
             )
 
-            let distanceInMetres =
-                userLocation.distance(
-                    from: donationLocation
-                )
+        let distanceInKilometres =
+            distanceInMetres / 1000
 
-            let distanceInKilometres =
-                distanceInMetres / 1000
+        return String(
+            format: "%.1f km",
+            distanceInKilometres
+        )
+    }
 
-            let formattedDistance = String(
-                format: "%.1f km",
-                distanceInKilometres
-            )
+    private func isLocation(
+        _ location: DonationLocation,
+        includedIn filter: NearbyFilter
+    ) -> Bool {
 
-            print(
-                "\(location.name): \(formattedDistance)"
-            )
+        switch filter {
+
+        case .all:
+            return true
+
+        case .camps:
+            return location.type == .camp
+
+        case .bloodBanks:
+            return location.type == .bloodBank
         }
     }
 }
