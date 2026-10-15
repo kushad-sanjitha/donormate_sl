@@ -11,10 +11,9 @@ import Foundation
 
 struct NearbyView: View {
 
-    private enum NearbyFilter {
-        case all
-        case camps
-        case bloodBanks
+    private enum NearbyMode {
+        case map
+        case list
     }
 
     private let locations: [DonationLocation] = [
@@ -44,6 +43,7 @@ struct NearbyView: View {
         )
     ]
 
+    @State private var selectedMode: NearbyMode = .map
     @State private var selectedFilter: NearbyFilter = .all
     @State private var selectedLocation: DonationLocation?
     @State private var detailsLocation: DonationLocation?
@@ -87,6 +87,17 @@ struct NearbyView: View {
         }
     }
 
+    private var modeButtonTitle: String {
+        switch selectedMode {
+
+        case .map:
+            return "List"
+
+        case .list:
+            return "Map"
+        }
+    }
+
     private var isShowingDetails: Binding<Bool> {
         Binding(
             get: {
@@ -116,9 +127,9 @@ struct NearbyView: View {
                     Spacer()
 
                     Button {
-                        print("Nearby list tapped")
+                        switchMode()
                     } label: {
-                        Text("List")
+                        Text(modeButtonTitle)
                             .font(.system(size: 12, weight: .bold))
                             .foregroundStyle(Color("TextPrimary"))
                             .padding(.horizontal, 12)
@@ -139,96 +150,107 @@ struct NearbyView: View {
                 Spacer()
                     .frame(height: 10)
 
-                HStack(spacing: 3) {
-
-                    filterButton(
-                        title: "All",
-                        filter: .all
-                    )
-
-                    filterButton(
-                        title: "Camps",
-                        filter: .camps
-                    )
-
-                    filterButton(
-                        title: "Blood Banks",
-                        filter: .bloodBanks
-                    )
-                }
-                .padding(3)
-                .background(Color("NeutralSoft"))
-                .clipShape(
-                    RoundedRectangle(cornerRadius: 12)
+                NearbyFilterControl(
+                    selectedFilter: selectedFilter,
+                    onFilterChanged: { newFilter in
+                        applyFilter(newFilter)
+                    }
                 )
 
                 Spacer()
                     .frame(height: 10)
 
-                ZStack(
-                    alignment: .bottom
-                ) {
+                switch selectedMode {
 
-                    Map(position: $cameraPosition) {
+                case .map:
+                    ZStack(
+                        alignment: .bottom
+                    ) {
 
-                        UserAnnotation()
+                        Map(position: $cameraPosition) {
 
-                        ForEach(filteredLocations) { location in
-                            Annotation(
-                                location.name,
-                                coordinate: CLLocationCoordinate2D(
-                                    latitude: location.latitude,
-                                    longitude: location.longitude
-                                )
-                            ) {
-                                Button {
-                                    selectedLocation = location
-                                } label: {
-                                    locationMarker(
-                                        for: location
+                            UserAnnotation()
+
+                            ForEach(filteredLocations) { location in
+                                Annotation(
+                                    location.name,
+                                    coordinate: CLLocationCoordinate2D(
+                                        latitude: location.latitude,
+                                        longitude: location.longitude
                                     )
+                                ) {
+                                    Button {
+                                        selectedLocation = location
+                                    } label: {
+                                        locationMarker(
+                                            for: location
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
+                        .frame(
+                            maxWidth: .infinity,
+                            maxHeight: .infinity
+                        )
+
+                        if let selectedLocation {
+                            NearbyLocationSummaryCard(
+                                name: selectedLocation.name,
+                                detail: selectedLocation.detail,
+                                distanceText: formattedDistance(
+                                    to: selectedLocation
+                                ),
+                                type: selectedLocation.type,
+                                onDetails: {
+                                    detailsLocation = selectedLocation
+                                },
+                                onDirections: {
+                                    print(
+                                        "Directions tapped:",
+                                        selectedLocation.name
+                                    )
+                                }
+                            )
+                            .padding(12)
+                        }
+                    }
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(
+                                Color("NeutralBorderStrong"),
+                                lineWidth: 1
+                            )
+                            .allowsHitTesting(false)
+                    }
+                    .clipShape(
+                        RoundedRectangle(cornerRadius: 20)
+                    )
+
+                case .list:
+                    ScrollView {
+                        VStack(spacing: 10) {
+
+                            ForEach(filteredLocations) { location in
+                                NearbyLocationRow(
+                                    location: location,
+                                    distanceText: formattedDistance(
+                                        to: location
+                                    ),
+                                    onTap: {
+                                        detailsLocation = location
+                                    }
+                                )
+                            }
+                        }
+                        .padding(.bottom, 16)
                     }
                     .frame(
                         maxWidth: .infinity,
                         maxHeight: .infinity
                     )
-
-                    if let selectedLocation {
-                        NearbyLocationSummaryCard(
-                            name: selectedLocation.name,
-                            detail: selectedLocation.detail,
-                            distanceText: formattedDistance(
-                                to: selectedLocation
-                            ),
-                            type: selectedLocation.type,
-                            onDetails: {
-                                detailsLocation = selectedLocation
-                            },
-                            onDirections: {
-                                print(
-                                    "Directions tapped:",
-                                    selectedLocation.name
-                                )
-                            }
-                        )
-                        .padding(12)
-                    }
                 }
-                .overlay {
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(
-                            Color("NeutralBorderStrong"),
-                            lineWidth: 1
-                        )
-                        .allowsHitTesting(false)
-                }
-                .clipShape(
-                    RoundedRectangle(cornerRadius: 20)
-                )
             }
             .padding(.horizontal, 18)
             .padding(.top, 18)
@@ -299,53 +321,30 @@ struct NearbyView: View {
         }
     }
 
-    private func filterButton(
-        title: String,
-        filter: NearbyFilter
-    ) -> some View {
+    private func switchMode() {
+        switch selectedMode {
 
-        let isSelected = selectedFilter == filter
+        case .map:
+            selectedMode = .list
+            selectedLocation = nil
 
-        return Button {
-            selectedFilter = filter
-
-            if let selectedLocation,
-               isLocation(
-                   selectedLocation,
-                   includedIn: filter
-               ) == false {
-                self.selectedLocation = nil
-            }
-        } label: {
-            Text(title)
-                .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(
-                    isSelected
-                        ? Color("TextPrimary")
-                        : Color("TextSecondary")
-                )
-                .frame(
-                    maxWidth: .infinity,
-                    minHeight: 34
-                )
-                .background(
-                    isSelected
-                        ? Color("SurfacePrimary")
-                        : Color.clear
-                )
-                .clipShape(
-                    RoundedRectangle(cornerRadius: 9)
-                )
-                .shadow(
-                    color: isSelected
-                        ? Color.black.opacity(0.06)
-                        : Color.clear,
-                    radius: 2,
-                    x: 0,
-                    y: 1
-                )
+        case .list:
+            selectedMode = .map
         }
-        .buttonStyle(.plain)
+    }
+
+    private func applyFilter(
+        _ newFilter: NearbyFilter
+    ) {
+        selectedFilter = newFilter
+
+        if let selectedLocation,
+           isLocation(
+               selectedLocation,
+               includedIn: newFilter
+           ) == false {
+            self.selectedLocation = nil
+        }
     }
 
     @ViewBuilder
