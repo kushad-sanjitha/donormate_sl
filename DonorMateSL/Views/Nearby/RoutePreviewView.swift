@@ -25,8 +25,12 @@ struct RoutePreviewView: View {
     @State private var isLoadingRoute = false
     @State private var routeErrorMessage: String?
 
-    private var mapRegion: MKCoordinateRegion {
-        MKCoordinateRegion(
+    @State private var cameraPosition: MapCameraPosition
+
+    init(location: DonationLocation) {
+        self.location = location
+
+        let initialRegion = MKCoordinateRegion(
             center: CLLocationCoordinate2D(
                 latitude: location.latitude,
                 longitude: location.longitude
@@ -35,6 +39,10 @@ struct RoutePreviewView: View {
                 latitudeDelta: 0.04,
                 longitudeDelta: 0.04
             )
+        )
+
+        _cameraPosition = State(
+            initialValue: .region(initialRegion)
         )
     }
 
@@ -120,8 +128,25 @@ struct RoutePreviewView: View {
                     .frame(height: 8)
 
                 Map(
-                    initialPosition: .region(mapRegion)
+                    position: $cameraPosition
                 ) {
+
+                    UserAnnotation()
+
+                    if let route {
+                        MapPolyline(
+                            route.polyline
+                        )
+                        .stroke(
+                            Color("InfoBlue"),
+                            style: StrokeStyle(
+                                lineWidth: 6,
+                                lineCap: .round,
+                                lineJoin: .round
+                            )
+                        )
+                    }
+
                     Annotation(
                         location.name,
                         coordinate: CLLocationCoordinate2D(
@@ -296,6 +321,10 @@ struct RoutePreviewView: View {
                 routeErrorMessage = nil
                 isLoadingRoute = false
 
+                fitCamera(
+                    to: calculatedRoute
+                )
+
                 print(
                     "Route calculated:",
                     calculatedRoute.distance,
@@ -313,6 +342,28 @@ struct RoutePreviewView: View {
                 )
             }
         }
+    }
+
+    private func fitCamera(
+        to route: MKRoute
+    ) {
+        let routeRect =
+            route.polyline.boundingMapRect
+
+        let horizontalPadding =
+            routeRect.size.width * 0.15
+
+        let verticalPadding =
+            routeRect.size.height * 0.15
+
+        let paddedRouteRect =
+            routeRect.insetBy(
+                dx: -horizontalPadding,
+                dy: -verticalPadding
+            )
+
+        cameraPosition =
+            .rect(paddedRouteRect)
     }
 }
 
