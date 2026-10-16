@@ -252,10 +252,7 @@ struct RoutePreviewView: View {
                     .frame(height: 12)
 
                 Button {
-                    print(
-                        "Open in Apple Maps tapped:",
-                        location.name
-                    )
+                    openInAppleMaps()
                 } label: {
                     Text("Open in Apple Maps")
                         .font(.system(size: 15, weight: .bold))
@@ -392,6 +389,28 @@ struct RoutePreviewView: View {
 
         cameraPosition =
             .rect(paddedRouteRect)
+    }
+
+    private func openInAppleMaps() {
+        let destinationLocation = CLLocation(
+            latitude: location.latitude,
+            longitude: location.longitude
+        )
+
+        let destinationMapItem = MKMapItem(
+            location: destinationLocation,
+            address: nil
+        )
+
+        destinationMapItem.name =
+            location.name
+
+        destinationMapItem.openInMaps(
+            launchOptions: [
+                MKLaunchOptionsDirectionsModeKey:
+                    MKLaunchOptionsDirectionsModeDriving
+            ]
+        )
     }
 }
 

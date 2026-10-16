@@ -21,8 +21,8 @@ struct NearbyView: View {
             id: "matara-donation-camp",
             name: "Matara Donation Camp",
             type: .camp,
-            latitude: 37.7793,
-            longitude: -122.4192,
+            latitude: 5.9485,
+            longitude: 80.5353,
             detail: "Sat · 9:00 AM"
         ),
         DonationLocation(
