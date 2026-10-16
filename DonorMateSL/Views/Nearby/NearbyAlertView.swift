@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import MapKit
 
 struct NearbyAlertView: View {
 
@@ -14,6 +15,23 @@ struct NearbyAlertView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var isNearbyAlertEnabled = true
+
+    private var destinationCoordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(
+            latitude: location.latitude,
+            longitude: location.longitude
+        )
+    }
+
+    private var mapRegion: MKCoordinateRegion {
+        MKCoordinateRegion(
+            center: destinationCoordinate,
+            span: MKCoordinateSpan(
+                latitudeDelta: 0.015,
+                longitudeDelta: 0.015
+            )
+        )
+    }
 
     private var markerForeground: Color {
         switch location.type {
@@ -79,73 +97,58 @@ struct NearbyAlertView: View {
                 Spacer()
                     .frame(height: 8)
 
-                ZStack {
+                Map(
+                    initialPosition: .region(mapRegion)
+                ) {
 
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(Color("NeutralSoft"))
+                    MapCircle(
+                        center: destinationCoordinate,
+                        radius: 500
+                    )
+                    .foregroundStyle(
+                        Color("InfoBlue")
+                            .opacity(0.12)
+                    )
+                    .stroke(
+                        Color("InfoBlue")
+                            .opacity(0.55),
+                        lineWidth: 2
+                    )
 
+                    UserAnnotation()
+
+                    Annotation(
+                        location.name,
+                        coordinate: destinationCoordinate
+                    ) {
+                        ZStack {
+                            Circle()
+                                .fill(markerForeground)
+                                .frame(
+                                    width: 36,
+                                    height: 36
+                                )
+
+                            Image(systemName: markerSymbol)
+                                .font(
+                                    .system(
+                                        size: 16,
+                                        weight: .bold
+                                    )
+                                )
+                                .foregroundStyle(.white)
+                        }
+                    }
+                }
+                .frame(height: 330)
+                .overlay {
                     RoundedRectangle(cornerRadius: 20)
                         .stroke(
                             Color("NeutralBorderStrong"),
                             lineWidth: 1
                         )
-
-                    Circle()
-                        .fill(
-                            Color("InfoBlue")
-                                .opacity(0.10)
-                        )
-                        .overlay {
-                            Circle()
-                                .stroke(
-                                    Color("InfoBlue")
-                                        .opacity(0.45),
-                                    lineWidth: 2
-                                )
-                        }
-                        .frame(
-                            width: 180,
-                            height: 180
-                        )
-
-                    ZStack {
-                        Circle()
-                            .fill(markerForeground)
-                            .frame(
-                                width: 36,
-                                height: 36
-                            )
-
-                        Image(systemName: markerSymbol)
-                            .font(
-                                .system(
-                                    size: 16,
-                                    weight: .bold
-                                )
-                            )
-                            .foregroundStyle(.white)
-                    }
-
-                    Circle()
-                        .fill(Color("InfoBlue"))
-                        .frame(
-                            width: 16,
-                            height: 16
-                        )
-                        .overlay {
-                            Circle()
-                                .stroke(
-                                    Color("SurfacePrimary"),
-                                    lineWidth: 3
-                                )
-                        }
-                        .offset(
-                            x: 110,
-                            y: 92
-                        )
-                        .accessibilityHidden(true)
+                        .allowsHitTesting(false)
                 }
-                .frame(height: 330)
                 .clipShape(
                     RoundedRectangle(cornerRadius: 20)
                 )
@@ -240,6 +243,7 @@ struct NearbyAlertView: View {
                     )
                     .labelsHidden()
                     .tint(Color("DonorRed"))
+                    .accessibilityLabel("Nearby alert")
                 }
                 .padding(14)
                 .frame(

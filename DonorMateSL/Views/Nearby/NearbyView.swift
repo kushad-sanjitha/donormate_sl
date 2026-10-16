@@ -16,6 +16,12 @@ struct NearbyView: View {
         case list
     }
 
+    private enum NearbyRoute: Hashable {
+        case details(String)
+        case route(String)
+        case alert(String)
+    }
+
     private let locations: [DonationLocation] = [
         DonationLocation(
             id: "matara-donation-camp",
@@ -43,11 +49,11 @@ struct NearbyView: View {
         )
     ]
 
+    @State private var navigationPath: [NearbyRoute] = []
+
     @State private var selectedMode: NearbyMode = .map
     @State private var selectedFilter: NearbyFilter = .all
     @State private var selectedLocation: DonationLocation?
-    @State private var detailsLocation: DonationLocation?
-    @State private var routeLocation: DonationLocation?
 
     @StateObject private var locationPermissionService =
         LocationPermissionService()
@@ -99,34 +105,10 @@ struct NearbyView: View {
         }
     }
 
-    private var isShowingDetails: Binding<Bool> {
-        Binding(
-            get: {
-                detailsLocation != nil
-            },
-            set: { isPresented in
-                if isPresented == false {
-                    detailsLocation = nil
-                }
-            }
-        )
-    }
-
-    private var isShowingRoute: Binding<Bool> {
-        Binding(
-            get: {
-                routeLocation != nil
-            },
-            set: { isPresented in
-                if isPresented == false {
-                    routeLocation = nil
-                }
-            }
-        )
-    }
-
     var body: some View {
-        NavigationStack {
+        NavigationStack(
+            path: $navigationPath
+        ) {
             VStack(spacing: 0) {
 
                 HStack(
@@ -218,10 +200,18 @@ struct NearbyView: View {
                                 ),
                                 type: selectedLocation.type,
                                 onDetails: {
-                                    detailsLocation = selectedLocation
+                                    navigationPath.append(
+                                        .details(
+                                            selectedLocation.id
+                                        )
+                                    )
                                 },
                                 onDirections: {
-                                    routeLocation = selectedLocation
+                                    navigationPath.append(
+                                        .route(
+                                            selectedLocation.id
+                                        )
+                                    )
                                 }
                             )
                             .padding(12)
@@ -250,7 +240,11 @@ struct NearbyView: View {
                                         to: location
                                     ),
                                     onTap: {
-                                        detailsLocation = location
+                                        navigationPath.append(
+                                            .details(
+                                                location.id
+                                            )
+                                        )
                                     }
                                 )
                             }
@@ -311,39 +305,95 @@ struct NearbyView: View {
                 hasCenteredOnUser = true
             }
             .navigationDestination(
-                isPresented: isShowingDetails
-            ) {
-                if let detailsLocation {
-
-                    switch detailsLocation.type {
-
-                    case .camp:
-                        CampaignDetailsView(
-                            location: detailsLocation,
-                            onDirections: { location in
-                                routeLocation = location
-                            }
-                        )
-
-                    case .bloodBank:
-                        BloodBankDetailsView(
-                            location: detailsLocation,
-                            onDirections: { location in
-                                routeLocation = location
-                            }
-                        )
-                    }
-                }
+                for: NearbyRoute.self
+            ) { route in
+                destination(
+                    for: route
+                )
             }
-            .navigationDestination(
-                isPresented: isShowingRoute
+        }
+    }
+
+    @ViewBuilder
+    private func destination(
+        for route: NearbyRoute
+    ) -> some View {
+
+        switch route {
+
+        case .details(let locationID):
+            if let location = location(
+                for: locationID
             ) {
-                if let routeLocation {
-                    RoutePreviewView(
-                        location: routeLocation
+
+                switch location.type {
+
+                case .camp:
+                    CampaignDetailsView(
+                        location: location,
+                        onDirections: { location in
+                            navigationPath.append(
+                                .route(
+                                    location.id
+                                )
+                            )
+                        },
+                        onNearbyAlert: { location in
+                            navigationPath.append(
+                                .alert(
+                                    location.id
+                                )
+                            )
+                        }
+                    )
+
+                case .bloodBank:
+                    BloodBankDetailsView(
+                        location: location,
+                        onDirections: { location in
+                            navigationPath.append(
+                                .route(
+                                    location.id
+                                )
+                            )
+                        },
+                        onNearbyAlert: { location in
+                            navigationPath.append(
+                                .alert(
+                                    location.id
+                                )
+                            )
+                        }
                     )
                 }
             }
+
+        case .route(let locationID):
+            if let location = location(
+                for: locationID
+            ) {
+                RoutePreviewView(
+                    location: location
+                )
+            }
+
+        case .alert(let locationID):
+            if let location = location(
+                for: locationID
+            ) {
+                NearbyAlertView(
+                    location: location
+                )
+            }
+        }
+    }
+
+    private func location(
+        for id: String
+    ) -> DonationLocation? {
+
+        locations.first {
+            $0.id == id
         }
     }
 
