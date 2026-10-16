@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreLocation
 import MapKit
 
 struct RoutePreviewView: View {
@@ -13,6 +14,16 @@ struct RoutePreviewView: View {
     let location: DonationLocation
 
     @Environment(\.dismiss) private var dismiss
+
+    @StateObject private var currentLocationService =
+        CurrentLocationService()
+
+    private let routeDirectionsService =
+        RouteDirectionsService()
+
+    @State private var route: MKRoute?
+    @State private var isLoadingRoute = false
+    @State private var routeErrorMessage: String?
 
     private var mapRegion: MKCoordinateRegion {
         MKCoordinateRegion(
@@ -47,6 +58,23 @@ struct RoutePreviewView: View {
         case .bloodBank:
             return "cross.case.fill"
         }
+    }
+
+    private var routeStatusText: String {
+        if isLoadingRoute {
+            return "Calculating route..."
+        }
+
+        if route != nil {
+            return "Route calculated"
+        }
+
+        if routeErrorMessage != nil ||
+            currentLocationService.errorMessage != nil {
+            return "Unable to calculate route"
+        }
+
+        return "Route information pending"
     }
 
     var body: some View {
@@ -146,7 +174,7 @@ struct RoutePreviewView: View {
                                 vertical: true
                             )
 
-                        Text("Route information pending")
+                        Text(routeStatusText)
                             .font(.system(size: 12))
                             .foregroundStyle(Color("TextSecondary"))
                     }
@@ -225,6 +253,66 @@ struct RoutePreviewView: View {
         .background(Color("BackgroundPrimary"))
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
+        .onAppear {
+            currentLocationService.requestCurrentLocation()
+        }
+        .onChange(
+            of: currentLocationService.currentLocation
+        ) { _, newLocation in
+
+            guard let newLocation else {
+                return
+            }
+
+            calculateRoute(
+                from: newLocation
+            )
+        }
+    }
+
+    private func calculateRoute(
+        from sourceLocation: CLLocation
+    ) {
+        guard isLoadingRoute == false else {
+            return
+        }
+
+        guard route == nil else {
+            return
+        }
+
+        isLoadingRoute = true
+        routeErrorMessage = nil
+
+        Task {
+            do {
+                let calculatedRoute =
+                    try await routeDirectionsService.calculateRoute(
+                        from: sourceLocation,
+                        to: location
+                    )
+
+                route = calculatedRoute
+                routeErrorMessage = nil
+                isLoadingRoute = false
+
+                print(
+                    "Route calculated:",
+                    calculatedRoute.distance,
+                    calculatedRoute.expectedTravelTime
+                )
+
+            } catch {
+                route = nil
+                routeErrorMessage = error.localizedDescription
+                isLoadingRoute = false
+
+                print(
+                    "Route calculation failed:",
+                    error.localizedDescription
+                )
+            }
+        }
     }
 }
 
