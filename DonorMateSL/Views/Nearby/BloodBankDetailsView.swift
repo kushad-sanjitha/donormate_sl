@@ -11,6 +11,7 @@ import MapKit
 struct BloodBankDetailsView: View {
 
     let location: DonationLocation
+    let onDirections: (DonationLocation) -> Void
 
     @Environment(\.dismiss) private var dismiss
 
@@ -150,19 +151,21 @@ struct BloodBankDetailsView: View {
                 Spacer()
                     .frame(height: 4)
 
-                Text("2.1 km from your current location")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color("TextSecondary"))
-                    .frame(
-                        maxWidth: .infinity,
-                        alignment: .leading
-                    )
+                Text(
+                    "2.1 km from your current location"
+                )
+                .font(.system(size: 12))
+                .foregroundStyle(Color("TextSecondary"))
+                .frame(
+                    maxWidth: .infinity,
+                    alignment: .leading
+                )
 
                 Spacer()
                     .frame(height: 13)
 
                 DetailInfoRow(
-                    systemImage: "clock.fill",
+                    systemImage: "clock",
                     label: "Today",
                     value: "Open · 8:00 AM–4:00 PM",
                     iconForeground: Color("TextSecondary")
@@ -194,10 +197,6 @@ struct BloodBankDetailsView: View {
                     )
                     .font(.system(size: 12))
                     .foregroundStyle(Color("TextPrimary"))
-                    .fixedSize(
-                        horizontal: false,
-                        vertical: true
-                    )
                 }
                 .padding(14)
                 .frame(
@@ -220,7 +219,7 @@ struct BloodBankDetailsView: View {
                     .frame(height: 14)
 
                 Button {
-                    print("Get Directions tapped")
+                    onDirections(location)
                 } label: {
                     Text("Get Directions")
                         .font(.system(size: 15, weight: .bold))
@@ -285,7 +284,13 @@ struct BloodBankDetailsView: View {
                 latitude: 5.9497,
                 longitude: 80.5428,
                 detail: "Open today"
-            )
+            ),
+            onDirections: { location in
+                print(
+                    "Get Directions tapped:",
+                    location.name
+                )
+            }
         )
     }
 }

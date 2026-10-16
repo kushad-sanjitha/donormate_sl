@@ -319,12 +319,18 @@ struct NearbyView: View {
 
                     case .camp:
                         CampaignDetailsView(
-                            location: detailsLocation
+                            location: detailsLocation,
+                            onDirections: { location in
+                                routeLocation = location
+                            }
                         )
 
                     case .bloodBank:
                         BloodBankDetailsView(
-                            location: detailsLocation
+                            location: detailsLocation,
+                            onDirections: { location in
+                                routeLocation = location
+                            }
                         )
                     }
                 }

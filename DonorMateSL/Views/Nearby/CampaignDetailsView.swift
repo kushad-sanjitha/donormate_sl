@@ -11,6 +11,7 @@ import MapKit
 struct CampaignDetailsView: View {
 
     let location: DonationLocation
+    let onDirections: (DonationLocation) -> Void
 
     @Environment(\.dismiss) private var dismiss
 
@@ -219,7 +220,7 @@ struct CampaignDetailsView: View {
                 HStack(spacing: 8) {
 
                     Button {
-                        print("Directions tapped")
+                        onDirections(location)
                     } label: {
                         Text("Directions")
                             .font(.system(size: 15, weight: .bold))
@@ -309,7 +310,13 @@ struct CampaignDetailsView: View {
                 latitude: 5.9485,
                 longitude: 80.5353,
                 detail: "Sat · 9:00 AM"
-            )
+            ),
+            onDirections: { location in
+                print(
+                    "Directions tapped:",
+                    location.name
+                )
+            }
         )
     }
 }
