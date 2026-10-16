@@ -73,8 +73,10 @@ struct RoutePreviewView: View {
             return "Calculating route..."
         }
 
-        if route != nil {
-            return "Route calculated"
+        if let route {
+            return formattedRouteSummary(
+                route
+            )
         }
 
         if routeErrorMessage != nil ||
@@ -342,6 +344,32 @@ struct RoutePreviewView: View {
                 )
             }
         }
+    }
+
+    private func formattedRouteSummary(
+        _ route: MKRoute
+    ) -> String {
+
+        let distanceInKilometres =
+            route.distance / 1000
+
+        let minutes =
+            max(
+                1,
+                Int(
+                    round(
+                        route.expectedTravelTime / 60
+                    )
+                )
+            )
+
+        let distanceText =
+            String(
+                format: "%.1f km",
+                distanceInKilometres
+            )
+
+        return "\(distanceText) · about \(minutes) min"
     }
 
     private func fitCamera(
