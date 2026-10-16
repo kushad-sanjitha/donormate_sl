@@ -47,6 +47,7 @@ struct NearbyView: View {
     @State private var selectedFilter: NearbyFilter = .all
     @State private var selectedLocation: DonationLocation?
     @State private var detailsLocation: DonationLocation?
+    @State private var routeLocation: DonationLocation?
 
     @StateObject private var locationPermissionService =
         LocationPermissionService()
@@ -106,6 +107,19 @@ struct NearbyView: View {
             set: { isPresented in
                 if isPresented == false {
                     detailsLocation = nil
+                }
+            }
+        )
+    }
+
+    private var isShowingRoute: Binding<Bool> {
+        Binding(
+            get: {
+                routeLocation != nil
+            },
+            set: { isPresented in
+                if isPresented == false {
+                    routeLocation = nil
                 }
             }
         )
@@ -207,10 +221,7 @@ struct NearbyView: View {
                                     detailsLocation = selectedLocation
                                 },
                                 onDirections: {
-                                    print(
-                                        "Directions tapped:",
-                                        selectedLocation.name
-                                    )
+                                    routeLocation = selectedLocation
                                 }
                             )
                             .padding(12)
@@ -308,14 +319,29 @@ struct NearbyView: View {
 
                     case .camp:
                         CampaignDetailsView(
-                            location: detailsLocation
+                            location: detailsLocation,
+                            onDirections: { location in
+                                routeLocation = location
+                            }
                         )
 
                     case .bloodBank:
                         BloodBankDetailsView(
-                            location: detailsLocation
+                            location: detailsLocation,
+                            onDirections: { location in
+                                routeLocation = location
+                            }
                         )
                     }
+                }
+            }
+            .navigationDestination(
+                isPresented: isShowingRoute
+            ) {
+                if let routeLocation {
+                    RoutePreviewView(
+                        location: routeLocation
+                    )
                 }
             }
         }
