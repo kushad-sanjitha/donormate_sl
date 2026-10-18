@@ -16,6 +16,7 @@ struct NearbyAlertView: View {
 
     @State private var isNearbyAlertEnabled = false
     @State private var isLoadingMonitoringState = true
+    @State private var isSavingAlert = false
 
     private var destinationCoordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(
@@ -245,7 +246,10 @@ struct NearbyAlertView: View {
                     .labelsHidden()
                     .tint(Color("DonorRed"))
                     .accessibilityLabel("Nearby alert")
-                    .disabled(isLoadingMonitoringState)
+                    .disabled(
+                        isLoadingMonitoringState ||
+                        isSavingAlert
+                    )
                 }
                 .padding(14)
                 .frame(
@@ -308,33 +312,47 @@ struct NearbyAlertView: View {
                     .frame(height: 14)
 
                 Button {
-                    print(
-                        "Save Location Alert tapped:",
-                        location.name,
-                        isNearbyAlertEnabled
-                    )
+                    Task {
+                        await saveLocationAlert()
+                    }
                 } label: {
-                    Text("Save Location Alert")
+                    HStack(spacing: 8) {
+
+                        if isSavingAlert {
+                            ProgressView()
+                                .tint(.white)
+                        }
+
+                        Text(
+                            isSavingAlert
+                                ? "Saving..."
+                                : "Save Location Alert"
+                        )
                         .font(
                             .system(
                                 size: 15,
                                 weight: .bold
                             )
                         )
-                        .foregroundStyle(.white)
-                        .frame(
-                            maxWidth: .infinity,
-                            minHeight: 48
-                        )
-                        .background(Color("DonorRed"))
-                        .clipShape(
-                            RoundedRectangle(cornerRadius: 14)
-                        )
+                    }
+                    .foregroundStyle(.white)
+                    .frame(
+                        maxWidth: .infinity,
+                        minHeight: 48
+                    )
+                    .background(Color("DonorRed"))
+                    .clipShape(
+                        RoundedRectangle(cornerRadius: 14)
+                    )
                 }
                 .buttonStyle(.plain)
-                .disabled(isLoadingMonitoringState)
+                .disabled(
+                    isLoadingMonitoringState ||
+                    isSavingAlert
+                )
                 .opacity(
-                    isLoadingMonitoringState
+                    isLoadingMonitoringState ||
+                    isSavingAlert
                         ? 0.6
                         : 1
                 )
@@ -367,6 +385,39 @@ struct NearbyAlertView: View {
 
         isLoadingMonitoringState =
             false
+    }
+
+    @MainActor
+    private func saveLocationAlert() async {
+
+        guard isSavingAlert == false else {
+            return
+        }
+
+        guard isNearbyAlertEnabled else {
+            print(
+                "Nearby alert removal is not implemented yet:",
+                location.name
+            )
+
+            return
+        }
+
+        isSavingAlert = true
+
+        await NearbyAlertMonitorService.shared
+            .addAlert(
+                locationID: location.id,
+                latitude: location.latitude,
+                longitude: location.longitude
+            )
+
+        isSavingAlert = false
+
+        print(
+            "Nearby alert registered:",
+            location.name
+        )
     }
 }
 
