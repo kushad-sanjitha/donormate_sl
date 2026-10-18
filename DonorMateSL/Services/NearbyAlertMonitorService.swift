@@ -61,7 +61,7 @@ actor NearbyAlertMonitorService {
                 }
 
             } catch is CancellationError {
-
+                // Intentional cancellation.
             } catch {
 
                 guard Task.isCancelled == false else {
@@ -210,69 +210,62 @@ actor NearbyAlertMonitorService {
         _ event: CLMonitor.Event
     ) {
 
-        let locationID =
-            locationID(
-                from: event.identifier
+        guard let locationID =
+                locationID(
+                    from: event.identifier
+                ) else {
+
+            print(
+                "Nearby alert event has unknown identifier:",
+                event.identifier
             )
+
+            return
+        }
+
+        guard let location =
+                DonationLocationCatalog.location(
+                    for: locationID
+                ) else {
+
+            print(
+                "Nearby alert event has unknown location ID:",
+                locationID
+            )
+
+            return
+        }
 
         switch event.state {
 
         case .satisfied:
-            if let locationID {
-                print(
-                    "Nearby alert condition satisfied:",
-                    locationID
-                )
-            } else {
-                print(
-                    "Nearby alert condition satisfied with unknown identifier:",
-                    event.identifier
-                )
-            }
+            print(
+                "Nearby alert condition satisfied:",
+                location.name
+            )
 
         case .unsatisfied:
-            if let locationID {
-                print(
-                    "Nearby alert condition unsatisfied:",
-                    locationID
-                )
-            } else {
-                print(
-                    "Nearby alert condition unsatisfied with unknown identifier:",
-                    event.identifier
-                )
-            }
+            print(
+                "Nearby alert condition unsatisfied:",
+                location.name
+            )
 
         case .unknown:
-            if let locationID {
-                print(
-                    "Nearby alert state unknown:",
-                    locationID
-                )
-            } else {
-                print(
-                    "Nearby alert state unknown for identifier:",
-                    event.identifier
-                )
-            }
+            print(
+                "Nearby alert state unknown:",
+                location.name
+            )
 
         case .unmonitored:
-            if let locationID {
-                print(
-                    "Nearby alert unmonitored:",
-                    locationID
-                )
-            } else {
-                print(
-                    "Nearby alert unmonitored identifier:",
-                    event.identifier
-                )
-            }
+            print(
+                "Nearby alert unmonitored:",
+                location.name
+            )
 
         @unknown default:
             print(
                 "Nearby alert state changed:",
-                event.identifier
+                location.name
             )
         }
     }

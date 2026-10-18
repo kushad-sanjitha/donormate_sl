@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum DonationLocationCatalog {
+nonisolated enum DonationLocationCatalog {
 
     static let locations: [DonationLocation] = [
         DonationLocation(
