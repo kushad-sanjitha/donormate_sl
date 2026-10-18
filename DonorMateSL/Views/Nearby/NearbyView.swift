@@ -22,33 +22,6 @@ struct NearbyView: View {
         case alert(String)
     }
 
-    private let locations: [DonationLocation] = [
-        DonationLocation(
-            id: "matara-donation-camp",
-            name: "Matara Donation Camp",
-            type: .camp,
-            latitude: 5.9485,
-            longitude: 80.5353,
-            detail: "Sat · 9:00 AM"
-        ),
-        DonationLocation(
-            id: "matara-blood-bank",
-            name: "Matara Blood Bank",
-            type: .bloodBank,
-            latitude: 5.9497,
-            longitude: 80.5428,
-            detail: "Open today"
-        ),
-        DonationLocation(
-            id: "walgama-donation-camp",
-            name: "Walgama Donation Camp",
-            type: .camp,
-            latitude: 5.9706,
-            longitude: 80.5241,
-            detail: "Sun · 8:30 AM"
-        )
-    ]
-
     @State private var navigationPath: [NearbyRoute] = []
 
     @State private var selectedMode: NearbyMode = .map
@@ -75,6 +48,10 @@ struct NearbyView: View {
             )
         )
     )
+
+    private var locations: [DonationLocation] {
+        DonationLocationCatalog.locations
+    }
 
     private var filteredLocations: [DonationLocation] {
         switch selectedFilter {
@@ -322,9 +299,10 @@ struct NearbyView: View {
         switch route {
 
         case .details(let locationID):
-            if let location = location(
-                for: locationID
-            ) {
+            if let location =
+                DonationLocationCatalog.location(
+                    for: locationID
+                ) {
 
                 switch location.type {
 
@@ -369,31 +347,26 @@ struct NearbyView: View {
             }
 
         case .route(let locationID):
-            if let location = location(
-                for: locationID
-            ) {
+            if let location =
+                DonationLocationCatalog.location(
+                    for: locationID
+                ) {
+
                 RoutePreviewView(
                     location: location
                 )
             }
 
         case .alert(let locationID):
-            if let location = location(
-                for: locationID
-            ) {
+            if let location =
+                DonationLocationCatalog.location(
+                    for: locationID
+                ) {
+
                 NearbyAlertView(
                     location: location
                 )
             }
-        }
-    }
-
-    private func location(
-        for id: String
-    ) -> DonationLocation? {
-
-        locations.first {
-            $0.id == id
         }
     }
 

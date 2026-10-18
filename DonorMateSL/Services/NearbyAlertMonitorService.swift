@@ -210,31 +210,64 @@ actor NearbyAlertMonitorService {
         _ event: CLMonitor.Event
     ) {
 
+        let locationID =
+            locationID(
+                from: event.identifier
+            )
+
         switch event.state {
 
         case .satisfied:
-            print(
-                "Nearby alert condition satisfied:",
-                event.identifier
-            )
+            if let locationID {
+                print(
+                    "Nearby alert condition satisfied:",
+                    locationID
+                )
+            } else {
+                print(
+                    "Nearby alert condition satisfied with unknown identifier:",
+                    event.identifier
+                )
+            }
 
         case .unsatisfied:
-            print(
-                "Nearby alert condition unsatisfied:",
-                event.identifier
-            )
+            if let locationID {
+                print(
+                    "Nearby alert condition unsatisfied:",
+                    locationID
+                )
+            } else {
+                print(
+                    "Nearby alert condition unsatisfied with unknown identifier:",
+                    event.identifier
+                )
+            }
 
         case .unknown:
-            print(
-                "Nearby alert state unknown:",
-                event.identifier
-            )
+            if let locationID {
+                print(
+                    "Nearby alert state unknown:",
+                    locationID
+                )
+            } else {
+                print(
+                    "Nearby alert state unknown for identifier:",
+                    event.identifier
+                )
+            }
 
         case .unmonitored:
-            print(
-                "Nearby alert unmonitored:",
-                event.identifier
-            )
+            if let locationID {
+                print(
+                    "Nearby alert unmonitored:",
+                    locationID
+                )
+            } else {
+                print(
+                    "Nearby alert unmonitored identifier:",
+                    event.identifier
+                )
+            }
 
         @unknown default:
             print(
@@ -259,5 +292,67 @@ actor NearbyAlertMonitorService {
                 .joined()
 
         return "DM\(encodedID)"
+    }
+
+    private func locationID(
+        from identifier: String
+    ) -> String? {
+
+        guard identifier.hasPrefix("DM") else {
+            return nil
+        }
+
+        let hexadecimal =
+            String(
+                identifier.dropFirst(2)
+            )
+
+        guard hexadecimal.isEmpty == false else {
+            return nil
+        }
+
+        guard hexadecimal.count.isMultiple(
+            of: 2
+        ) else {
+            return nil
+        }
+
+        var bytes: [UInt8] = []
+
+        var currentIndex =
+            hexadecimal.startIndex
+
+        while currentIndex <
+                hexadecimal.endIndex {
+
+            let nextIndex =
+                hexadecimal.index(
+                    currentIndex,
+                    offsetBy: 2
+                )
+
+            let byteString =
+                hexadecimal[
+                    currentIndex..<nextIndex
+                ]
+
+            guard let byte =
+                    UInt8(
+                        byteString,
+                        radix: 16
+                    ) else {
+                return nil
+            }
+
+            bytes.append(byte)
+
+            currentIndex =
+                nextIndex
+        }
+
+        return String(
+            bytes: bytes,
+            encoding: .utf8
+        )
     }
 }
