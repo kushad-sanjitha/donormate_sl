@@ -12,6 +12,7 @@ struct BloodBankDetailsView: View {
 
     let location: DonationLocation
     let onDirections: (DonationLocation) -> Void
+    let onNearbyAlert: (DonationLocation) -> Void
 
     @Environment(\.dismiss) private var dismiss
 
@@ -239,7 +240,7 @@ struct BloodBankDetailsView: View {
                     .frame(height: 10)
 
                 Button {
-                    print("Notify Me When Nearby tapped")
+                    onNearbyAlert(location)
                 } label: {
                     Text("Notify Me When Nearby")
                         .font(.system(size: 15, weight: .bold))
@@ -288,6 +289,12 @@ struct BloodBankDetailsView: View {
             onDirections: { location in
                 print(
                     "Get Directions tapped:",
+                    location.name
+                )
+            },
+            onNearbyAlert: { location in
+                print(
+                    "Nearby alert tapped:",
                     location.name
                 )
             }
