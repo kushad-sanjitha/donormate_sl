@@ -394,30 +394,36 @@ struct NearbyAlertView: View {
             return
         }
 
-        guard isNearbyAlertEnabled else {
+        isSavingAlert = true
+
+        if isNearbyAlertEnabled {
+
+            await NearbyAlertMonitorService.shared
+                .addAlert(
+                    locationID: location.id,
+                    latitude: location.latitude,
+                    longitude: location.longitude
+                )
+
             print(
-                "Nearby alert removal is not implemented yet:",
+                "Nearby alert registered:",
                 location.name
             )
 
-            return
+        } else {
+
+            await NearbyAlertMonitorService.shared
+                .removeAlert(
+                    locationID: location.id
+                )
+
+            print(
+                "Nearby alert removed:",
+                location.name
+            )
         }
 
-        isSavingAlert = true
-
-        await NearbyAlertMonitorService.shared
-            .addAlert(
-                locationID: location.id,
-                latitude: location.latitude,
-                longitude: location.longitude
-            )
-
         isSavingAlert = false
-
-        print(
-            "Nearby alert registered:",
-            location.name
-        )
     }
 }
 
