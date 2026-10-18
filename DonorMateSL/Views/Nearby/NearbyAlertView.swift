@@ -14,7 +14,8 @@ struct NearbyAlertView: View {
 
     @Environment(\.dismiss) private var dismiss
 
-    @State private var isNearbyAlertEnabled = true
+    @State private var isNearbyAlertEnabled = false
+    @State private var isLoadingMonitoringState = true
 
     private var destinationCoordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(
@@ -244,6 +245,7 @@ struct NearbyAlertView: View {
                     .labelsHidden()
                     .tint(Color("DonorRed"))
                     .accessibilityLabel("Nearby alert")
+                    .disabled(isLoadingMonitoringState)
                 }
                 .padding(14)
                 .frame(
@@ -330,6 +332,12 @@ struct NearbyAlertView: View {
                         )
                 }
                 .buttonStyle(.plain)
+                .disabled(isLoadingMonitoringState)
+                .opacity(
+                    isLoadingMonitoringState
+                        ? 0.6
+                        : 1
+                )
 
                 Spacer()
                     .frame(height: 28)
@@ -340,6 +348,25 @@ struct NearbyAlertView: View {
         .background(Color("BackgroundPrimary"))
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
+        .task {
+            await loadMonitoringState()
+        }
+    }
+
+    @MainActor
+    private func loadMonitoringState() async {
+
+        let isMonitoring =
+            await NearbyAlertMonitorService.shared
+                .isMonitoring(
+                    locationID: location.id
+                )
+
+        isNearbyAlertEnabled =
+            isMonitoring
+
+        isLoadingMonitoringState =
+            false
     }
 }
 
