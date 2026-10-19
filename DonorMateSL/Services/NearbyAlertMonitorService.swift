@@ -45,6 +45,13 @@ actor NearbyAlertMonitorService {
         let monitor =
             await locationMonitor()
 
+        let monitoredIdentifiers =
+        await monitor.identifiers
+
+        if monitoredIdentifiers.isEmpty == false {
+            ensureAlwaysServiceSession()
+        }
+
         guard eventTask == nil else {
             return
         }
