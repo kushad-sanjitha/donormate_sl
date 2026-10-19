@@ -29,9 +29,22 @@
 		D01C9D8E3071F86700FA0384 /* DonorMateSLUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DonorMateSLUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		D0CB6A2A3085D7CC00CB4545 /* Exceptions for "DonorMateSL" folder in "DonorMateSL" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = D01C9D763071F86600FA0384 /* DonorMateSL */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		D01C9D793071F86600FA0384 /* DonorMateSL */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				D0CB6A2A3085D7CC00CB4545 /* Exceptions for "DonorMateSL" folder in "DonorMateSL" target */,
+			);
 			path = DonorMateSL;
 			sourceTree = "<group>";
 		};
@@ -397,7 +410,9 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DonorMateSL/Info.plist;
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "DonorMate uses Face ID to protect access to your personal donor information.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "DonorMate uses your location in the background to notify you when you enter the area around a donation location where you enabled a nearby alert.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "DonorMate uses your location to find nearby blood donation camps and blood banks and calculate distance.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -430,7 +445,9 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DonorMateSL/Info.plist;
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "DonorMate uses Face ID to protect access to your personal donor information.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "DonorMate uses your location in the background to notify you when you enter the area around a donation location where you enabled a nearby alert.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "DonorMate uses your location to find nearby blood donation camps and blood banks and calculate distance.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

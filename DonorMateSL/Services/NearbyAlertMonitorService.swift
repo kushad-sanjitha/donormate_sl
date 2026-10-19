@@ -24,6 +24,9 @@ actor NearbyAlertMonitorService {
     private var monitorCreationTask:
         Task<CLMonitor, Never>?
 
+    private var serviceSession:
+        CLServiceSession?
+
     private var eventTask:
         Task<Void, Never>?
 
@@ -34,6 +37,7 @@ actor NearbyAlertMonitorService {
     deinit {
         eventTask?.cancel()
         monitorCreationTask?.cancel()
+        serviceSession?.invalidate()
     }
 
     func startObservingEvents() async {
@@ -57,7 +61,10 @@ actor NearbyAlertMonitorService {
                         break
                     }
 
-                    await handle(event)
+                    await handle(
+                        event,
+                        monitor: monitor
+                    )
                 }
 
             } catch is CancellationError {
@@ -97,6 +104,8 @@ actor NearbyAlertMonitorService {
         latitude: Double,
         longitude: Double
     ) async {
+
+        ensureAlwaysServiceSession()
 
         let monitor =
             await locationMonitor()
@@ -161,6 +170,18 @@ actor NearbyAlertMonitorService {
         return record != nil
     }
 
+    private func ensureAlwaysServiceSession() {
+
+        guard serviceSession == nil else {
+            return
+        }
+
+        serviceSession =
+            CLServiceSession(
+                authorization: .always
+            )
+    }
+
     private func locationMonitor() async
         -> CLMonitor {
 
@@ -207,7 +228,8 @@ actor NearbyAlertMonitorService {
     }
 
     private func handle(
-        _ event: CLMonitor.Event
+        _ event: CLMonitor.Event,
+        monitor: CLMonitor
     ) async {
 
         guard let locationID =
@@ -236,9 +258,24 @@ actor NearbyAlertMonitorService {
             return
         }
 
+        let previousState =
+            await monitor.record(
+                for: event.identifier
+            )?.lastEvent.state
+
         switch event.state {
 
         case .satisfied:
+            guard previousState == .unsatisfied else {
+
+                print(
+                    "Nearby alert satisfied ignored:",
+                    location.name
+                )
+
+                return
+            }
+
             print(
                 "Nearby alert condition satisfied:",
                 location.name
