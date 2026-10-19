@@ -57,7 +57,7 @@ actor NearbyAlertMonitorService {
                         break
                     }
 
-                    handle(event)
+                    await handle(event)
                 }
 
             } catch is CancellationError {
@@ -208,7 +208,7 @@ actor NearbyAlertMonitorService {
 
     private func handle(
         _ event: CLMonitor.Event
-    ) {
+    ) async {
 
         guard let locationID =
                 locationID(
@@ -243,6 +243,24 @@ actor NearbyAlertMonitorService {
                 "Nearby alert condition satisfied:",
                 location.name
             )
+
+            do {
+                try await NearbyAlertNotificationService.send(
+                    for: location
+                )
+
+                print(
+                    "Nearby alert notification submitted:",
+                    location.name
+                )
+
+            } catch {
+                print(
+                    "Nearby alert notification failed:",
+                    location.name,
+                    error.localizedDescription
+                )
+            }
 
         case .unsatisfied:
             print(
