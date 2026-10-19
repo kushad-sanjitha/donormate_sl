@@ -46,7 +46,7 @@ actor NearbyAlertMonitorService {
             await locationMonitor()
 
         let monitoredIdentifiers =
-        await monitor.identifiers
+            await monitor.identifiers
 
         if monitoredIdentifiers.isEmpty == false {
             ensureAlwaysServiceSession()
@@ -155,6 +155,14 @@ actor NearbyAlertMonitorService {
         await monitor.remove(
             identifier
         )
+
+        let remainingIdentifiers =
+            await monitor.identifiers
+
+        if remainingIdentifiers.isEmpty {
+            serviceSession?.invalidate()
+            serviceSession = nil
+        }
     }
 
     func isMonitoring(
