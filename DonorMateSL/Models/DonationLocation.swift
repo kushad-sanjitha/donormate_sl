@@ -7,9 +7,9 @@
 
 import Foundation
 
-struct DonationLocation: Identifiable {
+nonisolated struct DonationLocation: Identifiable, Sendable {
 
-    enum LocationType: Equatable {
+    enum LocationType: Equatable, Sendable {
         case camp
         case bloodBank
     }

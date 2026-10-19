@@ -24,6 +24,9 @@ actor NearbyAlertMonitorService {
     private var monitorCreationTask:
         Task<CLMonitor, Never>?
 
+    private var serviceSession:
+        CLServiceSession?
+
     private var eventTask:
         Task<Void, Never>?
 
@@ -34,12 +37,20 @@ actor NearbyAlertMonitorService {
     deinit {
         eventTask?.cancel()
         monitorCreationTask?.cancel()
+        serviceSession?.invalidate()
     }
 
     func startObservingEvents() async {
 
         let monitor =
             await locationMonitor()
+
+        let monitoredIdentifiers =
+            await monitor.identifiers
+
+        if monitoredIdentifiers.isEmpty == false {
+            ensureAlwaysServiceSession()
+        }
 
         guard eventTask == nil else {
             return
@@ -57,11 +68,14 @@ actor NearbyAlertMonitorService {
                         break
                     }
 
-                    handle(event)
+                    await handle(
+                        event,
+                        monitor: monitor
+                    )
                 }
 
             } catch is CancellationError {
-
+                // Intentional cancellation.
             } catch {
 
                 guard Task.isCancelled == false else {
@@ -97,6 +111,8 @@ actor NearbyAlertMonitorService {
         latitude: Double,
         longitude: Double
     ) async {
+
+        ensureAlwaysServiceSession()
 
         let monitor =
             await locationMonitor()
@@ -139,6 +155,14 @@ actor NearbyAlertMonitorService {
         await monitor.remove(
             identifier
         )
+
+        let remainingIdentifiers =
+            await monitor.identifiers
+
+        if remainingIdentifiers.isEmpty {
+            serviceSession?.invalidate()
+            serviceSession = nil
+        }
     }
 
     func isMonitoring(
@@ -159,6 +183,18 @@ actor NearbyAlertMonitorService {
             )
 
         return record != nil
+    }
+
+    private func ensureAlwaysServiceSession() {
+
+        guard serviceSession == nil else {
+            return
+        }
+
+        serviceSession =
+            CLServiceSession(
+                authorization: .always
+            )
     }
 
     private func locationMonitor() async
@@ -207,39 +243,99 @@ actor NearbyAlertMonitorService {
     }
 
     private func handle(
-        _ event: CLMonitor.Event
-    ) {
+        _ event: CLMonitor.Event,
+        monitor: CLMonitor
+    ) async {
+
+        guard let locationID =
+                locationID(
+                    from: event.identifier
+                ) else {
+
+            print(
+                "Nearby alert event has unknown identifier:",
+                event.identifier
+            )
+
+            return
+        }
+
+        guard let location =
+                DonationLocationCatalog.location(
+                    for: locationID
+                ) else {
+
+            print(
+                "Nearby alert event has unknown location ID:",
+                locationID
+            )
+
+            return
+        }
+
+        let previousState =
+            await monitor.record(
+                for: event.identifier
+            )?.lastEvent.state
 
         switch event.state {
 
         case .satisfied:
+            guard previousState == .unsatisfied else {
+
+                print(
+                    "Nearby alert satisfied ignored:",
+                    location.name
+                )
+
+                return
+            }
+
             print(
                 "Nearby alert condition satisfied:",
-                event.identifier
+                location.name
             )
+
+            do {
+                try await NearbyAlertNotificationService.send(
+                    for: location
+                )
+
+                print(
+                    "Nearby alert notification submitted:",
+                    location.name
+                )
+
+            } catch {
+                print(
+                    "Nearby alert notification failed:",
+                    location.name,
+                    error.localizedDescription
+                )
+            }
 
         case .unsatisfied:
             print(
                 "Nearby alert condition unsatisfied:",
-                event.identifier
+                location.name
             )
 
         case .unknown:
             print(
                 "Nearby alert state unknown:",
-                event.identifier
+                location.name
             )
 
         case .unmonitored:
             print(
                 "Nearby alert unmonitored:",
-                event.identifier
+                location.name
             )
 
         @unknown default:
             print(
                 "Nearby alert state changed:",
-                event.identifier
+                location.name
             )
         }
     }
@@ -259,5 +355,67 @@ actor NearbyAlertMonitorService {
                 .joined()
 
         return "DM\(encodedID)"
+    }
+
+    private func locationID(
+        from identifier: String
+    ) -> String? {
+
+        guard identifier.hasPrefix("DM") else {
+            return nil
+        }
+
+        let hexadecimal =
+            String(
+                identifier.dropFirst(2)
+            )
+
+        guard hexadecimal.isEmpty == false else {
+            return nil
+        }
+
+        guard hexadecimal.count.isMultiple(
+            of: 2
+        ) else {
+            return nil
+        }
+
+        var bytes: [UInt8] = []
+
+        var currentIndex =
+            hexadecimal.startIndex
+
+        while currentIndex <
+                hexadecimal.endIndex {
+
+            let nextIndex =
+                hexadecimal.index(
+                    currentIndex,
+                    offsetBy: 2
+                )
+
+            let byteString =
+                hexadecimal[
+                    currentIndex..<nextIndex
+                ]
+
+            guard let byte =
+                    UInt8(
+                        byteString,
+                        radix: 16
+                    ) else {
+                return nil
+            }
+
+            bytes.append(byte)
+
+            currentIndex =
+                nextIndex
+        }
+
+        return String(
+            bytes: bytes,
+            encoding: .utf8
+        )
     }
 }
