@@ -111,9 +111,15 @@ struct DonationDetailView: View {
                     Spacer()
                         .frame(height: 7)
 
-                    Text(record.date)
-                        .font(.system(size: 12))
-                        .foregroundStyle(Color("TextSecondary"))
+                    Text(
+                        record.date,
+                        format: .dateTime
+                            .day()
+                            .month(.wide)
+                            .year()
+                    )
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color("TextSecondary"))
                 }
                 .padding(14)
                 .frame(
@@ -174,11 +180,25 @@ struct DonationDetailView: View {
                         .font(.system(size: 12))
                         .foregroundStyle(Color("TextSecondary"))
 
-                    Text(
-                        record.nextPossibleDonationDate ?? "Not available"
-                    )
-                    .font(.system(size: 20, weight: .heavy))
-                    .foregroundStyle(Color("TextPrimary"))
+                    if let nextPossibleDonationDate =
+                        record.nextPossibleDonationDate {
+
+                        Text(
+                            nextPossibleDonationDate,
+                            format: .dateTime
+                                .day()
+                                .month(.wide)
+                                .year()
+                        )
+                        .font(.system(size: 20, weight: .heavy))
+                        .foregroundStyle(Color("TextPrimary"))
+
+                    } else {
+
+                        Text("Not available")
+                            .font(.system(size: 20, weight: .heavy))
+                            .foregroundStyle(Color("TextPrimary"))
+                    }
                 }
                 .padding(14)
                 .frame(
@@ -224,12 +244,24 @@ struct DonationDetailView: View {
     NavigationStack {
         DonationDetailView(
             record: DonationRecord(
-                date: "18 May 2026",
+                date: Calendar.current.date(
+                    from: DateComponents(
+                        year: 2026,
+                        month: 5,
+                        day: 18
+                    )
+                )!,
                 location: "Matara Blood Bank",
                 donationType: "Whole blood",
                 recordLabel: "Blood-bank record",
                 recordReference: "DB-2026-0518-006",
-                nextPossibleDonationDate: "18 September 2026"
+                nextPossibleDonationDate: Calendar.current.date(
+                    from: DateComponents(
+                        year: 2026,
+                        month: 9,
+                        day: 18
+                    )
+                )
             )
         )
     }
