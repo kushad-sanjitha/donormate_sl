@@ -10,4 +10,5 @@ import Foundation
 nonisolated enum DonationReadinessState: Equatable, Sendable {
     case ready
     case notReady(daysRemaining: Int)
+    case unknown
 }
