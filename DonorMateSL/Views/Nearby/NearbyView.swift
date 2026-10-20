@@ -436,23 +436,11 @@ struct NearbyView: View {
             return nil
         }
 
-        let donationLocation = CLLocation(
-            latitude: location.latitude,
-            longitude: location.longitude
-        )
-
-        let distanceInMetres =
-            userLocation.distance(
-                from: donationLocation
+        return LocationDistanceCalculator
+            .formattedDistance(
+                from: userLocation,
+                to: location
             )
-
-        let distanceInKilometres =
-            distanceInMetres / 1000
-
-        return String(
-            format: "%.1f km",
-            distanceInKilometres
-        )
     }
 
     private func isLocation(
