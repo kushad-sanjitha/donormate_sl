@@ -1,5 +1,5 @@
 //
-//  FileLocationDistanceCalculatorTests.swift
+//  LocationDistanceCalculatorTests.swift
 //  DonorMateSLTests
 //
 //  Created by user300742 on 10/20/26.
