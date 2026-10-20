@@ -7,15 +7,15 @@
 
 import Foundation
 
-struct DonationRecord {
+nonisolated struct DonationRecord: Sendable {
 
-    let date: String
+    let date: Date
     let location: String
     let donationType: String
     let recordLabel: String
 
     let recordReference: String?
-    let nextPossibleDonationDate: String?
+    let nextPossibleDonationDate: Date?
 
     var locationAndType: String {
         "\(location) · \(donationType)"

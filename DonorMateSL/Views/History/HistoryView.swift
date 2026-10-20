@@ -19,16 +19,34 @@ struct HistoryView: View {
     var onConnectDonorRecord: () -> Void = {}
 
     private let mayRecord = DonationRecord(
-        date: "18 May 2026",
+        date: Calendar.current.date(
+            from: DateComponents(
+                year: 2026,
+                month: 5,
+                day: 18
+            )
+        )!,
         location: "Matara Blood Bank",
         donationType: "Whole blood",
         recordLabel: "Blood-bank record",
         recordReference: "DB-2026-0518-006",
-        nextPossibleDonationDate: "18 September 2026"
+        nextPossibleDonationDate: Calendar.current.date(
+            from: DateComponents(
+                year: 2026,
+                month: 9,
+                day: 18
+            )
+        )
     )
 
     private let januaryRecord = DonationRecord(
-        date: "16 January 2026",
+        date: Calendar.current.date(
+            from: DateComponents(
+                year: 2026,
+                month: 1,
+                day: 16
+            )
+        )!,
         location: "Matara",
         donationType: "Whole blood",
         recordLabel: "Blood-bank record",
@@ -37,7 +55,13 @@ struct HistoryView: View {
     )
 
     private let septemberRecord = DonationRecord(
-        date: "12 September 2025",
+        date: Calendar.current.date(
+            from: DateComponents(
+                year: 2025,
+                month: 9,
+                day: 12
+            )
+        )!,
         location: "Matara",
         donationType: "Whole blood",
         recordLabel: "Blood-bank record",
@@ -46,13 +70,40 @@ struct HistoryView: View {
     )
 
     private let previousMayRecord = DonationRecord(
-        date: "06 May 2025",
+        date: Calendar.current.date(
+            from: DateComponents(
+                year: 2025,
+                month: 5,
+                day: 6
+            )
+        )!,
         location: "Matara",
         donationType: "Whole blood",
         recordLabel: "Blood-bank record",
         recordReference: nil,
         nextPossibleDonationDate: nil
     )
+
+    private var latestDonationDayMonth: String {
+        mayRecord.date.formatted(
+            Date.FormatStyle()
+                .day()
+                .month(.abbreviated)
+                .locale(
+                    Locale(identifier: "en_GB")
+                )
+        )
+    }
+
+    private var latestDonationYear: String {
+        mayRecord.date.formatted(
+            Date.FormatStyle()
+                .year()
+                .locale(
+                    Locale(identifier: "en_GB")
+                )
+        )
+    }
 
     var body: some View {
         NavigationStack {
@@ -75,21 +126,39 @@ struct HistoryView: View {
 
                                 Text("Your donation records")
                                     .font(.system(size: 12))
-                                    .foregroundStyle(Color("TextSecondary"))
+                                    .foregroundStyle(
+                                        Color("TextSecondary")
+                                    )
 
                                 Text("Donation History")
-                                    .font(.system(size: 24, weight: .heavy))
-                                    .foregroundStyle(Color("TextPrimary"))
+                                    .font(
+                                        .system(
+                                            size: 24,
+                                            weight: .heavy
+                                        )
+                                    )
+                                    .foregroundStyle(
+                                        Color("TextPrimary")
+                                    )
                             }
 
                             Spacer()
 
                             Text("Up to date")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundStyle(Color("SuccessGreen"))
+                                .font(
+                                    .system(
+                                        size: 12,
+                                        weight: .bold
+                                    )
+                                )
+                                .foregroundStyle(
+                                    Color("SuccessGreen")
+                                )
                                 .padding(.horizontal, 10)
                                 .frame(height: 28)
-                                .background(Color("SuccessGreenSoft"))
+                                .background(
+                                    Color("SuccessGreenSoft")
+                                )
                                 .overlay {
                                     Capsule()
                                         .stroke(
@@ -97,7 +166,9 @@ struct HistoryView: View {
                                             lineWidth: 1
                                         )
                                 }
-                                .clipShape(Capsule())
+                                .clipShape(
+                                    Capsule()
+                                )
                         }
 
                         Spacer()
@@ -125,8 +196,8 @@ struct HistoryView: View {
 
                             SummaryMetricCard(
                                 title: "Latest donation",
-                                value: "18 May",
-                                detail: "2026"
+                                value: latestDonationDayMonth,
+                                detail: latestDonationYear
                             )
                         }
 
@@ -144,7 +215,9 @@ struct HistoryView: View {
                                     record: mayRecord,
                                     isLast: false
                                 )
-                                .contentShape(Rectangle())
+                                .contentShape(
+                                    Rectangle()
+                                )
                             }
                             .buttonStyle(.plain)
 
@@ -167,8 +240,15 @@ struct HistoryView: View {
                     case .empty:
 
                         Text("Donation History")
-                            .font(.system(size: 24, weight: .heavy))
-                            .foregroundStyle(Color("TextPrimary"))
+                            .font(
+                                .system(
+                                    size: 24,
+                                    weight: .heavy
+                                )
+                            )
+                            .foregroundStyle(
+                                Color("TextPrimary")
+                            )
                             .frame(
                                 maxWidth: .infinity,
                                 alignment: .leading
@@ -189,9 +269,18 @@ struct HistoryView: View {
                             .frame(height: 10)
 
                         Text("No linked donations yet")
-                            .font(.system(size: 20, weight: .heavy))
-                            .foregroundStyle(Color("TextPrimary"))
-                            .multilineTextAlignment(.center)
+                            .font(
+                                .system(
+                                    size: 20,
+                                    weight: .heavy
+                                )
+                            )
+                            .foregroundStyle(
+                                Color("TextPrimary")
+                            )
+                            .multilineTextAlignment(
+                                .center
+                            )
                             .frame(
                                 maxWidth: .infinity,
                                 alignment: .center
@@ -203,9 +292,15 @@ struct HistoryView: View {
                         Text(
                             "Your donation history will appear here when a blood-bank record is available and connected."
                         )
-                        .font(.system(size: 14))
-                        .foregroundStyle(Color("TextSecondary"))
-                        .multilineTextAlignment(.center)
+                        .font(
+                            .system(size: 14)
+                        )
+                        .foregroundStyle(
+                            Color("TextSecondary")
+                        )
+                        .multilineTextAlignment(
+                            .center
+                        )
                         .lineSpacing(3)
                         .fixedSize(
                             horizontal: false,
@@ -232,15 +327,26 @@ struct HistoryView: View {
                             onConnectDonorRecord()
                         } label: {
                             Text("Connect Donor Record")
-                                .font(.system(size: 15, weight: .bold))
-                                .foregroundStyle(.white)
+                                .font(
+                                    .system(
+                                        size: 15,
+                                        weight: .bold
+                                    )
+                                )
+                                .foregroundStyle(
+                                    .white
+                                )
                                 .frame(
                                     maxWidth: .infinity,
                                     minHeight: 48
                                 )
-                                .background(Color("DonorRed"))
+                                .background(
+                                    Color("DonorRed")
+                                )
                                 .clipShape(
-                                    RoundedRectangle(cornerRadius: 14)
+                                    RoundedRectangle(
+                                        cornerRadius: 14
+                                    )
                                 )
                         }
                         .buttonStyle(.plain)
@@ -252,7 +358,9 @@ struct HistoryView: View {
                 .padding(.horizontal, 18)
                 .padding(.top, 18)
             }
-            .background(Color("BackgroundPrimary"))
+            .background(
+                Color("BackgroundPrimary")
+            )
         }
     }
 }
@@ -260,7 +368,9 @@ struct HistoryView: View {
 #Preview {
     HistoryView(
         onConnectDonorRecord: {
-            print("Connect Donor Record tapped")
+            print(
+                "Connect Donor Record tapped"
+            )
         }
     )
 }
