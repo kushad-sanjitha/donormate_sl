@@ -43,7 +43,7 @@ nonisolated enum DonationReadinessCalculator {
             return .unknown
         }
 
-        guard nextPossibleDay >= donationDay else {
+        guard nextPossibleDay > donationDay else {
             return .unknown
         }
 

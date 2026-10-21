@@ -270,6 +270,38 @@ struct DonationReadinessCalculatorTests {
     }
 
     @Test
+    func sameDayDonationAndNextPossibleDateReturnsUnknown() {
+
+        let date =
+            makeDate(
+                year: 2026,
+                month: 5,
+                day: 18
+            )
+
+        let record =
+            DonationRecord(
+                date: date,
+                location: "Matara Blood Bank",
+                donationType: "Whole blood",
+                recordLabel: "Blood-bank record",
+                recordReference: "DB-2026-0518-006",
+                nextPossibleDonationDate: date
+            )
+
+        let result =
+            DonationReadinessCalculator.readiness(
+                for: record,
+                currentDate: date,
+                calendar: calendar
+            )
+
+        #expect(
+            result == .unknown
+        )
+    }
+
+    @Test
     func differentHoursOnSameThresholdDateStillReturnsReady() {
 
         let record =
