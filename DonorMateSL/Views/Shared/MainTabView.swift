@@ -45,6 +45,8 @@ struct MainTabView: View {
                 .tag(MainTab.nearby)
 
             HistoryView(
+                donorRecordsStore:
+                    donorRecordsStore,
                 onConnectDonorRecord:
                     onConnectDonorRecord
             )
@@ -74,8 +76,16 @@ struct MainTabView: View {
 
 #Preview {
     MainTabView(
-        selectedTab: .constant(.home),
+        selectedTab:
+            .constant(.history),
         donorRecordsStore:
-            DonorRecordsStore()
+            DonorRecordsStore(
+                linkState: .linked(
+                    profile:
+                        DonorDemoData.profile
+                ),
+                records:
+                    DonorDemoData.records
+            )
     )
 }
