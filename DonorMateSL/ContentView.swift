@@ -46,6 +46,9 @@ struct ContentView: View {
 
     @State private var selectedMainTab: MainTab = .home
 
+    @StateObject private var donorRecordsStore =
+        DonorRecordsStore()
+
     @StateObject private var locationPermissionService =
         LocationPermissionService()
 
@@ -114,8 +117,11 @@ struct ContentView: View {
                         currentFlow = .createAccount
                     },
                     onSignIn: {
-                        connectDonorRecordSource = .authentication
-                        currentFlow = .connectDonorRecord
+                        connectDonorRecordSource =
+                            .authentication
+
+                        currentFlow =
+                            .connectDonorRecord
                     }
                 )
 
@@ -125,8 +131,11 @@ struct ContentView: View {
                         currentFlow = .accountAccess
                     },
                     onCreateAccount: {
-                        connectDonorRecordSource = .authentication
-                        currentFlow = .connectDonorRecord
+                        connectDonorRecordSource =
+                            .authentication
+
+                        currentFlow =
+                            .connectDonorRecord
                     }
                 )
 
@@ -136,7 +145,9 @@ struct ContentView: View {
                         currentFlow = .signIn
                     },
                     onSendResetLink: {
-                        print("Reset link requested")
+                        print(
+                            "Reset link requested"
+                        )
                     },
                     onBackToSignIn: {
                         currentFlow = .signIn
@@ -144,30 +155,10 @@ struct ContentView: View {
                 )
 
             case .connectDonorRecord:
-                ConnectDonorRecordView(
-                    onBack: {
-                        handleConnectDonorRecordBack()
-                    },
-                    onFindRecord: {
-                        currentFlow = .donorRecordLinked
-                    },
-                    onLinkLater: {
-                        handleLinkLater()
-                    },
-                    onNeedHelp: {
-                        print("Need help tapped")
-                    }
-                )
+                connectDonorRecordScreen
 
             case .donorRecordLinked:
-                DonorRecordLinkedView(
-                    name: "Sample Donor",
-                    bloodGroup: "A+",
-                    donationCount: 6,
-                    onContinue: {
-                        handleDonorRecordLinkedContinue()
-                    }
-                )
+                donorRecordLinkedScreen
 
             case .permissionSetup:
                 PermissionSetupView(
@@ -208,13 +199,21 @@ struct ContentView: View {
                             switch result {
 
                             case .authenticationSucceeded:
-                                faceIDProtectionEnabled = true
-                                faceIDUnavailable = false
-                                currentFlow = .mainApp
+                                faceIDProtectionEnabled =
+                                    true
+
+                                faceIDUnavailable =
+                                    false
+
+                                currentFlow =
+                                    .mainApp
 
                             case .unavailable:
-                                faceIDUnavailable = true
-                                currentFlow = .faceIDUnavailable
+                                faceIDUnavailable =
+                                    true
+
+                                currentFlow =
+                                    .faceIDUnavailable
 
                             case .authenticationFailed:
                                 print(
@@ -227,9 +226,14 @@ struct ContentView: View {
                         }
                     },
                     onNotNow: {
-                        faceIDProtectionEnabled = false
-                        faceIDUnavailable = false
-                        currentFlow = .mainApp
+                        faceIDProtectionEnabled =
+                            false
+
+                        faceIDUnavailable =
+                            false
+
+                        currentFlow =
+                            .mainApp
                     }
                 )
 
@@ -239,22 +243,34 @@ struct ContentView: View {
                         currentFlow = .faceIDSetup
                     },
                     onContinueWithPassword: {
-                        faceIDProtectionEnabled = false
-                        currentFlow = .mainApp
+                        faceIDProtectionEnabled =
+                            false
+
+                        currentFlow =
+                            .mainApp
                     },
                     onTryAgain: {
                         refreshBiometricAvailability()
-                        currentFlow = .faceIDSetup
+                        currentFlow =
+                            .faceIDSetup
                     }
                 )
 
             case .mainApp:
                 MainTabView(
-                    selectedTab: $selectedMainTab,
+                    selectedTab:
+                        $selectedMainTab,
+                    donorRecordsStore:
+                        donorRecordsStore,
                     onConnectDonorRecord: {
-                        selectedMainTab = .history
-                        connectDonorRecordSource = .mainApp
-                        currentFlow = .connectDonorRecord
+                        selectedMainTab =
+                            .history
+
+                        connectDonorRecordSource =
+                            .mainApp
+
+                        currentFlow =
+                            .connectDonorRecord
                     }
                 )
             }
@@ -262,21 +278,85 @@ struct ContentView: View {
         .onAppear {
             refreshSetupStatuses()
         }
-        .onChange(of: scenePhase) { _, newPhase in
+        .onChange(of: scenePhase) {
+            _, newPhase in
+
             if newPhase == .active {
                 refreshSetupStatuses()
             }
         }
     }
 
+    private var connectDonorRecordScreen: some View {
+
+        ConnectDonorRecordView(
+            onBack: {
+                handleConnectDonorRecordBack()
+            },
+            onFindRecord: {
+                loadDemoDonorData()
+
+                currentFlow =
+                    .donorRecordLinked
+            },
+            onLinkLater: {
+                handleLinkLater()
+            },
+            onNeedHelp: {
+                print(
+                    "Need help tapped"
+                )
+            }
+        )
+    }
+
+    @ViewBuilder
+    private var donorRecordLinkedScreen: some View {
+
+        if let profile =
+            donorRecordsStore.profile {
+
+            DonorRecordLinkedView(
+                name:
+                    profile.displayName,
+                bloodGroup:
+                    profile.bloodGroup,
+                donationCount:
+                    profile.reportedDonationCount,
+                isDemoData: true,
+                onContinue: {
+                    handleDonorRecordLinkedContinue()
+                }
+            )
+
+        } else {
+            connectDonorRecordScreen
+        }
+    }
+
+    private func loadDemoDonorData() {
+
+        donorRecordsStore.replaceLinkedData(
+            profile: DonorDemoData.profile,
+            records: DonorDemoData.records
+        )
+    }
+
     private func refreshSetupStatuses() {
-        locationPermissionService.refreshStatus()
-        notificationPermissionService.refreshStatus()
+
+        locationPermissionService
+            .refreshStatus()
+
+        notificationPermissionService
+            .refreshStatus()
+
         refreshBiometricAvailability()
     }
 
     private func refreshBiometricAvailability() {
-        biometricAuthenticationService.refreshAvailability()
+
+        biometricAuthenticationService
+            .refreshAvailability()
 
         switch biometricAuthenticationService.state {
 
@@ -295,6 +375,7 @@ struct ContentView: View {
     }
 
     private func handleConnectDonorRecordBack() {
+
         switch connectDonorRecordSource {
 
         case .authentication:
@@ -307,11 +388,15 @@ struct ContentView: View {
     }
 
     private func handleLinkLater() {
+
         switch connectDonorRecordSource {
 
         case .authentication:
-            permissionSetupSource = .connectDonorRecord
-            currentFlow = .permissionSetup
+            permissionSetupSource =
+                .connectDonorRecord
+
+            currentFlow =
+                .permissionSetup
 
         case .mainApp:
             selectedMainTab = .history
@@ -320,11 +405,15 @@ struct ContentView: View {
     }
 
     private func handleDonorRecordLinkedContinue() {
+
         switch connectDonorRecordSource {
 
         case .authentication:
-            permissionSetupSource = .donorRecordLinked
-            currentFlow = .permissionSetup
+            permissionSetupSource =
+                .donorRecordLinked
+
+            currentFlow =
+                .permissionSetup
 
         case .mainApp:
             selectedMainTab = .history
@@ -333,13 +422,16 @@ struct ContentView: View {
     }
 
     private func handlePermissionSetupBack() {
+
         switch permissionSetupSource {
 
         case .donorRecordLinked:
-            currentFlow = .donorRecordLinked
+            currentFlow =
+                .donorRecordLinked
 
         case .connectDonorRecord:
-            currentFlow = .connectDonorRecord
+            currentFlow =
+                .connectDonorRecord
         }
     }
 }

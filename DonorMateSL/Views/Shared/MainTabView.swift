@@ -18,36 +18,52 @@ struct MainTabView: View {
 
     @Binding var selectedTab: MainTab
 
+    @ObservedObject var donorRecordsStore:
+        DonorRecordsStore
+
     var onConnectDonorRecord: () -> Void = {}
 
     var body: some View {
-        TabView(selection: $selectedTab) {
+        TabView(
+            selection: $selectedTab
+        ) {
 
-            HomeView()
-                .tabItem {
-                    Label(
-                        "Home",
-                        systemImage: "house.fill"
-                    )
-                }
-                .tag(MainTab.home)
+            HomeView(
+                donorRecordsStore:
+                    donorRecordsStore,
+                onConnectDonorRecord:
+                    onConnectDonorRecord
+            )
+            .tabItem {
+                Label(
+                    "Home",
+                    systemImage:
+                        "house.fill"
+                )
+            }
+            .tag(MainTab.home)
 
             NearbyView()
                 .tabItem {
                     Label(
                         "Nearby",
-                        systemImage: "map.fill"
+                        systemImage:
+                            "map.fill"
                     )
                 }
                 .tag(MainTab.nearby)
 
             HistoryView(
-                onConnectDonorRecord: onConnectDonorRecord
+                donorRecordsStore:
+                    donorRecordsStore,
+                onConnectDonorRecord:
+                    onConnectDonorRecord
             )
             .tabItem {
                 Label(
                     "History",
-                    systemImage: "clock.arrow.circlepath"
+                    systemImage:
+                        "clock.arrow.circlepath"
                 )
             }
             .tag(MainTab.history)
@@ -56,17 +72,31 @@ struct MainTabView: View {
                 .tabItem {
                     Label(
                         "Profile",
-                        systemImage: "person.fill"
+                        systemImage:
+                            "person.fill"
                     )
                 }
                 .tag(MainTab.profile)
         }
-        .tint(Color("DonorRed"))
+        .tint(
+            Color("DonorRed")
+        )
     }
 }
 
 #Preview {
     MainTabView(
-        selectedTab: .constant(.home)
+        selectedTab:
+            .constant(.home),
+        donorRecordsStore:
+            DonorRecordsStore(
+                linkState:
+                    .linked(
+                        profile:
+                            DonorDemoData.profile
+                    ),
+                records:
+                    DonorDemoData.records
+            )
     )
 }
