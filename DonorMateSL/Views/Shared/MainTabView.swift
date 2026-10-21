@@ -18,6 +18,9 @@ struct MainTabView: View {
 
     @Binding var selectedTab: MainTab
 
+    @ObservedObject var donorRecordsStore:
+        DonorRecordsStore
+
     var onConnectDonorRecord: () -> Void = {}
 
     var body: some View {
@@ -42,12 +45,14 @@ struct MainTabView: View {
                 .tag(MainTab.nearby)
 
             HistoryView(
-                onConnectDonorRecord: onConnectDonorRecord
+                onConnectDonorRecord:
+                    onConnectDonorRecord
             )
             .tabItem {
                 Label(
                     "History",
-                    systemImage: "clock.arrow.circlepath"
+                    systemImage:
+                        "clock.arrow.circlepath"
                 )
             }
             .tag(MainTab.history)
@@ -61,12 +66,16 @@ struct MainTabView: View {
                 }
                 .tag(MainTab.profile)
         }
-        .tint(Color("DonorRed"))
+        .tint(
+            Color("DonorRed")
+        )
     }
 }
 
 #Preview {
     MainTabView(
-        selectedTab: .constant(.home)
+        selectedTab: .constant(.home),
+        donorRecordsStore:
+            DonorRecordsStore()
     )
 }
