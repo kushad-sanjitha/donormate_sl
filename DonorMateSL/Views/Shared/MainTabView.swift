@@ -24,22 +24,31 @@ struct MainTabView: View {
     var onConnectDonorRecord: () -> Void = {}
 
     var body: some View {
-        TabView(selection: $selectedTab) {
+        TabView(
+            selection: $selectedTab
+        ) {
 
-            HomeView()
-                .tabItem {
-                    Label(
-                        "Home",
-                        systemImage: "house.fill"
-                    )
-                }
-                .tag(MainTab.home)
+            HomeView(
+                donorRecordsStore:
+                    donorRecordsStore,
+                onConnectDonorRecord:
+                    onConnectDonorRecord
+            )
+            .tabItem {
+                Label(
+                    "Home",
+                    systemImage:
+                        "house.fill"
+                )
+            }
+            .tag(MainTab.home)
 
             NearbyView()
                 .tabItem {
                     Label(
                         "Nearby",
-                        systemImage: "map.fill"
+                        systemImage:
+                            "map.fill"
                     )
                 }
                 .tag(MainTab.nearby)
@@ -63,7 +72,8 @@ struct MainTabView: View {
                 .tabItem {
                     Label(
                         "Profile",
-                        systemImage: "person.fill"
+                        systemImage:
+                            "person.fill"
                     )
                 }
                 .tag(MainTab.profile)
@@ -77,13 +87,14 @@ struct MainTabView: View {
 #Preview {
     MainTabView(
         selectedTab:
-            .constant(.history),
+            .constant(.home),
         donorRecordsStore:
             DonorRecordsStore(
-                linkState: .linked(
-                    profile:
-                        DonorDemoData.profile
-                ),
+                linkState:
+                    .linked(
+                        profile:
+                            DonorDemoData.profile
+                    ),
                 records:
                     DonorDemoData.records
             )
