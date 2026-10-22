@@ -11,10 +11,28 @@ import MapKit
 struct CampaignDetailsView: View {
 
     let location: DonationLocation
+
+    @ObservedObject var donorRecordsStore:
+        DonorRecordsStore
+
     let onDirections: (DonationLocation) -> Void
     let onNearbyAlert: (DonationLocation) -> Void
 
     @Environment(\.dismiss) private var dismiss
+
+    private var readinessPresentation:
+        DonationReadinessPresentation {
+
+        DonationReadinessPresentationBuilder
+            .presentation(
+                linkState:
+                    donorRecordsStore.linkState,
+                latestRecord:
+                    donorRecordsStore.latestRecord,
+                currentDate: Date(),
+                calendar: .current
+            )
+    }
 
     private var mapRegion: MKCoordinateRegion {
         MKCoordinateRegion(
@@ -186,33 +204,9 @@ struct CampaignDetailsView: View {
                 Spacer()
                     .frame(height: 12)
 
-                HStack(
-                    alignment: .top,
-                    spacing: 4
-                ) {
-                    Text("Your status:")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(Color("TextPrimary"))
-
-                    Text("You can donate again in 24 days.")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Color("TextPrimary"))
-                }
-                .padding(14)
-                .frame(
-                    maxWidth: .infinity,
-                    alignment: .leading
-                )
-                .background(Color("WarningAmberSoft"))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(
-                            Color("BorderPrimary"),
-                            lineWidth: 1
-                        )
-                }
-                .clipShape(
-                    RoundedRectangle(cornerRadius: 16)
+                ReadinessStatusCard(
+                    presentation:
+                        readinessPresentation
                 )
 
                 Spacer()
@@ -312,6 +306,16 @@ struct CampaignDetailsView: View {
                 longitude: 80.5353,
                 detail: "Sat · 9:00 AM"
             ),
+            donorRecordsStore:
+                DonorRecordsStore(
+                    linkState:
+                        .linked(
+                            profile:
+                                DonorDemoData.profile
+                        ),
+                    records:
+                        DonorDemoData.records
+                ),
             onDirections: { location in
                 print(
                     "Directions tapped:",
