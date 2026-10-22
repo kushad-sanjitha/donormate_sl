@@ -11,10 +11,28 @@ import MapKit
 struct BloodBankDetailsView: View {
 
     let location: DonationLocation
+
+    @ObservedObject var donorRecordsStore:
+        DonorRecordsStore
+
     let onDirections: (DonationLocation) -> Void
     let onNearbyAlert: (DonationLocation) -> Void
 
     @Environment(\.dismiss) private var dismiss
+
+    private var readinessPresentation:
+        DonationReadinessPresentation {
+
+        DonationReadinessPresentationBuilder
+            .presentation(
+                linkState:
+                    donorRecordsStore.linkState,
+                latestRecord:
+                    donorRecordsStore.latestRecord,
+                currentDate: Date(),
+                calendar: .current
+            )
+    }
 
     private var mapRegion: MKCoordinateRegion {
         MKCoordinateRegion(
@@ -185,35 +203,9 @@ struct BloodBankDetailsView: View {
                 Spacer()
                     .frame(height: 12)
 
-                HStack(
-                    alignment: .top,
-                    spacing: 4
-                ) {
-                    Text("Your status:")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(Color("TextPrimary"))
-
-                    Text(
-                        "recorded minimum donation interval completed."
-                    )
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color("TextPrimary"))
-                }
-                .padding(14)
-                .frame(
-                    maxWidth: .infinity,
-                    alignment: .leading
-                )
-                .background(Color("SuccessGreenSoft"))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(
-                            Color("SuccessGreenBorder"),
-                            lineWidth: 1
-                        )
-                }
-                .clipShape(
-                    RoundedRectangle(cornerRadius: 16)
+                ReadinessStatusCard(
+                    presentation:
+                        readinessPresentation
                 )
 
                 Spacer()
@@ -286,6 +278,16 @@ struct BloodBankDetailsView: View {
                 longitude: 80.5428,
                 detail: "Open today"
             ),
+            donorRecordsStore:
+                DonorRecordsStore(
+                    linkState:
+                        .linked(
+                            profile:
+                                DonorDemoData.profile
+                        ),
+                    records:
+                        DonorDemoData.records
+                ),
             onDirections: { location in
                 print(
                     "Get Directions tapped:",
@@ -301,3 +303,4 @@ struct BloodBankDetailsView: View {
         )
     }
 }
+

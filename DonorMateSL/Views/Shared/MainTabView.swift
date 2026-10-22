@@ -39,7 +39,10 @@ struct MainTabView: View {
                 accountProfile:
                     accountProfile,
                 onConnectDonorRecord:
-                    onConnectDonorRecord
+                    onConnectDonorRecord,
+                onFindNearby: {
+                    selectedTab = .nearby
+                }
             )
             .tabItem {
                 Label(
@@ -50,8 +53,11 @@ struct MainTabView: View {
             }
             .tag(MainTab.home)
 
-            NearbyView()
-                .tabItem {
+            NearbyView(
+                donorRecordsStore:
+                    donorRecordsStore
+            )
+            .tabItem {
                     Label(
                         "Nearby",
                         systemImage:
@@ -124,4 +130,3 @@ struct MainTabView: View {
         accountErrorMessage: nil
     )
 }
-

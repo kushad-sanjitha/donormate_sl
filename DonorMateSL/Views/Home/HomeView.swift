@@ -19,6 +19,7 @@ struct HomeView: View {
     let accountProfile: AccountProfile
 
     var onConnectDonorRecord: () -> Void = {}
+    var onFindNearby: () -> Void = {}
 
     @State private var currentDate = Date()
 
@@ -645,7 +646,12 @@ struct HomeView: View {
             ) {
 
                 NavigationLink {
-                    DonationReadinessView()
+                    DonationReadinessView(
+                        donorRecordsStore:
+                            donorRecordsStore,
+                        onFindNearby:
+                            onFindNearby
+                    )
                 } label: {
                     HomeQuickActionCard(
                         title:
@@ -753,4 +759,3 @@ struct HomeView: View {
             )
     )
 }
-

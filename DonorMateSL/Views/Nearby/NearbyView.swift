@@ -11,6 +11,9 @@ import Foundation
 
 struct NearbyView: View {
 
+    @ObservedObject var donorRecordsStore:
+        DonorRecordsStore
+
     private enum NearbyMode {
         case map
         case list
@@ -309,6 +312,8 @@ struct NearbyView: View {
                 case .camp:
                     CampaignDetailsView(
                         location: location,
+                        donorRecordsStore:
+                            donorRecordsStore,
                         onDirections: { location in
                             navigationPath.append(
                                 .route(
@@ -328,6 +333,8 @@ struct NearbyView: View {
                 case .bloodBank:
                     BloodBankDetailsView(
                         location: location,
+                        donorRecordsStore:
+                            donorRecordsStore,
                         onDirections: { location in
                             navigationPath.append(
                                 .route(
@@ -463,5 +470,16 @@ struct NearbyView: View {
 }
 
 #Preview {
-    NearbyView()
+    NearbyView(
+        donorRecordsStore:
+            DonorRecordsStore(
+                linkState:
+                    .linked(
+                        profile:
+                            DonorDemoData.profile
+                    ),
+                records:
+                    DonorDemoData.records
+            )
+    )
 }
