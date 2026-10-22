@@ -21,7 +21,12 @@ struct MainTabView: View {
     @ObservedObject var donorRecordsStore:
         DonorRecordsStore
 
+    let accountProfile: AccountProfile
+    let isAccountLoading: Bool
+    let accountErrorMessage: String?
+
     var onConnectDonorRecord: () -> Void = {}
+    var onSignOut: () -> Void = {}
 
     var body: some View {
         TabView(
@@ -31,6 +36,8 @@ struct MainTabView: View {
             HomeView(
                 donorRecordsStore:
                     donorRecordsStore,
+                accountProfile:
+                    accountProfile,
                 onConnectDonorRecord:
                     onConnectDonorRecord
             )
@@ -68,15 +75,24 @@ struct MainTabView: View {
             }
             .tag(MainTab.history)
 
-            ProfileView()
-                .tabItem {
-                    Label(
-                        "Profile",
-                        systemImage:
-                            "person.fill"
-                    )
-                }
-                .tag(MainTab.profile)
+            ProfileView(
+                accountProfile:
+                    accountProfile,
+                isLoading:
+                    isAccountLoading,
+                errorMessage:
+                    accountErrorMessage,
+                onSignOut:
+                    onSignOut
+            )
+            .tabItem {
+                Label(
+                    "Profile",
+                    systemImage:
+                        "person.fill"
+                )
+            }
+            .tag(MainTab.profile)
         }
         .tint(
             Color("DonorRed")
@@ -97,6 +113,15 @@ struct MainTabView: View {
                     ),
                 records:
                     DonorDemoData.records
-            )
+            ),
+        accountProfile:
+            AccountProfile(
+                uid: "preview-user",
+                displayName: "Kushad Dissanayake",
+                email: "kushad@example.com"
+            ),
+        isAccountLoading: false,
+        accountErrorMessage: nil
     )
 }
+

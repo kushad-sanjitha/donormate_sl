@@ -9,13 +9,14 @@ import SwiftUI
 
 struct ContentView: View {
 
-    private enum AppFlow {
+    private enum AppFlow: Equatable {
         case splash
         case onboarding
         case accountAccess
         case signIn
         case createAccount
         case resetPassword
+        case accountRecovery
         case connectDonorRecord
         case donorRecordLinked
         case permissionSetup
@@ -34,20 +35,37 @@ struct ContentView: View {
         case mainApp
     }
 
-    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.scenePhase)
+    private var scenePhase
 
-    @State private var currentFlow: AppFlow = .splash
+    @State private var currentFlow:
+        AppFlow = .splash
 
     @State private var permissionSetupSource:
-        PermissionSetupSource = .donorRecordLinked
+        PermissionSetupSource =
+            .donorRecordLinked
 
     @State private var connectDonorRecordSource:
-        ConnectDonorRecordSource = .authentication
+        ConnectDonorRecordSource =
+            .authentication
 
-    @State private var selectedMainTab: MainTab = .home
+    @State private var selectedMainTab:
+        MainTab = .home
+
+    @State private var waitingForSessionResolution =
+        false
+
+    @State private var isRestoredSessionUnlocking =
+        false
+
+    @State private var showBiometricUnlockFailure =
+        false
 
     @StateObject private var donorRecordsStore =
         DonorRecordsStore()
+
+    @StateObject private var accountSessionStore =
+        AccountSessionStore()
 
     @StateObject private var locationPermissionService =
         LocationPermissionService()
@@ -63,7 +81,8 @@ struct ContentView: View {
 
     @State private var faceIDUnavailable = false
 
-    private var faceIDStatus: FaceIDSetupStatus {
+    private var faceIDStatus:
+        FaceIDSetupStatus {
 
         if faceIDUnavailable {
             return .unavailable
@@ -82,41 +101,100 @@ struct ContentView: View {
 
             case .splash:
                 SplashView {
-                    currentFlow = .onboarding
+                    handleSplashContinue()
                 }
 
             case .onboarding:
                 OnboardingView(
                     onSkip: {
-                        currentFlow = .accountAccess
+                        currentFlow =
+                            .accountAccess
                     },
                     onFinished: {
-                        currentFlow = .accountAccess
+                        currentFlow =
+                            .accountAccess
                     }
                 )
 
             case .accountAccess:
                 AccountAccessView(
                     onSignIn: {
-                        currentFlow = .signIn
+                        accountSessionStore
+                            .clearError()
+
+                        currentFlow =
+                            .signIn
                     },
                     onCreateAccount: {
-                        currentFlow = .createAccount
+                        accountSessionStore
+                            .clearError()
+
+                        currentFlow =
+                            .createAccount
                     }
                 )
 
             case .signIn:
                 SignInView(
+                    isLoading:
+                        accountSessionStore
+                            .isLoading,
+                    authenticationErrorMessage:
+                        accountSessionStore
+                            .errorMessage,
                     onBack: {
-                        currentFlow = .accountAccess
+                        accountSessionStore
+                            .clearError()
+
+                        currentFlow =
+                            .accountAccess
                     },
                     onForgotPassword: {
-                        currentFlow = .resetPassword
+                        accountSessionStore
+                            .clearError()
+
+                        currentFlow =
+                            .resetPassword
                     },
                     onCreateAccount: {
-                        currentFlow = .createAccount
+                        accountSessionStore
+                            .clearError()
+
+                        currentFlow =
+                            .createAccount
                     },
                     onSignIn: {
+                        email,
+                        password in
+
+                        let succeeded =
+                            await accountSessionStore
+                                .signIn(
+                                    email:
+                                        email,
+                                    password:
+                                        password
+                                )
+
+                        guard succeeded else {
+
+                            if accountSessionStore
+                                .needsAccountRecovery {
+
+                                currentFlow =
+                                    .accountRecovery
+                            }
+
+                            return
+                        }
+
+                        guard hasValidAccountProfile else {
+                            currentFlow =
+                                .accountRecovery
+
+                            return
+                        }
+
                         connectDonorRecordSource =
                             .authentication
 
@@ -127,10 +205,54 @@ struct ContentView: View {
 
             case .createAccount:
                 CreateAccountView(
+                    isLoading:
+                        accountSessionStore
+                            .isLoading,
+                    authenticationErrorMessage:
+                        accountSessionStore
+                            .errorMessage,
                     onBack: {
-                        currentFlow = .accountAccess
+                        accountSessionStore
+                            .clearError()
+
+                        currentFlow =
+                            .accountAccess
                     },
                     onCreateAccount: {
+                        fullName,
+                        email,
+                        password in
+
+                        let succeeded =
+                            await accountSessionStore
+                                .createAccount(
+                                    displayName:
+                                        fullName,
+                                    email:
+                                        email,
+                                    password:
+                                        password
+                                )
+
+                        guard succeeded else {
+
+                            if accountSessionStore
+                                .needsAccountRecovery {
+
+                                currentFlow =
+                                    .accountRecovery
+                            }
+
+                            return
+                        }
+
+                        guard hasValidAccountProfile else {
+                            currentFlow =
+                                .accountRecovery
+
+                            return
+                        }
+
                         connectDonorRecordSource =
                             .authentication
 
@@ -141,18 +263,38 @@ struct ContentView: View {
 
             case .resetPassword:
                 ResetPasswordView(
+                    isLoading:
+                        accountSessionStore
+                            .isLoading,
+                    authenticationErrorMessage:
+                        accountSessionStore
+                            .errorMessage,
                     onBack: {
-                        currentFlow = .signIn
+                        accountSessionStore
+                            .clearError()
+
+                        currentFlow =
+                            .signIn
                     },
                     onSendResetLink: {
-                        print(
-                            "Reset link requested"
-                        )
+                        email in
+
+                        await accountSessionStore
+                            .requestPasswordReset(
+                                email: email
+                            )
                     },
                     onBackToSignIn: {
-                        currentFlow = .signIn
+                        accountSessionStore
+                            .clearError()
+
+                        currentFlow =
+                            .signIn
                     }
                 )
+
+            case .accountRecovery:
+                accountRecoveryScreen
 
             case .connectDonorRecord:
                 connectDonorRecordScreen
@@ -163,9 +305,11 @@ struct ContentView: View {
             case .permissionSetup:
                 PermissionSetupView(
                     locationStatus:
-                        locationPermissionService.status,
+                        locationPermissionService
+                            .status,
                     notificationStatus:
-                        notificationPermissionService.status,
+                        notificationPermissionService
+                            .status,
                     faceIDStatus:
                         faceIDStatus,
                     onBack: {
@@ -181,14 +325,17 @@ struct ContentView: View {
                     },
                     onContinue: {
                         refreshBiometricAvailability()
-                        currentFlow = .faceIDSetup
+
+                        currentFlow =
+                            .faceIDSetup
                     }
                 )
 
             case .faceIDSetup:
                 FaceIDSetupView(
                     onBack: {
-                        currentFlow = .permissionSetup
+                        currentFlow =
+                            .permissionSetup
                     },
                     onEnableFaceID: {
                         Task {
@@ -240,7 +387,8 @@ struct ContentView: View {
             case .faceIDUnavailable:
                 FaceIDUnavailableView(
                     onBack: {
-                        currentFlow = .faceIDSetup
+                        currentFlow =
+                            .faceIDSetup
                     },
                     onContinueWithPassword: {
                         faceIDProtectionEnabled =
@@ -251,50 +399,286 @@ struct ContentView: View {
                     },
                     onTryAgain: {
                         refreshBiometricAvailability()
+
                         currentFlow =
                             .faceIDSetup
                     }
                 )
 
             case .mainApp:
-                MainTabView(
-                    selectedTab:
-                        $selectedMainTab,
-                    donorRecordsStore:
-                        donorRecordsStore,
-                    onConnectDonorRecord: {
-                        selectedMainTab =
-                            .history
+                if let accountProfile =
+                    validAccountProfile {
 
-                        connectDonorRecordSource =
-                            .mainApp
+                    MainTabView(
+                        selectedTab:
+                            $selectedMainTab,
+                        donorRecordsStore:
+                            donorRecordsStore,
+                        accountProfile:
+                            accountProfile,
+                        isAccountLoading:
+                            accountSessionStore
+                                .isLoading,
+                        accountErrorMessage:
+                            accountSessionStore
+                                .errorMessage,
+                        onConnectDonorRecord: {
+                            selectedMainTab =
+                                .history
 
-                        currentFlow =
-                            .connectDonorRecord
-                    }
-                )
+                            connectDonorRecordSource =
+                                .mainApp
+
+                            currentFlow =
+                                .connectDonorRecord
+                        },
+                        onSignOut: {
+                            handleAccountSignOut()
+                        }
+                    )
+
+                } else {
+                    accountRecoveryScreen
+                }
             }
         }
         .onAppear {
             refreshSetupStatuses()
         }
         .onChange(of: scenePhase) {
-            _, newPhase in
+            _,
+            newPhase in
 
             if newPhase == .active {
                 refreshSetupStatuses()
             }
         }
+        .onChange(
+            of:
+                accountSessionStore
+                    .authenticatedUserID
+        ) {
+            previousUserID,
+            newUserID in
+
+            handleAuthenticatedUserChange(
+                previousUserID:
+                    previousUserID,
+                newUserID:
+                    newUserID
+            )
+        }
+        .onChange(
+            of:
+                accountSessionStore
+                    .isAuthStateResolved
+        ) {
+            _,
+            isResolved in
+
+            guard isResolved else {
+                return
+            }
+
+            if waitingForSessionResolution {
+                routeAfterSplash()
+            }
+
+            enforceProtectedFlowAccess()
+        }
+        .onChange(
+            of:
+                accountSessionStore
+                    .profile?.uid
+        ) {
+            _,
+            newProfileUserID in
+
+            if waitingForSessionResolution,
+               newProfileUserID != nil {
+
+                routeAfterSplash()
+            }
+
+            if currentFlow ==
+                .accountRecovery,
+               hasValidAccountProfile {
+
+                connectDonorRecordSource =
+                    .authentication
+
+                currentFlow =
+                    .connectDonorRecord
+            }
+
+            enforceProtectedFlowAccess()
+        }
+        .onChange(
+            of:
+                accountSessionStore
+                    .needsProfileSetup
+        ) {
+            _,
+            needsSetup in
+
+            guard needsSetup,
+                  accountSessionStore
+                    .authenticatedUserID != nil else {
+
+                return
+            }
+
+            switch currentFlow {
+
+            case .signIn,
+                 .createAccount,
+                 .accountRecovery:
+
+                currentFlow =
+                    .accountRecovery
+
+            default:
+                enforceProtectedFlowAccess()
+            }
+        }
+        .onChange(
+            of:
+                accountSessionStore
+                    .isLoading
+        ) {
+            _,
+            isLoading in
+
+            guard !isLoading else {
+                return
+            }
+
+            if waitingForSessionResolution {
+                routeAfterSplash()
+            }
+
+            enforceProtectedFlowAccess()
+        }
+        .alert(
+            "Face ID could not unlock DonorMate",
+            isPresented:
+                $showBiometricUnlockFailure
+        ) {
+            Button("Try Again") {
+                requestRestoredSessionUnlock()
+            }
+
+            Button("Use Password") {
+                usePasswordForRestoredSession()
+            }
+
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(
+                "Your Firebase session is still protected. Try Face ID again or sign in with your password."
+            )
+        }
     }
 
-    private var connectDonorRecordScreen: some View {
+    private var validAccountProfile:
+        AccountProfile? {
+
+        guard let userID =
+                accountSessionStore
+                    .authenticatedUserID,
+              let profile =
+                accountSessionStore
+                    .profile,
+              profile.uid == userID else {
+
+            return nil
+        }
+
+        return profile
+    }
+
+    private var hasValidAccountProfile:
+        Bool {
+
+        validAccountProfile != nil
+    }
+
+    private var accountRecoveryScreen:
+        some View {
+
+        AccountRecoveryView(
+            isLoading:
+                accountSessionStore
+                    .isLoading,
+            errorMessage:
+                accountSessionStore
+                    .errorMessage,
+            requiresName:
+                accountSessionStore
+                    .requiresProfileName,
+            hasPendingProfile:
+                accountSessionStore
+                    .pendingProfile != nil,
+            onCompleteName: {
+                displayName in
+
+                let succeeded =
+                    await accountSessionStore
+                        .completeMissingProfile(
+                            displayName:
+                                displayName
+                        )
+
+                guard succeeded,
+                      hasValidAccountProfile else {
+                    return
+                }
+
+                openAuthenticatedEntryFlow()
+            },
+            onRetrySetup: {
+
+                let succeeded =
+                    await accountSessionStore
+                        .retryProfileSetup()
+
+                guard succeeded,
+                      hasValidAccountProfile else {
+                    return
+                }
+
+                openAuthenticatedEntryFlow()
+            },
+            onRetryLoad: {
+
+                let succeeded =
+                    await accountSessionStore
+                        .retryProfileLoad()
+
+                guard succeeded,
+                      hasValidAccountProfile else {
+                    return
+                }
+
+                openAuthenticatedEntryFlow()
+            },
+            onSignOut: {
+                handleAccountSignOut()
+            }
+        )
+    }
+
+    private var connectDonorRecordScreen:
+        some View {
 
         ConnectDonorRecordView(
             onBack: {
                 handleConnectDonorRecordBack()
             },
             onFindRecord: {
-                loadDemoDonorData()
+                guard loadDemoDonorData() else {
+                    return
+                }
 
                 currentFlow =
                     .donorRecordLinked
@@ -311,7 +695,8 @@ struct ContentView: View {
     }
 
     @ViewBuilder
-    private var donorRecordLinkedScreen: some View {
+    private var donorRecordLinkedScreen:
+        some View {
 
         if let profile =
             donorRecordsStore.profile {
@@ -322,7 +707,8 @@ struct ContentView: View {
                 bloodGroup:
                     profile.bloodGroup,
                 donationCount:
-                    profile.reportedDonationCount,
+                    profile
+                        .reportedDonationCount,
                 isDemoData: true,
                 onContinue: {
                     handleDonorRecordLinkedContinue()
@@ -334,12 +720,302 @@ struct ContentView: View {
         }
     }
 
-    private func loadDemoDonorData() {
+    private func handleSplashContinue() {
 
-        donorRecordsStore.replaceLinkedData(
-            profile: DonorDemoData.profile,
-            records: DonorDemoData.records
-        )
+        if !accountSessionStore
+            .isAuthStateResolved
+            || accountSessionStore
+                .isLoading {
+
+            waitingForSessionResolution =
+                true
+
+            return
+        }
+
+        routeAfterSplash()
+    }
+
+    private func routeAfterSplash() {
+
+        guard accountSessionStore
+            .isAuthStateResolved else {
+
+            waitingForSessionResolution =
+                true
+
+            return
+        }
+
+        if accountSessionStore
+            .isLoading {
+
+            waitingForSessionResolution =
+                true
+
+            return
+        }
+
+        waitingForSessionResolution =
+            false
+
+        guard accountSessionStore
+            .authenticatedUserID != nil else {
+
+            currentFlow =
+                .onboarding
+
+            return
+        }
+
+        if hasValidAccountProfile {
+
+            if faceIDProtectionEnabled {
+                requestRestoredSessionUnlock()
+            } else {
+                openAuthenticatedEntryFlow()
+            }
+
+            return
+        }
+
+        currentFlow =
+            .accountRecovery
+    }
+
+    private func handleAuthenticatedUserChange(
+        previousUserID: String?,
+        newUserID: String?
+    ) {
+
+        if previousUserID != newUserID {
+
+            donorRecordsStore
+                .unlink()
+
+            if previousUserID != nil {
+                faceIDProtectionEnabled =
+                    false
+            }
+        }
+
+        guard accountSessionStore
+            .isAuthStateResolved else {
+
+            return
+        }
+
+        guard newUserID != nil else {
+
+            if requiresAuthenticatedAccount(
+                currentFlow
+            )
+            || currentFlow ==
+                .accountRecovery {
+
+                selectedMainTab =
+                    .home
+
+                connectDonorRecordSource =
+                    .authentication
+
+                currentFlow =
+                    .accountAccess
+            }
+
+            return
+        }
+
+        if waitingForSessionResolution {
+            routeAfterSplash()
+        }
+
+        enforceProtectedFlowAccess()
+    }
+
+    private func enforceProtectedFlowAccess() {
+
+        guard requiresAuthenticatedAccount(
+            currentFlow
+        ) else {
+            return
+        }
+
+        guard accountSessionStore
+            .isAuthStateResolved else {
+            return
+        }
+
+        guard accountSessionStore
+            .authenticatedUserID != nil else {
+
+            donorRecordsStore
+                .unlink()
+
+            selectedMainTab =
+                .home
+
+            currentFlow =
+                .accountAccess
+
+            return
+        }
+
+        if hasValidAccountProfile {
+            return
+        }
+
+        if accountSessionStore
+            .isLoading {
+
+            return
+        }
+
+        donorRecordsStore
+            .unlink()
+
+        currentFlow =
+            .accountRecovery
+    }
+
+    @discardableResult
+    private func loadDemoDonorData() -> Bool {
+
+        guard hasValidAccountProfile else {
+            currentFlow =
+                .accountRecovery
+
+            return false
+        }
+
+        donorRecordsStore
+            .replaceLinkedData(
+                profile:
+                    DonorDemoData.profile,
+                records:
+                    DonorDemoData.records
+            )
+
+        return true
+    }
+
+    private func openAuthenticatedEntryFlow() {
+
+        connectDonorRecordSource =
+            .authentication
+
+        currentFlow =
+            .connectDonorRecord
+    }
+
+    private func requestRestoredSessionUnlock() {
+
+        guard faceIDProtectionEnabled else {
+            openAuthenticatedEntryFlow()
+            return
+        }
+
+        guard hasValidAccountProfile else {
+            currentFlow =
+                .accountRecovery
+            return
+        }
+
+        guard !isRestoredSessionUnlocking else {
+            return
+        }
+
+        isRestoredSessionUnlocking =
+            true
+
+        Task {
+            let result =
+                await biometricAuthenticationService
+                    .authenticateWithFaceID()
+
+            isRestoredSessionUnlocking =
+                false
+
+            guard hasValidAccountProfile else {
+                currentFlow =
+                    .accountRecovery
+                return
+            }
+
+            switch result {
+
+            case .authenticationSucceeded:
+                faceIDUnavailable =
+                    false
+
+                openAuthenticatedEntryFlow()
+
+            case .unavailable:
+                faceIDUnavailable =
+                    true
+
+                showBiometricUnlockFailure =
+                    true
+
+            case .authenticationFailed:
+                showBiometricUnlockFailure =
+                    true
+
+            case .available:
+                break
+            }
+        }
+    }
+
+    private func usePasswordForRestoredSession() {
+
+        let signedOut =
+            accountSessionStore
+                .signOut()
+
+        guard signedOut else {
+            currentFlow =
+                .accountRecovery
+            return
+        }
+
+        donorRecordsStore
+            .unlink()
+
+        faceIDProtectionEnabled =
+            false
+
+        selectedMainTab =
+            .home
+
+        currentFlow =
+            .signIn
+    }
+
+    private func handleAccountSignOut() {
+
+        let signedOut =
+            accountSessionStore
+                .signOut()
+
+        guard signedOut else {
+            return
+        }
+
+        donorRecordsStore
+            .unlink()
+
+        faceIDProtectionEnabled =
+            false
+
+        selectedMainTab =
+            .home
+
+        connectDonorRecordSource =
+            .authentication
+
+        currentFlow =
+            .accountAccess
     }
 
     private func refreshSetupStatuses() {
@@ -358,16 +1034,20 @@ struct ContentView: View {
         biometricAuthenticationService
             .refreshAvailability()
 
-        switch biometricAuthenticationService.state {
+        switch biometricAuthenticationService
+            .state {
 
         case .available:
-            faceIDUnavailable = false
+            faceIDUnavailable =
+                false
 
         case .unavailable:
-            faceIDUnavailable = true
+            faceIDUnavailable =
+                true
 
         case .authenticationSucceeded:
-            faceIDUnavailable = false
+            faceIDUnavailable =
+                false
 
         case .authenticationFailed:
             break
@@ -379,15 +1059,30 @@ struct ContentView: View {
         switch connectDonorRecordSource {
 
         case .authentication:
-            currentFlow = .signIn
+            currentFlow =
+                .signIn
 
         case .mainApp:
-            selectedMainTab = .history
-            currentFlow = .mainApp
+            selectedMainTab =
+                .history
+
+            currentFlow =
+                .mainApp
         }
     }
 
     private func handleLinkLater() {
+
+        guard hasValidAccountProfile else {
+
+            currentFlow =
+                .accountRecovery
+
+            return
+        }
+
+        donorRecordsStore
+            .unlink()
 
         switch connectDonorRecordSource {
 
@@ -399,12 +1094,23 @@ struct ContentView: View {
                 .permissionSetup
 
         case .mainApp:
-            selectedMainTab = .history
-            currentFlow = .mainApp
+            selectedMainTab =
+                .history
+
+            currentFlow =
+                .mainApp
         }
     }
 
     private func handleDonorRecordLinkedContinue() {
+
+        guard hasValidAccountProfile else {
+
+            currentFlow =
+                .accountRecovery
+
+            return
+        }
 
         switch connectDonorRecordSource {
 
@@ -416,8 +1122,11 @@ struct ContentView: View {
                 .permissionSetup
 
         case .mainApp:
-            selectedMainTab = .history
-            currentFlow = .mainApp
+            selectedMainTab =
+                .history
+
+            currentFlow =
+                .mainApp
         }
     }
 
@@ -434,8 +1143,36 @@ struct ContentView: View {
                 .connectDonorRecord
         }
     }
+
+    private func requiresAuthenticatedAccount(
+        _ flow: AppFlow
+    ) -> Bool {
+
+        switch flow {
+
+        case .connectDonorRecord,
+             .donorRecordLinked,
+             .permissionSetup,
+             .faceIDSetup,
+             .faceIDUnavailable,
+             .mainApp:
+
+            return true
+
+        case .splash,
+             .onboarding,
+             .accountAccess,
+             .signIn,
+             .createAccount,
+             .resetPassword,
+             .accountRecovery:
+
+            return false
+        }
+    }
 }
 
 #Preview {
     ContentView()
 }
+

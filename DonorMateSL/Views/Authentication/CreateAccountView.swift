@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct CreateAccountView: View {
+
     @State private var fullName = ""
     @State private var email = ""
     @State private var password = ""
@@ -16,8 +17,22 @@ struct CreateAccountView: View {
     @State private var isPasswordVisible = false
     @State private var isConfirmPasswordVisible = false
 
+    @State private var validationErrorMessage:
+        String?
+
+    let isLoading: Bool
+    let authenticationErrorMessage: String?
+
     var onBack: () -> Void = {}
-    var onCreateAccount: () -> Void = {}
+
+    var onCreateAccount:
+        (String, String, String) async -> Void =
+            { _, _, _ in }
+
+    private var displayedErrorMessage: String? {
+        validationErrorMessage
+        ?? authenticationErrorMessage
+    }
 
     var body: some View {
         ScrollView {
@@ -28,37 +43,74 @@ struct CreateAccountView: View {
                     Button {
                         onBack()
                     } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundStyle(Color("TextPrimary"))
-                            .frame(width: 38, height: 38)
-                            .background(Color("SurfacePrimary"))
-                            .overlay {
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(
-                                        Color("BorderPrimary"),
-                                        lineWidth: 1
-                                    )
-                            }
-                            .clipShape(
-                                RoundedRectangle(cornerRadius: 12)
+                        Image(
+                            systemName:
+                                "chevron.left"
+                        )
+                        .font(
+                            .system(
+                                size: 16,
+                                weight: .bold
                             )
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
+                        )
+                        .foregroundStyle(
+                            Color("TextPrimary")
+                        )
+                        .frame(
+                            width: 38,
+                            height: 38
+                        )
+                        .background(
+                            Color("SurfacePrimary")
+                        )
+                        .overlay {
+                            RoundedRectangle(
+                                cornerRadius: 12
+                            )
+                            .stroke(
+                                Color(
+                                    "BorderPrimary"
+                                ),
+                                lineWidth: 1
+                            )
+                        }
+                        .clipShape(
+                            RoundedRectangle(
+                                cornerRadius: 12
+                            )
+                        )
+                        .frame(
+                            width: 44,
+                            height: 44
+                        )
+                        .contentShape(
+                            Rectangle()
+                        )
                     }
                     .buttonStyle(.plain)
+                    .disabled(isLoading)
                     .accessibilityLabel("Back")
 
                     Spacer()
 
                     Text("Create Account")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(Color("TextPrimary"))
+                        .font(
+                            .system(
+                                size: 15,
+                                weight: .bold
+                            )
+                        )
+                        .foregroundStyle(
+                            Color("TextPrimary")
+                        )
 
                     Spacer()
 
                     Color.clear
-                        .frame(width: 44, height: 44)
+                        .frame(
+                            width: 44,
+                            height: 44
+                        )
                 }
 
                 Spacer()
@@ -70,19 +122,37 @@ struct CreateAccountView: View {
                 ) {
 
                     Text("NEW ACCOUNT")
-                        .font(.system(size: 12, weight: .heavy))
-                        .foregroundStyle(Color("DonorRed"))
+                        .font(
+                            .system(
+                                size: 12,
+                                weight: .heavy
+                            )
+                        )
+                        .foregroundStyle(
+                            Color("DonorRed")
+                        )
 
-                    Text("Create your DonorMate account.")
-                        .font(.system(size: 28, weight: .heavy))
-                        .foregroundStyle(Color("TextPrimary"))
-                        .padding(.top, 10)
+                    Text(
+                        "Create your DonorMate account."
+                    )
+                    .font(
+                        .system(
+                            size: 28,
+                            weight: .heavy
+                        )
+                    )
+                    .foregroundStyle(
+                        Color("TextPrimary")
+                    )
+                    .padding(.top, 10)
 
                     Text(
                         "This account gives you secure access to the donor companion."
                     )
                     .font(.system(size: 14))
-                    .foregroundStyle(Color("TextSecondary"))
+                    .foregroundStyle(
+                        Color("TextSecondary")
+                    )
                     .lineSpacing(3)
                     .padding(.top, 10)
                 }
@@ -108,22 +178,40 @@ struct CreateAccountView: View {
                             text: $fullName
                         )
                         .font(.system(size: 14))
-                        .foregroundStyle(Color("TextPrimary"))
-                        .textInputAutocapitalization(.words)
+                        .foregroundStyle(
+                            Color("TextPrimary")
+                        )
+                        .textInputAutocapitalization(
+                            .words
+                        )
                         .autocorrectionDisabled()
                         .submitLabel(.next)
-                        .padding(.horizontal, 14)
+                        .disabled(isLoading)
+                        .padding(
+                            .horizontal,
+                            14
+                        )
                         .frame(height: 52)
-                        .background(Color("SurfacePrimary"))
+                        .background(
+                            Color(
+                                "SurfacePrimary"
+                            )
+                        )
                         .overlay {
-                            RoundedRectangle(cornerRadius: 13)
-                                .stroke(
-                                    Color("BorderPrimary"),
-                                    lineWidth: 1
-                                )
+                            RoundedRectangle(
+                                cornerRadius: 13
+                            )
+                            .stroke(
+                                Color(
+                                    "BorderPrimary"
+                                ),
+                                lineWidth: 1
+                            )
                         }
                         .clipShape(
-                            RoundedRectangle(cornerRadius: 13)
+                            RoundedRectangle(
+                                cornerRadius: 13
+                            )
                         )
                     }
 
@@ -139,23 +227,43 @@ struct CreateAccountView: View {
                             text: $email
                         )
                         .font(.system(size: 14))
-                        .foregroundStyle(Color("TextPrimary"))
-                        .textInputAutocapitalization(.never)
+                        .foregroundStyle(
+                            Color("TextPrimary")
+                        )
+                        .textInputAutocapitalization(
+                            .never
+                        )
                         .autocorrectionDisabled()
-                        .keyboardType(.emailAddress)
+                        .keyboardType(
+                            .emailAddress
+                        )
                         .submitLabel(.next)
-                        .padding(.horizontal, 14)
+                        .disabled(isLoading)
+                        .padding(
+                            .horizontal,
+                            14
+                        )
                         .frame(height: 52)
-                        .background(Color("SurfacePrimary"))
+                        .background(
+                            Color(
+                                "SurfacePrimary"
+                            )
+                        )
                         .overlay {
-                            RoundedRectangle(cornerRadius: 13)
-                                .stroke(
-                                    Color("BorderPrimary"),
-                                    lineWidth: 1
-                                )
+                            RoundedRectangle(
+                                cornerRadius: 13
+                            )
+                            .stroke(
+                                Color(
+                                    "BorderPrimary"
+                                ),
+                                lineWidth: 1
+                            )
                         }
                         .clipShape(
-                            RoundedRectangle(cornerRadius: 13)
+                            RoundedRectangle(
+                                cornerRadius: 13
+                            )
                         )
                     }
 
@@ -167,11 +275,16 @@ struct CreateAccountView: View {
                         fieldLabel("Password")
 
                         secureInput(
-                            placeholder: "Password",
-                            text: $password,
-                            isVisible: $isPasswordVisible,
-                            accessibilityLabel: "password",
-                            submitLabel: .next
+                            placeholder:
+                                "Password",
+                            text:
+                                $password,
+                            isVisible:
+                                $isPasswordVisible,
+                            accessibilityLabel:
+                                "password",
+                            submitLabel:
+                                .next
                         )
                     }
 
@@ -180,15 +293,25 @@ struct CreateAccountView: View {
                         spacing: 6
                     ) {
 
-                        fieldLabel("Confirm password")
+                        fieldLabel(
+                            "Confirm password"
+                        )
 
                         secureInput(
-                            placeholder: "Confirm password",
-                            text: $confirmPassword,
-                            isVisible: $isConfirmPasswordVisible,
-                            accessibilityLabel: "confirm password",
-                            submitLabel: .done
+                            placeholder:
+                                "Confirm password",
+                            text:
+                                $confirmPassword,
+                            isVisible:
+                                $isConfirmPasswordVisible,
+                            accessibilityLabel:
+                                "confirm password",
+                            submitLabel:
+                                .done
                         )
+                        .onSubmit {
+                            submitCreateAccount()
+                        }
                     }
                 }
 
@@ -199,32 +322,75 @@ struct CreateAccountView: View {
                     "By continuing, you agree to use DonorMate only for your own donor-linked information."
                 )
                 .font(.system(size: 12))
-                .foregroundStyle(Color("TextSecondary"))
+                .foregroundStyle(
+                    Color("TextSecondary")
+                )
                 .lineSpacing(2)
                 .frame(
                     maxWidth: .infinity,
                     alignment: .leading
                 )
 
+                if let displayedErrorMessage {
+
+                    Spacer()
+                        .frame(height: 12)
+
+                    Text(displayedErrorMessage)
+                        .font(.system(size: 12))
+                        .foregroundStyle(
+                            Color("DonorRed")
+                        )
+                        .frame(
+                            maxWidth: .infinity,
+                            alignment: .leading
+                        )
+                        .fixedSize(
+                            horizontal: false,
+                            vertical: true
+                        )
+                }
+
                 Spacer()
                     .frame(height: 18)
 
                 Button {
-                    onCreateAccount()
+                    submitCreateAccount()
                 } label: {
-                    Text("Create Account")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(
-                            maxWidth: .infinity,
-                            minHeight: 48
+                    Group {
+                        if isLoading {
+                            ProgressView()
+                                .tint(.white)
+                        } else {
+                            Text(
+                                "Create Account"
+                            )
+                            .font(
+                                .system(
+                                    size: 15,
+                                    weight: .bold
+                                )
+                            )
+                            .foregroundStyle(
+                                .white
+                            )
+                        }
+                    }
+                    .frame(
+                        maxWidth: .infinity,
+                        minHeight: 48
+                    )
+                    .background(
+                        Color("DonorRed")
+                    )
+                    .clipShape(
+                        RoundedRectangle(
+                            cornerRadius: 14
                         )
-                        .background(Color("DonorRed"))
-                        .clipShape(
-                            RoundedRectangle(cornerRadius: 14)
-                        )
+                    )
                 }
                 .buttonStyle(.plain)
+                .disabled(isLoading)
 
                 Spacer()
                     .frame(height: 26)
@@ -232,13 +398,25 @@ struct CreateAccountView: View {
             .padding(.horizontal, 18)
             .padding(.top, 18)
         }
-        .background(Color("BackgroundPrimary"))
+        .background(
+            Color("BackgroundPrimary")
+        )
     }
 
-    private func fieldLabel(_ title: String) -> some View {
+    private func fieldLabel(
+        _ title: String
+    ) -> some View {
+
         Text(title)
-            .font(.system(size: 12, weight: .semibold))
-            .foregroundStyle(Color("TextPrimary"))
+            .font(
+                .system(
+                    size: 12,
+                    weight: .semibold
+                )
+            )
+            .foregroundStyle(
+                Color("TextPrimary")
+            )
             .frame(
                 maxWidth: .infinity,
                 alignment: .leading
@@ -269,13 +447,19 @@ struct CreateAccountView: View {
                 }
             }
             .font(.system(size: 14))
-            .foregroundStyle(Color("TextPrimary"))
-            .textInputAutocapitalization(.never)
+            .foregroundStyle(
+                Color("TextPrimary")
+            )
+            .textInputAutocapitalization(
+                .never
+            )
             .autocorrectionDisabled()
             .submitLabel(submitLabel)
+            .disabled(isLoading)
 
             Button {
-                isVisible.wrappedValue.toggle()
+                isVisible.wrappedValue
+                    .toggle()
             } label: {
                 Image(
                     systemName:
@@ -283,12 +467,25 @@ struct CreateAccountView: View {
                         ? "eye.slash"
                         : "eye"
                 )
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(Color("TextSecondary"))
-                .frame(width: 32, height: 32)
-                .contentShape(Rectangle())
+                .font(
+                    .system(
+                        size: 16,
+                        weight: .semibold
+                    )
+                )
+                .foregroundStyle(
+                    Color("TextSecondary")
+                )
+                .frame(
+                    width: 32,
+                    height: 32
+                )
+                .contentShape(
+                    Rectangle()
+                )
             }
             .buttonStyle(.plain)
+            .disabled(isLoading)
             .accessibilityLabel(
                 isVisible.wrappedValue
                 ? "Hide \(accessibilityLabel)"
@@ -297,27 +494,94 @@ struct CreateAccountView: View {
         }
         .padding(.horizontal, 14)
         .frame(height: 52)
-        .background(Color("SurfacePrimary"))
+        .background(
+            Color("SurfacePrimary")
+        )
         .overlay {
-            RoundedRectangle(cornerRadius: 13)
-                .stroke(
-                    Color("BorderPrimary"),
-                    lineWidth: 1
-                )
+            RoundedRectangle(
+                cornerRadius: 13
+            )
+            .stroke(
+                Color("BorderPrimary"),
+                lineWidth: 1
+            )
         }
         .clipShape(
-            RoundedRectangle(cornerRadius: 13)
+            RoundedRectangle(
+                cornerRadius: 13
+            )
         )
+    }
+
+    private func submitCreateAccount() {
+
+        guard !isLoading else {
+            return
+        }
+
+        let cleanedName =
+            fullName.trimmingCharacters(
+                in: .whitespacesAndNewlines
+            )
+
+        let cleanedEmail =
+            email.trimmingCharacters(
+                in: .whitespacesAndNewlines
+            )
+
+        guard !cleanedName.isEmpty else {
+            validationErrorMessage =
+                "Enter your full name."
+            return
+        }
+
+        guard !cleanedEmail.isEmpty else {
+            validationErrorMessage =
+                "Enter your email address."
+            return
+        }
+
+        guard !password.isEmpty else {
+            validationErrorMessage =
+                "Enter a password."
+            return
+        }
+
+        guard password ==
+                confirmPassword else {
+
+            validationErrorMessage =
+                "Passwords do not match."
+            return
+        }
+
+        validationErrorMessage = nil
+
+        Task {
+            await onCreateAccount(
+                cleanedName,
+                cleanedEmail,
+                password
+            )
+        }
     }
 }
 
 #Preview {
     CreateAccountView(
+        isLoading: false,
+        authenticationErrorMessage: nil,
         onBack: {
             print("Back tapped")
         },
         onCreateAccount: {
-            print("Create Account submitted")
+            fullName,
+            email,
+            _ in
+
+            print(
+                "Create account submitted for \(fullName), \(email)"
+            )
         }
     )
 }

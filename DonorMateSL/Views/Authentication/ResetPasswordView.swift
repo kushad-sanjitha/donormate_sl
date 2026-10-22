@@ -8,13 +8,28 @@
 import SwiftUI
 
 struct ResetPasswordView: View {
+
     @State private var email = ""
+    @State private var validationErrorMessage: String?
+    @State private var didSendResetLink = false
 
-        var onBack: () -> Void = {}
-        var onSendResetLink: () -> Void = {}
-        var onBackToSignIn: () -> Void = {}
+    let isLoading: Bool
+    let authenticationErrorMessage: String?
 
-        var body: some View {
+    var onBack: () -> Void = {}
+
+    var onSendResetLink:
+        (String) async -> Bool = { _ in false }
+
+    var onBackToSignIn: () -> Void = {}
+
+    private var displayedErrorMessage: String? {
+        validationErrorMessage
+        ?? authenticationErrorMessage
+    }
+
+    var body: some View {
+        ScrollView {
             VStack(spacing: 0) {
 
                 HStack {
@@ -41,6 +56,7 @@ struct ResetPasswordView: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .disabled(isLoading)
                     .accessibilityLabel("Back")
 
                     Spacer()
@@ -99,7 +115,7 @@ struct ResetPasswordView: View {
                         .multilineTextAlignment(.center)
 
                     Text(
-                        "Enter the email linked to your DonorMate account. We will send password reset instructions."
+                        "Enter the email linked to your DonorMate account. If the request is accepted, Firebase will send password reset instructions."
                     )
                     .font(.system(size: 14))
                     .foregroundStyle(Color("TextSecondary"))
@@ -130,6 +146,7 @@ struct ResetPasswordView: View {
                     .autocorrectionDisabled()
                     .keyboardType(.emailAddress)
                     .submitLabel(.done)
+                    .disabled(isLoading)
                     .padding(.horizontal, 14)
                     .frame(height: 52)
                     .background(Color("SurfacePrimary"))
@@ -143,27 +160,76 @@ struct ResetPasswordView: View {
                     .clipShape(
                         RoundedRectangle(cornerRadius: 13)
                     )
+                    .onSubmit {
+                        submitResetRequest()
+                    }
+                    .onChange(of: email) {
+                        _, _ in
+
+                        validationErrorMessage = nil
+                        didSendResetLink = false
+                    }
+                }
+
+                if let displayedErrorMessage {
+                    Text(displayedErrorMessage)
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color("DonorRed"))
+                        .frame(
+                            maxWidth: .infinity,
+                            alignment: .leading
+                        )
+                        .fixedSize(
+                            horizontal: false,
+                            vertical: true
+                        )
+                        .padding(.top, 12)
+                }
+
+                if didSendResetLink {
+                    Text(
+                        "If this email can receive a reset request, password reset instructions have been sent."
+                    )
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color("TextSecondary"))
+                    .frame(
+                        maxWidth: .infinity,
+                        alignment: .leading
+                    )
+                    .fixedSize(
+                        horizontal: false,
+                        vertical: true
+                    )
+                    .padding(.top, 12)
                 }
 
                 Spacer()
                     .frame(height: 14)
 
                 Button {
-                    onSendResetLink()
+                    submitResetRequest()
                 } label: {
-                    Text("Send Reset Link")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(
-                            maxWidth: .infinity,
-                            minHeight: 48
-                        )
-                        .background(Color("DonorRed"))
-                        .clipShape(
-                            RoundedRectangle(cornerRadius: 14)
-                        )
+                    Group {
+                        if isLoading {
+                            ProgressView()
+                                .tint(.white)
+                        } else {
+                            Text("Send Reset Link")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundStyle(.white)
+                        }
+                    }
+                    .frame(
+                        maxWidth: .infinity,
+                        minHeight: 48
+                    )
+                    .background(Color("DonorRed"))
+                    .clipShape(
+                        RoundedRectangle(cornerRadius: 14)
+                    )
                 }
                 .buttonStyle(.plain)
+                .disabled(isLoading)
 
                 Spacer()
                     .frame(height: 10)
@@ -191,29 +257,62 @@ struct ResetPasswordView: View {
                         )
                 }
                 .buttonStyle(.plain)
+                .disabled(isLoading)
 
                 Spacer()
+                    .frame(height: 26)
             }
             .padding(.horizontal, 18)
             .padding(.top, 18)
-            .frame(
-                maxWidth: .infinity,
-                maxHeight: .infinity
-            )
-            .background(Color("BackgroundPrimary"))
         }
+        .background(Color("BackgroundPrimary"))
     }
 
-    #Preview {
-        ResetPasswordView(
-            onBack: {
-                print("Back tapped")
-            },
-            onSendResetLink: {
-                print("Reset link requested")
-            },
-            onBackToSignIn: {
-                print("Back to Sign In tapped")
-            }
-        )
+    private func submitResetRequest() {
+
+        guard !isLoading else {
+            return
+        }
+
+        let cleanedEmail =
+            email.trimmingCharacters(
+                in: .whitespacesAndNewlines
+            )
+
+        guard !cleanedEmail.isEmpty else {
+            validationErrorMessage =
+                "Enter your email address."
+            return
+        }
+
+        validationErrorMessage = nil
+        didSendResetLink = false
+
+        Task {
+            didSendResetLink =
+                await onSendResetLink(
+                    cleanedEmail
+                )
+        }
     }
+}
+
+#Preview {
+    ResetPasswordView(
+        isLoading: false,
+        authenticationErrorMessage: nil,
+        onBack: {
+            print("Back tapped")
+        },
+        onSendResetLink: {
+            email in
+
+            print("Reset link requested for \(email)")
+            return true
+        },
+        onBackToSignIn: {
+            print("Back to Sign In tapped")
+        }
+    )
+}
+
