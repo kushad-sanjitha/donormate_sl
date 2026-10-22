@@ -16,6 +16,8 @@ struct HomeView: View {
     @ObservedObject var donorRecordsStore:
         DonorRecordsStore
 
+    let accountProfile: AccountProfile
+
     var onConnectDonorRecord: () -> Void = {}
 
     @State private var currentDate = Date()
@@ -44,6 +46,48 @@ struct HomeView: View {
                 calendar:
                     calendar
             )
+    }
+
+
+    private var accountGreeting: String {
+
+        let nameParts =
+            accountProfile.displayName
+                .split {
+                    $0.isWhitespace
+                }
+
+        guard let firstName =
+                nameParts.first else {
+
+            return "Welcome to DonorMate"
+        }
+
+        return "Hi, \(firstName)"
+    }
+
+    private var accountInitials: String? {
+
+        let nameParts =
+            accountProfile.displayName
+                .split {
+                    $0.isWhitespace
+                }
+
+        guard !nameParts.isEmpty else {
+            return nil
+        }
+
+        return nameParts
+            .prefix(2)
+            .compactMap {
+                $0.first
+            }
+            .map {
+                    String($0)
+                }
+            .joined()
+            .uppercased()
     }
 
     var body: some View {
@@ -116,7 +160,7 @@ struct HomeView: View {
                     )
 
                 Text(
-                    presentation.greeting
+                    accountGreeting
                 )
                 .font(
                     .system(
@@ -142,7 +186,7 @@ struct HomeView: View {
                     )
 
                 if let initials =
-                    presentation.initials {
+                    accountInitials {
 
                     Text(initials)
                         .font(
@@ -667,6 +711,12 @@ struct HomeView: View {
                     ),
                 records:
                     DonorDemoData.records
+            ),
+        accountProfile:
+            AccountProfile(
+                uid: "preview-user",
+                displayName: "Kushad Dissanayake",
+                email: "kushad@example.com"
             )
     )
 }
@@ -674,7 +724,13 @@ struct HomeView: View {
 #Preview("Unlinked Donor") {
     HomeView(
         donorRecordsStore:
-            DonorRecordsStore()
+            DonorRecordsStore(),
+        accountProfile:
+            AccountProfile(
+                uid: "preview-user",
+                displayName: "Kushad Dissanayake",
+                email: "kushad@example.com"
+            )
     )
 }
 
@@ -688,6 +744,13 @@ struct HomeView: View {
                             DonorDemoData.profile
                     ),
                 records: []
+            ),
+        accountProfile:
+            AccountProfile(
+                uid: "preview-user",
+                displayName: "Kushad Dissanayake",
+                email: "kushad@example.com"
             )
     )
 }
+

@@ -14,6 +14,7 @@ nonisolated enum AccountServiceError:
     Sendable {
 
     case invalidDisplayName
+    case invalidEmail
     case missingAuthenticatedUser
     case missingEmail
     case profileNotFound
@@ -31,6 +32,9 @@ nonisolated enum AccountServiceError:
 
         case .invalidDisplayName:
             return "Enter a valid full name between 1 and 80 characters."
+
+        case .invalidEmail:
+            return "Enter a valid email address."
 
         case .missingAuthenticatedUser:
             return "No authenticated account is available."
@@ -82,6 +86,10 @@ protocol AccountServicing: AnyObject {
     func completeCurrentProfile(
         displayName: String
     ) async throws -> AccountProfile
+
+    func sendPasswordReset(
+        email: String
+    ) async throws
 
     func signOut() throws
 
@@ -334,6 +342,27 @@ final class FirebaseAccountService:
         return profile
     }
 
+    func sendPasswordReset(
+        email: String
+    ) async throws {
+
+        let cleanedEmail =
+            email
+                .trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                )
+                .lowercased()
+
+        guard !cleanedEmail.isEmpty else {
+            throw AccountServiceError
+                .invalidEmail
+        }
+
+        try await auth.sendPasswordReset(
+            withEmail: cleanedEmail
+        )
+    }
+
     func signOut() throws {
         try auth.signOut()
     }
@@ -350,9 +379,12 @@ final class FirebaseAccountService:
                 _,
                 user in
 
+                let userID =
+                    user?.uid
+
                 Task { @MainActor in
                     handler(
-                        user?.uid
+                        userID
                     )
                 }
             }
@@ -491,3 +523,4 @@ final class FirebaseAccountService:
         return cleanedName
     }
 }
+

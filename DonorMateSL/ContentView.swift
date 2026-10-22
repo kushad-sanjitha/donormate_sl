@@ -55,6 +55,12 @@ struct ContentView: View {
     @State private var waitingForSessionResolution =
         false
 
+    @State private var isRestoredSessionUnlocking =
+        false
+
+    @State private var showBiometricUnlockFailure =
+        false
+
     @StateObject private var donorRecordsStore =
         DonorRecordsStore()
 
@@ -173,7 +179,7 @@ struct ContentView: View {
                         guard succeeded else {
 
                             if accountSessionStore
-                                .needsProfileSetup {
+                                .needsAccountRecovery {
 
                                 currentFlow =
                                     .accountRecovery
@@ -231,7 +237,7 @@ struct ContentView: View {
                         guard succeeded else {
 
                             if accountSessionStore
-                                .needsProfileSetup {
+                                .needsAccountRecovery {
 
                                 currentFlow =
                                     .accountRecovery
@@ -257,104 +263,38 @@ struct ContentView: View {
 
             case .resetPassword:
                 ResetPasswordView(
+                    isLoading:
+                        accountSessionStore
+                            .isLoading,
+                    authenticationErrorMessage:
+                        accountSessionStore
+                            .errorMessage,
                     onBack: {
+                        accountSessionStore
+                            .clearError()
+
                         currentFlow =
                             .signIn
                     },
                     onSendResetLink: {
-                        print(
-                            "Reset link requested"
-                        )
+                        email in
+
+                        await accountSessionStore
+                            .requestPasswordReset(
+                                email: email
+                            )
                     },
                     onBackToSignIn: {
+                        accountSessionStore
+                            .clearError()
+
                         currentFlow =
                             .signIn
                     }
                 )
 
             case .accountRecovery:
-                AccountRecoveryView(
-                    isLoading:
-                        accountSessionStore
-                            .isLoading,
-                    errorMessage:
-                        accountSessionStore
-                            .errorMessage,
-                    requiresName:
-                        accountSessionStore
-                            .requiresProfileName,
-                    hasPendingProfile:
-                        accountSessionStore
-                            .pendingProfile != nil,
-                    onCompleteName: {
-                        displayName in
-
-                        let succeeded =
-                            await accountSessionStore
-                                .completeMissingProfile(
-                                    displayName:
-                                        displayName
-                                )
-
-                        guard succeeded,
-                              hasValidAccountProfile else {
-                            return
-                        }
-
-                        connectDonorRecordSource =
-                            .authentication
-
-                        currentFlow =
-                            .connectDonorRecord
-                    },
-                    onRetrySetup: {
-
-                        let succeeded =
-                            await accountSessionStore
-                                .retryProfileSetup()
-
-                        guard succeeded,
-                              hasValidAccountProfile else {
-                            return
-                        }
-
-                        connectDonorRecordSource =
-                            .authentication
-
-                        currentFlow =
-                            .connectDonorRecord
-                    },
-                    onRetryLoad: {
-
-                        let succeeded =
-                            await accountSessionStore
-                                .retryProfileLoad()
-
-                        guard succeeded,
-                              hasValidAccountProfile else {
-                            return
-                        }
-
-                        connectDonorRecordSource =
-                            .authentication
-
-                        currentFlow =
-                            .connectDonorRecord
-                    },
-                    onSignOut: {
-                        accountSessionStore
-                            .signOut()
-
-                        donorRecordsStore
-                            .unlink()
-
-                        selectedMainTab =
-                            .home
-
-                        currentFlow =
-                            .accountAccess
-                    }
-                )
+                accountRecoveryScreen
 
             case .connectDonorRecord:
                 connectDonorRecordScreen
@@ -466,22 +406,40 @@ struct ContentView: View {
                 )
 
             case .mainApp:
-                MainTabView(
-                    selectedTab:
-                        $selectedMainTab,
-                    donorRecordsStore:
-                        donorRecordsStore,
-                    onConnectDonorRecord: {
-                        selectedMainTab =
-                            .history
+                if let accountProfile =
+                    validAccountProfile {
 
-                        connectDonorRecordSource =
-                            .mainApp
+                    MainTabView(
+                        selectedTab:
+                            $selectedMainTab,
+                        donorRecordsStore:
+                            donorRecordsStore,
+                        accountProfile:
+                            accountProfile,
+                        isAccountLoading:
+                            accountSessionStore
+                                .isLoading,
+                        accountErrorMessage:
+                            accountSessionStore
+                                .errorMessage,
+                        onConnectDonorRecord: {
+                            selectedMainTab =
+                                .history
 
-                        currentFlow =
-                            .connectDonorRecord
-                    }
-                )
+                            connectDonorRecordSource =
+                                .mainApp
+
+                            currentFlow =
+                                .connectDonorRecord
+                        },
+                        onSignOut: {
+                            handleAccountSignOut()
+                        }
+                    )
+
+                } else {
+                    accountRecoveryScreen
+                }
             }
         }
         .onAppear {
@@ -601,22 +559,113 @@ struct ContentView: View {
 
             enforceProtectedFlowAccess()
         }
+        .alert(
+            "Face ID could not unlock DonorMate",
+            isPresented:
+                $showBiometricUnlockFailure
+        ) {
+            Button("Try Again") {
+                requestRestoredSessionUnlock()
+            }
+
+            Button("Use Password") {
+                usePasswordForRestoredSession()
+            }
+
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(
+                "Your Firebase session is still protected. Try Face ID again or sign in with your password."
+            )
+        }
     }
 
-    private var hasValidAccountProfile:
-        Bool {
+    private var validAccountProfile:
+        AccountProfile? {
 
         guard let userID =
                 accountSessionStore
                     .authenticatedUserID,
               let profile =
                 accountSessionStore
-                    .profile else {
+                    .profile,
+              profile.uid == userID else {
 
-            return false
+            return nil
         }
 
-        return profile.uid == userID
+        return profile
+    }
+
+    private var hasValidAccountProfile:
+        Bool {
+
+        validAccountProfile != nil
+    }
+
+    private var accountRecoveryScreen:
+        some View {
+
+        AccountRecoveryView(
+            isLoading:
+                accountSessionStore
+                    .isLoading,
+            errorMessage:
+                accountSessionStore
+                    .errorMessage,
+            requiresName:
+                accountSessionStore
+                    .requiresProfileName,
+            hasPendingProfile:
+                accountSessionStore
+                    .pendingProfile != nil,
+            onCompleteName: {
+                displayName in
+
+                let succeeded =
+                    await accountSessionStore
+                        .completeMissingProfile(
+                            displayName:
+                                displayName
+                        )
+
+                guard succeeded,
+                      hasValidAccountProfile else {
+                    return
+                }
+
+                openAuthenticatedEntryFlow()
+            },
+            onRetrySetup: {
+
+                let succeeded =
+                    await accountSessionStore
+                        .retryProfileSetup()
+
+                guard succeeded,
+                      hasValidAccountProfile else {
+                    return
+                }
+
+                openAuthenticatedEntryFlow()
+            },
+            onRetryLoad: {
+
+                let succeeded =
+                    await accountSessionStore
+                        .retryProfileLoad()
+
+                guard succeeded,
+                      hasValidAccountProfile else {
+                    return
+                }
+
+                openAuthenticatedEntryFlow()
+            },
+            onSignOut: {
+                handleAccountSignOut()
+            }
+        )
     }
 
     private var connectDonorRecordScreen:
@@ -627,7 +676,9 @@ struct ContentView: View {
                 handleConnectDonorRecordBack()
             },
             onFindRecord: {
-                loadDemoDonorData()
+                guard loadDemoDonorData() else {
+                    return
+                }
 
                 currentFlow =
                     .donorRecordLinked
@@ -719,11 +770,11 @@ struct ContentView: View {
 
         if hasValidAccountProfile {
 
-            connectDonorRecordSource =
-                .authentication
-
-            currentFlow =
-                .connectDonorRecord
+            if faceIDProtectionEnabled {
+                requestRestoredSessionUnlock()
+            } else {
+                openAuthenticatedEntryFlow()
+            }
 
             return
         }
@@ -741,6 +792,11 @@ struct ContentView: View {
 
             donorRecordsStore
                 .unlink()
+
+            if previousUserID != nil {
+                faceIDProtectionEnabled =
+                    false
+            }
         }
 
         guard accountSessionStore
@@ -822,13 +878,14 @@ struct ContentView: View {
             .accountRecovery
     }
 
-    private func loadDemoDonorData() {
+    @discardableResult
+    private func loadDemoDonorData() -> Bool {
 
         guard hasValidAccountProfile else {
             currentFlow =
                 .accountRecovery
 
-            return
+            return false
         }
 
         donorRecordsStore
@@ -838,6 +895,127 @@ struct ContentView: View {
                 records:
                     DonorDemoData.records
             )
+
+        return true
+    }
+
+    private func openAuthenticatedEntryFlow() {
+
+        connectDonorRecordSource =
+            .authentication
+
+        currentFlow =
+            .connectDonorRecord
+    }
+
+    private func requestRestoredSessionUnlock() {
+
+        guard faceIDProtectionEnabled else {
+            openAuthenticatedEntryFlow()
+            return
+        }
+
+        guard hasValidAccountProfile else {
+            currentFlow =
+                .accountRecovery
+            return
+        }
+
+        guard !isRestoredSessionUnlocking else {
+            return
+        }
+
+        isRestoredSessionUnlocking =
+            true
+
+        Task {
+            let result =
+                await biometricAuthenticationService
+                    .authenticateWithFaceID()
+
+            isRestoredSessionUnlocking =
+                false
+
+            guard hasValidAccountProfile else {
+                currentFlow =
+                    .accountRecovery
+                return
+            }
+
+            switch result {
+
+            case .authenticationSucceeded:
+                faceIDUnavailable =
+                    false
+
+                openAuthenticatedEntryFlow()
+
+            case .unavailable:
+                faceIDUnavailable =
+                    true
+
+                showBiometricUnlockFailure =
+                    true
+
+            case .authenticationFailed:
+                showBiometricUnlockFailure =
+                    true
+
+            case .available:
+                break
+            }
+        }
+    }
+
+    private func usePasswordForRestoredSession() {
+
+        let signedOut =
+            accountSessionStore
+                .signOut()
+
+        guard signedOut else {
+            currentFlow =
+                .accountRecovery
+            return
+        }
+
+        donorRecordsStore
+            .unlink()
+
+        faceIDProtectionEnabled =
+            false
+
+        selectedMainTab =
+            .home
+
+        currentFlow =
+            .signIn
+    }
+
+    private func handleAccountSignOut() {
+
+        let signedOut =
+            accountSessionStore
+                .signOut()
+
+        guard signedOut else {
+            return
+        }
+
+        donorRecordsStore
+            .unlink()
+
+        faceIDProtectionEnabled =
+            false
+
+        selectedMainTab =
+            .home
+
+        connectDonorRecordSource =
+            .authentication
+
+        currentFlow =
+            .accountAccess
     }
 
     private func refreshSetupStatuses() {
@@ -994,272 +1172,7 @@ struct ContentView: View {
     }
 }
 
-private struct AccountRecoveryView:
-    View {
-
-    @State private var displayName = ""
-
-    let isLoading: Bool
-    let errorMessage: String?
-    let requiresName: Bool
-    let hasPendingProfile: Bool
-
-    let onCompleteName:
-        (String) async -> Void
-
-    let onRetrySetup:
-        () async -> Void
-
-    let onRetryLoad:
-        () async -> Void
-
-    let onSignOut:
-        () -> Void
-
-    var body: some View {
-        ScrollView {
-            VStack(
-                alignment: .leading,
-                spacing: 0
-            ) {
-
-                Text("ACCOUNT SETUP")
-                    .font(
-                        .system(
-                            size: 12,
-                            weight: .heavy
-                        )
-                    )
-                    .foregroundStyle(
-                        Color("DonorRed")
-                    )
-
-                Text(
-                    "Finish your DonorMate account."
-                )
-                .font(
-                    .system(
-                        size: 28,
-                        weight: .heavy
-                    )
-                )
-                .foregroundStyle(
-                    Color("TextPrimary")
-                )
-                .padding(.top, 10)
-
-                Text(recoveryDescription)
-                    .font(.system(size: 14))
-                    .foregroundStyle(
-                        Color("TextSecondary")
-                    )
-                    .lineSpacing(3)
-                    .padding(.top, 10)
-
-                if requiresName {
-
-                    Text("Full name")
-                        .font(
-                            .system(
-                                size: 12,
-                                weight: .semibold
-                            )
-                        )
-                        .foregroundStyle(
-                            Color("TextPrimary")
-                        )
-                        .padding(.top, 24)
-
-                    TextField(
-                        "Your full name",
-                        text: $displayName
-                    )
-                    .font(.system(size: 14))
-                    .foregroundStyle(
-                        Color("TextPrimary")
-                    )
-                    .textInputAutocapitalization(
-                        .words
-                    )
-                    .autocorrectionDisabled()
-                    .disabled(isLoading)
-                    .padding(.horizontal, 14)
-                    .frame(height: 52)
-                    .background(
-                        Color("SurfacePrimary")
-                    )
-                    .overlay {
-                        RoundedRectangle(
-                            cornerRadius: 13
-                        )
-                        .stroke(
-                            Color("BorderPrimary"),
-                            lineWidth: 1
-                        )
-                    }
-                    .clipShape(
-                        RoundedRectangle(
-                            cornerRadius: 13
-                        )
-                    )
-                    .padding(.top, 6)
-                }
-
-                if let errorMessage {
-
-                    Text(errorMessage)
-                        .font(.system(size: 12))
-                        .foregroundStyle(
-                            Color("DonorRed")
-                        )
-                        .fixedSize(
-                            horizontal: false,
-                            vertical: true
-                        )
-                        .padding(.top, 16)
-                }
-
-                Button {
-                    performPrimaryAction()
-                } label: {
-                    Group {
-                        if isLoading {
-
-                            ProgressView()
-                                .tint(.white)
-
-                        } else {
-
-                            Text(primaryButtonTitle)
-                                .font(
-                                    .system(
-                                        size: 15,
-                                        weight: .bold
-                                    )
-                                )
-                                .foregroundStyle(
-                                    .white
-                                )
-                        }
-                    }
-                    .frame(
-                        maxWidth: .infinity,
-                        minHeight: 48
-                    )
-                    .background(
-                        Color("DonorRed")
-                    )
-                    .clipShape(
-                        RoundedRectangle(
-                            cornerRadius: 14
-                        )
-                    )
-                }
-                .buttonStyle(.plain)
-                .disabled(
-                    isLoading
-                    || (
-                        requiresName
-                        && displayName
-                            .trimmingCharacters(
-                                in:
-                                    .whitespacesAndNewlines
-                            )
-                            .isEmpty
-                    )
-                )
-                .padding(.top, 24)
-
-                Button {
-                    onSignOut()
-                } label: {
-                    Text("Sign Out")
-                        .font(
-                            .system(
-                                size: 14,
-                                weight: .bold
-                            )
-                        )
-                        .foregroundStyle(
-                            Color("DonorRed")
-                        )
-                        .frame(
-                            maxWidth: .infinity,
-                            minHeight: 46
-                        )
-                }
-                .buttonStyle(.plain)
-                .disabled(isLoading)
-                .padding(.top, 8)
-            }
-            .padding(.horizontal, 18)
-            .padding(.top, 36)
-        }
-        .background(
-            Color("BackgroundPrimary")
-        )
-    }
-
-    private var recoveryDescription:
-        String {
-
-        if requiresName {
-            return "Your Firebase account is signed in, but your profile needs your name before setup can continue."
-        }
-
-        if hasPendingProfile {
-            return "Your Firebase account was created, but the profile could not be saved. Retry the profile setup without creating another account."
-        }
-
-        return "Your Firebase session is still valid, but your account profile could not be loaded. Check your connection and try again."
-    }
-
-    private var primaryButtonTitle:
-        String {
-
-        if requiresName {
-            return "Complete Profile"
-        }
-
-        if hasPendingProfile {
-            return "Retry Profile Setup"
-        }
-
-        return "Retry"
-    }
-
-    private func performPrimaryAction() {
-
-        guard !isLoading else {
-            return
-        }
-
-        Task {
-            if requiresName {
-
-                let cleanedName =
-                    displayName
-                        .trimmingCharacters(
-                            in:
-                                .whitespacesAndNewlines
-                        )
-
-                await onCompleteName(
-                    cleanedName
-                )
-
-            } else if hasPendingProfile {
-
-                await onRetrySetup()
-
-            } else {
-
-                await onRetryLoad()
-            }
-        }
-    }
-}
-
 #Preview {
     ContentView()
 }
+

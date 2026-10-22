@@ -76,6 +76,15 @@ final class AccountSessionStore:
         || requiresProfileName
     }
 
+    var needsAccountRecovery: Bool {
+        guard let authenticatedUserID else {
+            return false
+        }
+
+        return profile?.uid !=
+            authenticatedUserID
+    }
+
     func createAccount(
         displayName: String,
         email: String,
@@ -557,7 +566,58 @@ final class AccountSessionStore:
         }
     }
 
-    func signOut() {
+
+    func requestPasswordReset(
+        email: String
+    ) async -> Bool {
+
+        guard !isLoading else {
+            return false
+        }
+
+        let operationID =
+            beginManualOperation(
+                isAuthentication: false
+            )
+
+        defer {
+            finishManualOperation(
+                operationID
+            )
+        }
+
+        do {
+            try await accountService
+                .sendPasswordReset(
+                    email: email
+                )
+
+            guard isManualOperationCurrent(
+                operationID
+            ) else {
+                return false
+            }
+
+            errorMessage = nil
+            return true
+
+        } catch {
+
+            guard isManualOperationCurrent(
+                operationID
+            ) else {
+                return false
+            }
+
+            errorMessage =
+                error.localizedDescription
+
+            return false
+        }
+    }
+
+    @discardableResult
+    func signOut() -> Bool {
 
         do {
             try accountService
@@ -569,10 +629,14 @@ final class AccountSessionStore:
 
             isAuthStateResolved = true
 
+            return true
+
         } catch {
 
             errorMessage =
                 error.localizedDescription
+
+            return false
         }
     }
 
@@ -1136,3 +1200,4 @@ final class AccountSessionStore:
             uid
     }
 }
+
