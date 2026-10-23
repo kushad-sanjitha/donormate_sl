@@ -12,8 +12,17 @@ struct CampaignDetailsView: View {
 
     let location: DonationLocation
 
-    @ObservedObject var donorRecordsStore:
-        DonorRecordsStore
+    @ObservedObject var donorRecordsStore: DonorRecordsStore
+    @ObservedObject var currentLocationService: CurrentLocationService
+
+    private var distanceText: String? {
+        guard let userLocation = currentLocationService.currentLocation else {
+            return nil
+        }
+        return LocationDistanceCalculator.formattedDistance(
+            from: userLocation, to: location
+        )
+    }
 
     let onDirections: (DonationLocation) -> Void
     let onNearbyAlert: (DonationLocation) -> Void
@@ -134,9 +143,7 @@ struct CampaignDetailsView: View {
                 Spacer()
                     .frame(height: 4)
 
-                Text(
-                    "Saturday, 26 September · 9:00 AM–3:00 PM"
-                )
+                Text(location.detail)
                 .font(.system(size: 12))
                 .foregroundStyle(Color("TextSecondary"))
                 .frame(
@@ -150,8 +157,8 @@ struct CampaignDetailsView: View {
                 DetailInfoRow(
                     systemImage: "mappin",
                     label: "Venue",
-                    value: "Matara Town Hall",
-                    supportingText: "2.4 km away",
+                    value: location.venue ?? "Venue unavailable",
+                    supportingText: distanceText.map { "\($0) away" },
                     iconForeground: Color("TextSecondary")
                 )
 
@@ -161,7 +168,7 @@ struct CampaignDetailsView: View {
                 DetailInfoRow(
                     systemImage: "cross.case.fill",
                     label: "Organised by",
-                    value: "Matara Blood Bank",
+                    value: location.organiser ?? "Organiser unavailable",
                     iconForeground: Color("TextSecondary")
                 )
 
@@ -281,6 +288,7 @@ struct CampaignDetailsView: View {
                     records:
                         DonorDemoData.records
                 ),
+            currentLocationService: CurrentLocationService(),
             onDirections: { location in
                 print(
                     "Directions tapped:",
@@ -296,4 +304,3 @@ struct CampaignDetailsView: View {
         )
     }
 }
-

@@ -21,6 +21,65 @@ actor NearbyAlertMonitorService {
 
     private var monitor: CLMonitor?
 
+    private var locationsByID: [String: DonationLocation] = [:]
+    private var hasRegisteredLocations = false
+
+    func replaceLocations(_ locations: [DonationLocation]) async {
+        let updated = Dictionary(
+            locations.map { ($0.id, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
+
+        guard !hasRegisteredLocations || updated != locationsByID else {
+            return
+        }
+
+        let previous = locationsByID
+        let wasRegistered = hasRegisteredLocations
+        locationsByID = updated
+        hasRegisteredLocations = true
+
+        let monitor = await locationMonitor()
+        let existingIdentifiers = await monitor.identifiers
+
+        for identifier in existingIdentifiers {
+            guard let id = locationID(from: identifier) else {
+                continue
+            }
+
+            guard let location = locationsByID[id] else {
+                await monitor.remove(identifier)
+                continue
+            }
+
+            if wasRegistered,
+               let old = previous[id],
+               old.latitude == location.latitude,
+               old.longitude == location.longitude {
+                continue
+            }
+
+            await monitor.remove(identifier)
+
+            let condition = CLMonitor.CircularGeographicCondition(
+                center: CLLocationCoordinate2D(
+                    latitude: location.latitude,
+                    longitude: location.longitude
+                ),
+                radius: Self.alertRadius
+            )
+
+            await monitor.add(condition, identifier: identifier)
+        }
+
+        if (await monitor.identifiers).isEmpty {
+            serviceSession?.invalidate()
+            serviceSession = nil
+        } else {
+            ensureAlwaysServiceSession()
+        }
+    }
+
     private var monitorCreationTask:
         Task<CLMonitor, Never>?
 
@@ -260,10 +319,7 @@ actor NearbyAlertMonitorService {
             return
         }
 
-        guard let location =
-                DonationLocationCatalog.location(
-                    for: locationID
-                ) else {
+        guard let location = locationsByID[locationID] else {
 
             print(
                 "Nearby alert event has unknown location ID:",

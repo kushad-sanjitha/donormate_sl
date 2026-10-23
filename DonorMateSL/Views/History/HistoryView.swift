@@ -190,8 +190,11 @@ struct HistoryView: View {
 
             InfoMessageCard(
                 systemImage: "info.circle.fill",
-                title: "Demonstration records",
-                detail: "These records are provided for demonstration and are not verified blood-bank records."
+                title: donorRecordsStore.isVerified
+                    ? "Connected donor records" : "Demonstration records",
+                detail: donorRecordsStore.isVerified
+                    ? "Records supplied by an authorised donor-record service."
+                    : "These records are for demonstration and are not verified blood-bank records."
             )
 
             Spacer()
@@ -239,7 +242,8 @@ struct HistoryView: View {
 
                 NavigationLink {
                     DonationDetailView(
-                        record: record
+                        record: record,
+                        isVerified: donorRecordsStore.isVerified
                     )
                 } label: {
                     DonationHistoryRow(

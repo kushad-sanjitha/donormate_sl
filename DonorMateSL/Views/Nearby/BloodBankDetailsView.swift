@@ -12,8 +12,15 @@ struct BloodBankDetailsView: View {
 
     let location: DonationLocation
 
-    @ObservedObject var donorRecordsStore:
-        DonorRecordsStore
+    @ObservedObject var donorRecordsStore: DonorRecordsStore
+    @ObservedObject var currentLocationService: CurrentLocationService
+
+    private var distanceText: String {
+        guard let userLocation = currentLocationService.currentLocation else {
+            return "Distance unavailable without location access"
+        }
+        return "\(LocationDistanceCalculator.formattedDistance(from: userLocation, to: location)) from your location"
+    }
 
     let onDirections: (DonationLocation) -> Void
     let onNearbyAlert: (DonationLocation) -> Void
@@ -134,9 +141,7 @@ struct BloodBankDetailsView: View {
                 Spacer()
                     .frame(height: 4)
 
-                Text(
-                    "2.1 km from your current location"
-                )
+                Text(distanceText)
                 .font(.system(size: 12))
                 .foregroundStyle(Color("TextSecondary"))
                 .frame(
@@ -149,8 +154,8 @@ struct BloodBankDetailsView: View {
 
                 DetailInfoRow(
                     systemImage: "clock",
-                    label: "Today",
-                    value: "Open · 8:00 AM–4:00 PM",
+                    label: "Listed hours",
+                    value: location.openingHours ?? "Hours unavailable",
                     iconForeground: Color("TextSecondary")
                 )
 
@@ -160,7 +165,7 @@ struct BloodBankDetailsView: View {
                 DetailInfoRow(
                     systemImage: "phone.fill",
                     label: "Contact",
-                    value: "Blood bank contact available",
+                    value: location.contact ?? "Contact unavailable",
                     iconForeground: Color("TextSecondary")
                 )
 
@@ -253,6 +258,7 @@ struct BloodBankDetailsView: View {
                     records:
                         DonorDemoData.records
                 ),
+            currentLocationService: CurrentLocationService(),
             onDirections: { location in
                 print(
                     "Get Directions tapped:",

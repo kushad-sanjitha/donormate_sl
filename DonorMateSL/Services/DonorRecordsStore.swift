@@ -12,6 +12,7 @@ nonisolated struct DonorRecordsState: Sendable {
 
     let linkState: DonorLinkState
     let records: [DonationRecord]
+    let isVerified: Bool
 }
 
 @MainActor
@@ -21,21 +22,28 @@ final class DonorRecordsStore: ObservableObject {
 
     init(
         linkState: DonorLinkState = .unlinked,
-        records: [DonationRecord] = []
+        records: [DonationRecord] = [],
+        isVerified: Bool = false
     ) {
         switch linkState {
         case .unlinked:
             state = DonorRecordsState(
                 linkState: .unlinked,
-                records: []
+                records: [],
+                isVerified: false
             )
 
         case .linked:
             state = DonorRecordsState(
                 linkState: linkState,
-                records: records
+                records: records,
+                isVerified: isVerified
             )
         }
+    }
+
+    var isVerified: Bool {
+        state.isVerified
     }
 
     var linkState: DonorLinkState {
@@ -77,13 +85,15 @@ final class DonorRecordsStore: ObservableObject {
 
     func replaceLinkedData(
         profile: DonorProfile,
-        records: [DonationRecord]
+        records: [DonationRecord],
+        isVerified: Bool = false
     ) {
         state = DonorRecordsState(
             linkState: .linked(
                 profile: profile
             ),
-            records: records
+            records: records,
+            isVerified: isVerified
         )
     }
 
@@ -97,14 +107,16 @@ final class DonorRecordsStore: ObservableObject {
 
         state = DonorRecordsState(
             linkState: state.linkState,
-            records: records
+            records: records,
+            isVerified: state.isVerified
         )
     }
 
     func unlink() {
         state = DonorRecordsState(
             linkState: .unlinked,
-            records: []
+            records: [],
+            isVerified: false
         )
     }
 }

@@ -25,6 +25,11 @@ final class CurrentLocationService: NSObject, ObservableObject {
         self.locationManager.delegate = self
     }
 
+    func clearCurrentLocation() {
+        currentLocation = nil
+        errorMessage = nil
+    }
+
     func requestCurrentLocation() {
         errorMessage = nil
         locationManager.requestLocation()

@@ -10,6 +10,7 @@ import SwiftUI
 struct DonationDetailView: View {
 
     let record: DonationRecord
+    var isVerified: Bool = false
 
     @Environment(\.dismiss) private var dismiss
 
@@ -48,7 +49,7 @@ struct DonationDetailView: View {
 
                 Spacer()
 
-                Text(record.recordLabel)
+                Text(isVerified ? record.recordLabel : "Sample record")
                     .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(Color("SuccessGreen"))
                     .padding(.horizontal, 10)
@@ -154,8 +155,10 @@ struct DonationDetailView: View {
 
                 DetailInfoRow(
                     systemImage: "cross.case.fill",
-                    label: "Recorded by",
-                    value: "Blood-bank staff",
+                    label: "Record source",
+                    value: isVerified
+                        ? "Authorised donor service"
+                        : "Demonstration data",
                     iconForeground: Color("DonorPurple")
                 )
 
@@ -182,7 +185,9 @@ struct DonationDetailView: View {
                         .foregroundStyle(Color("TextSecondary"))
 
                     if let nextPossibleDonationDate =
-                        record.nextPossibleDonationDate {
+                        DonationWaitingPeriodPolicy.effectiveNextPossibleDonationDate(
+                            for: record
+                        ) {
 
                         Text(
                             nextPossibleDonationDate,

@@ -16,12 +16,19 @@ enum MainTab: Hashable {
 
 struct MainTabView: View {
 
+    @Environment(\.scenePhase) private var scenePhase
+
     @Binding var selectedTab: MainTab
 
     @ObservedObject var donorRecordsStore:
         DonorRecordsStore
 
     let accountProfile: AccountProfile
+
+    @ObservedObject var donationLocationStore: DonationLocationStore
+    @ObservedObject var locationPermissionService: LocationPermissionService
+
+    @StateObject private var currentLocationService = CurrentLocationService()
     let isAccountLoading: Bool
     let accountErrorMessage: String?
 
@@ -38,6 +45,8 @@ struct MainTabView: View {
                     donorRecordsStore,
                 accountProfile:
                     accountProfile,
+                donationLocationStore: donationLocationStore,
+                currentLocationService: currentLocationService,
                 onConnectDonorRecord:
                     onConnectDonorRecord,
                 onFindNearby: {
@@ -54,8 +63,9 @@ struct MainTabView: View {
             .tag(MainTab.home)
 
             NearbyView(
-                donorRecordsStore:
-                    donorRecordsStore
+                donorRecordsStore: donorRecordsStore,
+                donationLocationStore: donationLocationStore,
+                currentLocationService: currentLocationService
             )
             .tabItem {
                     Label(
@@ -100,9 +110,32 @@ struct MainTabView: View {
             }
             .tag(MainTab.profile)
         }
-        .tint(
-            Color("DonorRed")
-        )
+        .tint(Color("DonorRed"))
+        .onAppear {
+            locationPermissionService.refreshStatus()
+            if locationPermissionService.status == .authorized {
+                currentLocationService.requestCurrentLocation()
+            } else {
+                currentLocationService.clearCurrentLocation()
+            }
+        }
+        .onChange(of: locationPermissionService.status) { _, status in
+            if status == .authorized {
+                currentLocationService.requestCurrentLocation()
+            } else {
+                currentLocationService.clearCurrentLocation()
+            }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                locationPermissionService.refreshStatus()
+                if locationPermissionService.status == .authorized {
+                    currentLocationService.requestCurrentLocation()
+                } else {
+                    currentLocationService.clearCurrentLocation()
+                }
+            }
+        }
     }
 }
 
@@ -126,6 +159,8 @@ struct MainTabView: View {
                 displayName: "Kushad Dissanayake",
                 email: "kushad@example.com"
             ),
+        donationLocationStore: DonationLocationStore(),
+        locationPermissionService: LocationPermissionService(),
         isAccountLoading: false,
         accountErrorMessage: nil
     )
