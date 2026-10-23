@@ -88,46 +88,16 @@ struct RoutePreviewView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-
-                HStack(
-                    alignment: .center,
-                    spacing: 10
-                ) {
-
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundStyle(Color("TextPrimary"))
-                            .frame(width: 38, height: 38)
-                            .background(Color("SurfacePrimary"))
-                            .overlay {
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(
-                                        Color("BorderPrimary"),
-                                        lineWidth: 1
-                                    )
-                            }
-                            .clipShape(
-                                RoundedRectangle(cornerRadius: 12)
-                            )
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Back")
-
-                    Text("Directions")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(Color("TextPrimary"))
-
-                    Spacer()
+        VStack(spacing: 0) {
+            ScreenNavigationHeader(
+                title: "Directions",
+                onBack: {
+                    dismiss()
                 }
-                .frame(minHeight: 46)
+            )
 
-                Spacer()
-                    .frame(height: 8)
+            ScreenScrollView {
+                VStack(spacing: 0) {
 
                 Map(
                     position: $cameraPosition
@@ -273,6 +243,7 @@ struct RoutePreviewView: View {
             }
             .padding(.horizontal, 18)
             .padding(.top, 18)
+        }
         }
         .background(Color("BackgroundPrimary"))
         .toolbar(.hidden, for: .navigationBar)

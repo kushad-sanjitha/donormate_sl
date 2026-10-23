@@ -292,6 +292,7 @@ struct NearbyView: View {
                 )
             }
         }
+        .tabBarContentClearance()
     }
 
     @ViewBuilder

@@ -29,50 +29,17 @@ struct ResetPasswordView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-
-                HStack {
-
-                    Button {
-                        onBack()
-                    } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundStyle(Color("TextPrimary"))
-                            .frame(width: 38, height: 38)
-                            .background(Color("SurfacePrimary"))
-                            .overlay {
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(
-                                        Color("BorderPrimary"),
-                                        lineWidth: 1
-                                    )
-                            }
-                            .clipShape(
-                                RoundedRectangle(cornerRadius: 12)
-                            )
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(isLoading)
-                    .accessibilityLabel("Back")
-
-                    Spacer()
-
-                    Text("Reset Password")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(Color("TextPrimary"))
-
-                    Spacer()
-
-                    Color.clear
-                        .frame(width: 44, height: 44)
+        VStack(spacing: 0) {
+            ScreenNavigationHeader(
+                title: "Reset Password",
+                isBackDisabled: isLoading,
+                onBack: {
+                    onBack()
                 }
+            )
 
-                Spacer()
-                    .frame(height: 42)
+            ScreenScrollView {
+                VStack(spacing: 0) {
 
                 ZStack {
                     RoundedRectangle(cornerRadius: 24)
@@ -115,7 +82,7 @@ struct ResetPasswordView: View {
                         .multilineTextAlignment(.center)
 
                     Text(
-                        "Enter the email linked to your DonorMate account. If the request is accepted, Firebase will send password reset instructions."
+                        "Enter the email linked to your DonorMate account. If the request is accepted, password reset instructions will be sent to that address."
                     )
                     .font(.system(size: 14))
                     .foregroundStyle(Color("TextSecondary"))
@@ -265,6 +232,7 @@ struct ResetPasswordView: View {
             .padding(.horizontal, 18)
             .padding(.top, 18)
         }
+        }
         .background(Color("BackgroundPrimary"))
     }
 
@@ -315,4 +283,3 @@ struct ResetPasswordView: View {
         }
     )
 }
-

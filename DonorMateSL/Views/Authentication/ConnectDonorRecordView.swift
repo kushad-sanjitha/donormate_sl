@@ -25,50 +25,17 @@ struct ConnectDonorRecordView: View {
     var onNeedHelp: () -> Void = {}
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-
-                HStack {
-
-                    Button {
-                        onBack()
-                    } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundStyle(Color("TextPrimary"))
-                            .frame(width: 38, height: 38)
-                            .background(Color("SurfacePrimary"))
-                            .overlay {
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(
-                                        Color("BorderPrimary"),
-                                        lineWidth: 1
-                                    )
-                            }
-                            .clipShape(
-                                RoundedRectangle(cornerRadius: 12)
-                            )
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(isFindingRecord)
-                    .accessibilityLabel("Back")
-
-                    Spacer()
-
-                    Text("Connect Donor Record")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(Color("TextPrimary"))
-
-                    Spacer()
-
-                    Color.clear
-                        .frame(width: 44, height: 44)
+        VStack(spacing: 0) {
+            ScreenNavigationHeader(
+                title: "Connect Donor Record",
+                isBackDisabled: isFindingRecord,
+                onBack: {
+                    onBack()
                 }
+            )
 
-                Spacer()
-                    .frame(height: 18)
+            ScreenScrollView {
+                VStack(spacing: 0) {
 
                 VStack(
                     alignment: .leading,
@@ -217,7 +184,7 @@ struct ConnectDonorRecordView: View {
                     .accessibilityHidden(true)
 
                     Text(
-                        "Your linked blood group and donation history will be view-only in DonorMate. The current lookup remains an explicitly labelled demo until a trusted donor-record service is connected."
+                        "Blood group and donation history are read-only in DonorMate. Record availability depends on the connected donor-record service."
                     )
                     .font(.system(size: 12))
                     .foregroundStyle(Color("TextPrimary"))
@@ -311,6 +278,7 @@ struct ConnectDonorRecordView: View {
             .padding(.horizontal, 18)
             .padding(.top, 18)
         }
+        }
         .background(Color("BackgroundPrimary"))
     }
 
@@ -346,7 +314,7 @@ struct ConnectDonorRecordView: View {
 
             if !succeeded {
                 lookupErrorMessage =
-                    "No matching prototype donor record was found for that reference."
+                    "No matching donor record was found for that reference."
             }
         }
     }
