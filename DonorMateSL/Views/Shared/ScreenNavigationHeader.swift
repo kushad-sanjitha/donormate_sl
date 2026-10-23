@@ -92,6 +92,7 @@ struct ScreenNavigationHeader: View {
         .padding(.horizontal, 18)
         .padding(.vertical, 8)
         .background(Color("BackgroundPrimary"))
+        .zIndex(1)
     }
 }
 
@@ -101,4 +102,3 @@ struct ScreenNavigationHeader: View {
         onBack: {}
     )
 }
-

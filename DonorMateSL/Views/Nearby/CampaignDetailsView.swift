@@ -61,7 +61,7 @@ struct CampaignDetailsView: View {
                 }
             )
 
-            ScrollView {
+            ScreenScrollView {
                 VStack(spacing: 0) {
 
                 Map(
@@ -296,3 +296,4 @@ struct CampaignDetailsView: View {
         )
     }
 }
+

@@ -96,7 +96,7 @@ struct RoutePreviewView: View {
                 }
             )
 
-            ScrollView {
+            ScreenScrollView {
                 VStack(spacing: 0) {
 
                 Map(

@@ -49,7 +49,7 @@ struct DonationReadinessView: View {
                 }
             )
 
-            ScrollView {
+            ScreenScrollView {
                 VStack(spacing: 0) {
 
                 readinessSummary

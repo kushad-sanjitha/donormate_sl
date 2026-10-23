@@ -287,18 +287,18 @@ struct AccountRecoveryView: View {
     private var recoveryDescription: String {
 
         if requiresNationalIdentityNumber {
-            return "Your Firebase session is valid, but your account needs its NIC identity before donor-linked information can be accessed."
+            return "Your account needs a valid NIC before donor-linked information can be accessed."
         }
 
         if requiresName {
-            return "Your Firebase account is signed in, but your profile needs your name before setup can continue."
+            return "Your account profile needs your name before setup can continue."
         }
 
         if hasPendingProfile {
-            return "Your Firebase account was created, but the profile could not be saved. Retry the profile setup without creating another account."
+            return "Your account was created, but the profile could not be saved. Retry profile setup without creating another account."
         }
 
-        return "Your Firebase session is still valid, but your account profile could not be loaded. Check your connection and try again."
+        return "Your account profile could not be loaded. Check your connection and try again."
     }
 
     private var primaryButtonTitle: String {

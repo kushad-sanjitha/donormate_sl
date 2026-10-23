@@ -61,7 +61,7 @@ struct BloodBankDetailsView: View {
                 }
             )
 
-            ScrollView {
+            ScreenScrollView {
                 VStack(spacing: 0) {
 
                 Map(

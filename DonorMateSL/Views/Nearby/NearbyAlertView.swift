@@ -66,7 +66,7 @@ struct NearbyAlertView: View {
                 }
             )
 
-            ScrollView {
+            ScreenScrollView {
                 VStack(spacing: 0) {
 
                 Map(

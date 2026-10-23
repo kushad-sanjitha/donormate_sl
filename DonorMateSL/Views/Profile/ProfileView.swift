@@ -144,6 +144,7 @@ struct ProfileView: View {
                 )
             }
         }
+        .tabBarContentClearance()
     }
 
     private var initials: String {

@@ -34,7 +34,7 @@ struct ConnectDonorRecordView: View {
                 }
             )
 
-            ScrollView {
+            ScreenScrollView {
                 VStack(spacing: 0) {
 
                 VStack(
@@ -184,7 +184,7 @@ struct ConnectDonorRecordView: View {
                     .accessibilityHidden(true)
 
                     Text(
-                        "Blood group and donation history are read-only in DonorMate. Until an authorised donor-record service is connected, record matching uses sample data."
+                        "Blood group and donation history are read-only in DonorMate. Record availability depends on the connected donor-record service."
                     )
                     .font(.system(size: 12))
                     .foregroundStyle(Color("TextPrimary"))
@@ -314,7 +314,7 @@ struct ConnectDonorRecordView: View {
 
             if !succeeded {
                 lookupErrorMessage =
-                    "No matching sample donor record was found for that reference."
+                    "No matching donor record was found for that reference."
             }
         }
     }

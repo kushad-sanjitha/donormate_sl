@@ -124,6 +124,7 @@ struct HomeView: View {
                 Color("BackgroundPrimary")
             )
         }
+        .tabBarContentClearance()
         .onChange(of: scenePhase) {
             _, newPhase in
 
@@ -762,4 +763,3 @@ struct HomeView: View {
             )
     )
 }
-

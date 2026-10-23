@@ -45,7 +45,7 @@ struct CreateAccountView: View {
                 }
             )
 
-            ScrollView {
+            ScreenScrollView {
                 VStack(spacing: 0) {
 
                 VStack(

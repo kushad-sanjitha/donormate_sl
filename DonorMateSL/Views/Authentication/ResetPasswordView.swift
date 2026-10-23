@@ -38,7 +38,7 @@ struct ResetPasswordView: View {
                 }
             )
 
-            ScrollView {
+            ScreenScrollView {
                 VStack(spacing: 0) {
 
                 ZStack {
@@ -82,7 +82,7 @@ struct ResetPasswordView: View {
                         .multilineTextAlignment(.center)
 
                     Text(
-                        "Enter the email linked to your DonorMate account. If the request is accepted, Firebase will send password reset instructions."
+                        "Enter the email linked to your DonorMate account. If the request is accepted, password reset instructions will be sent to that address."
                     )
                     .font(.system(size: 14))
                     .foregroundStyle(Color("TextSecondary"))

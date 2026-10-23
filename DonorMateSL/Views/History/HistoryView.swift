@@ -93,63 +93,68 @@ struct HistoryView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 0) {
+            Group {
+                switch presentationState {
 
-                    switch presentationState {
-
-                    case .unlinked:
+                case .unlinked:
+                    ScreenScrollView {
                         emptyHistoryContent(
                             title:
                                 "No linked donations yet",
                             description:
-                                "Your donation history will appear here when a blood-bank record is available and connected.",
+                                "Your donation history will appear here when a donor record is connected and records are available.",
                             informationTitle:
-                                "View-only updates",
+                                "Read-only records",
                             informationDetail:
-                                "Donors can view linked records, but cannot create or edit them.",
+                                "Linked donation records can be viewed in DonorMate, but they cannot be created or edited here.",
                             showsConnectAction:
                                 true
                         )
+                        .padding(.horizontal, 18)
+                        .padding(.top, 18)
+                    }
 
-                    case .linkedEmpty:
+                case .linkedEmpty:
+                    ScreenScrollView {
                         emptyHistoryContent(
                             title:
                                 "No donation records yet",
                             description:
                                 "Your donor record is connected, but no donation history is currently available.",
                             informationTitle:
-                                "Waiting for linked records",
+                                "No records available",
                             informationDetail:
-                                "Donation records will appear here when they are supplied by the linked service.",
+                                "Donation records will appear here when they are supplied by the connected donor-record service.",
                             showsConnectAction:
                                 false
                         )
-
-                    case .populated:
-                        populatedHistoryContent
+                        .padding(.horizontal, 18)
+                        .padding(.top, 18)
                     }
 
-                    Spacer()
-                        .frame(height: 28)
+                case .populated:
+                    VStack(spacing: 0) {
+                        populatedHistoryHeader
+
+                        ScrollView {
+                            populatedHistoryRows
+                                .padding(.horizontal, 18)
+                                .padding(.bottom, 20)
+                        }
+                        .scrollDismissesKeyboard(.interactively)
+                    }
                 }
-                .padding(.horizontal, 18)
-                .padding(.top, 18)
             }
             .background(
                 Color("BackgroundPrimary")
             )
         }
+        .tabBarContentClearance()
     }
 
-    private var populatedHistoryContent: some View {
+    private var populatedHistoryHeader: some View {
 
-        let records =
-            donorRecordsStore
-                .recordsNewestFirst
-
-        return VStack(spacing: 0) {
-
+        VStack(spacing: 0) {
             VStack(
                 alignment: .leading,
                 spacing: 4
@@ -184,8 +189,8 @@ struct HistoryView: View {
 
             InfoMessageCard(
                 systemImage: "info.circle.fill",
-                title: "Sample donation records",
-                detail: "These sample records are provided for demonstration and are not verified blood-bank records."
+                title: "Demonstration records",
+                detail: "These records are provided for demonstration and are not verified blood-bank records."
             )
 
             Spacer()
@@ -208,37 +213,45 @@ struct HistoryView: View {
                     detail: latestDonationYear
                 )
             }
+        }
+        .padding(.horizontal, 18)
+        .padding(.top, 18)
+        .padding(.bottom, 16)
+        .background(Color("BackgroundPrimary"))
+        .zIndex(1)
+    }
 
-            Spacer()
-                .frame(height: 16)
+    private var populatedHistoryRows: some View {
 
-            VStack(spacing: 0) {
+        let records =
+            donorRecordsStore
+                .recordsNewestFirst
 
-                ForEach(
-                    records.indices,
-                    id: \.self
-                ) { index in
+        return VStack(spacing: 0) {
+            ForEach(
+                records.indices,
+                id: \.self
+            ) { index in
 
-                    let record =
-                        records[index]
+                let record =
+                    records[index]
 
-                    NavigationLink {
-                        DonationDetailView(
-                            record: record
-                        )
-                    } label: {
-                        DonationHistoryRow(
-                            record: record,
-                            isLast:
-                                index ==
-                                records.count - 1
-                        )
-                        .contentShape(
-                            Rectangle()
-                        )
-                    }
-                    .buttonStyle(.plain)
+                NavigationLink {
+                    DonationDetailView(
+                        record: record
+                    )
+                } label: {
+                    DonationHistoryRow(
+                        record: record,
+                        isLast:
+                            index ==
+                            records.count - 1
+                    )
+                    .contentShape(
+                        Rectangle()
+                    )
                 }
+                .buttonStyle(.plain)
             }
         }
     }
