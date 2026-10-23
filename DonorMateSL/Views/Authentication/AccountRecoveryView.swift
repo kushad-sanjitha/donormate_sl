@@ -72,7 +72,7 @@ struct AccountRecoveryView: View {
     }
 
     var body: some View {
-        ScrollView {
+        ScreenScrollView {
             VStack(
                 alignment: .leading,
                 spacing: 0

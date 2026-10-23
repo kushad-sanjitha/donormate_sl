@@ -25,199 +25,167 @@ struct PermissionSetupView: View {
     var onContinue: () -> Void = {}
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
+        VStack(spacing: 0) {
+            ScreenNavigationHeader(
+                title: "Set Up DonorMate",
+                onBack: onBack
+            )
 
-                HStack {
+            ScreenScrollView {
+                VStack(spacing: 0) {
+                    Spacer()
+                        .frame(height: 18)
+
+                    VStack(
+                        alignment: .leading,
+                        spacing: 0
+                    ) {
+
+                        Text("PERMISSIONS")
+                            .font(.system(size: 12, weight: .heavy))
+                            .foregroundStyle(Color("DonorRed"))
+
+                        Text("Enable the features that make DonorMate useful.")
+                            .font(.system(size: 28, weight: .heavy))
+                            .foregroundStyle(Color("TextPrimary"))
+                            .padding(.top, 10)
+
+                        Text(
+                            "You can change these permissions later in Settings."
+                        )
+                        .font(.system(size: 14))
+                        .foregroundStyle(Color("TextSecondary"))
+                        .lineSpacing(3)
+                        .padding(.top, 10)
+                    }
+                    .frame(
+                        maxWidth: .infinity,
+                        alignment: .leading
+                    )
+
+                    Spacer()
+                        .frame(height: 24)
+
+                    VStack(spacing: 12) {
+
+                        permissionCard(
+                            icon: "location.fill",
+                            iconForeground: Color("InfoBlue"),
+                            iconBackground: Color("InfoBlueSoft"),
+                            title: "Location",
+                            description: "Nearby discovery, distance and location-aware alerts.",
+                            actionTitle: locationActionTitle,
+                            actionForeground: locationActionForeground,
+                            actionBackground: locationActionBackground,
+                            actionEnabled: locationStatus == .notDetermined,
+                            action: onAllowLocation
+                        )
+
+                        permissionCard(
+                            icon: "bell.fill",
+                            iconForeground: Color("DonorRed"),
+                            iconBackground: Color("DonorRedSoft"),
+                            title: "Notifications",
+                            description: "Donation reminders, campaign reminders and urgent needs.",
+                            actionTitle: notificationActionTitle,
+                            actionForeground: notificationActionForeground,
+                            actionBackground: notificationActionBackground,
+                            actionEnabled: notificationStatus == .notDetermined,
+                            action: onAllowNotifications
+                        )
+
+                        permissionCard(
+                            icon: "faceid",
+                            iconForeground: faceIDIconForeground,
+                            iconBackground: faceIDIconBackground,
+                            title: "Face ID",
+                            description: "Protect access to personal donor information.",
+                            actionTitle: faceIDActionTitle,
+                            actionForeground: faceIDActionForeground,
+                            actionBackground: faceIDActionBackground,
+                            actionEnabled: false,
+                            action: nil
+                        )
+                    }
+
+                    Spacer()
+                        .frame(height: 16)
+
+                    HStack(
+                        alignment: .top,
+                        spacing: 10
+                    ) {
+
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(
+                                    Color("InfoBlue")
+                                        .opacity(0.10)
+                                )
+                                .frame(
+                                    width: 36,
+                                    height: 36
+                                )
+
+                            Image(systemName: "info.circle.fill")
+                                .font(
+                                    .system(
+                                        size: 18,
+                                        weight: .semibold
+                                    )
+                                )
+                                .foregroundStyle(Color("InfoBlue"))
+                        }
+                        .accessibilityHidden(true)
+
+                        Text(
+                            "Privacy: permission-dependent features still show a clear fallback when access is declined."
+                        )
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color("TextPrimary"))
+                        .lineSpacing(2)
+
+                        Spacer(minLength: 0)
+                    }
+                    .padding(14)
+                    .background(Color("InfoBlueSoft"))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(
+                                Color("InfoBlue").opacity(0.18),
+                                lineWidth: 1
+                            )
+                    }
+                    .clipShape(
+                        RoundedRectangle(cornerRadius: 16)
+                    )
+
+                    Spacer()
+                        .frame(height: 20)
 
                     Button {
-                        onBack()
+                        onContinue()
                     } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundStyle(Color("TextPrimary"))
-                            .frame(width: 38, height: 38)
-                            .background(Color("SurfacePrimary"))
-                            .overlay {
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(
-                                        Color("BorderPrimary"),
-                                        lineWidth: 1
-                                    )
-                            }
-                            .clipShape(
-                                RoundedRectangle(cornerRadius: 12)
+                        Text("Continue")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(
+                                maxWidth: .infinity,
+                                minHeight: 48
                             )
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
+                            .background(Color("DonorRed"))
+                            .clipShape(
+                                RoundedRectangle(cornerRadius: 14)
+                            )
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Back")
 
                     Spacer()
-
-                    Text("Set Up DonorMate")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(Color("TextPrimary"))
-
-                    Spacer()
-
-                    Color.clear
-                        .frame(width: 44, height: 44)
+                        .frame(height: 26)
                 }
-
-                Spacer()
-                    .frame(height: 18)
-
-                VStack(
-                    alignment: .leading,
-                    spacing: 0
-                ) {
-
-                    Text("PERMISSIONS")
-                        .font(.system(size: 12, weight: .heavy))
-                        .foregroundStyle(Color("DonorRed"))
-
-                    Text("Enable the features that make DonorMate useful.")
-                        .font(.system(size: 28, weight: .heavy))
-                        .foregroundStyle(Color("TextPrimary"))
-                        .padding(.top, 10)
-
-                    Text(
-                        "You can change these permissions later in Settings."
-                    )
-                    .font(.system(size: 14))
-                    .foregroundStyle(Color("TextSecondary"))
-                    .lineSpacing(3)
-                    .padding(.top, 10)
-                }
-                .frame(
-                    maxWidth: .infinity,
-                    alignment: .leading
-                )
-
-                Spacer()
-                    .frame(height: 24)
-
-                VStack(spacing: 12) {
-
-                    permissionCard(
-                        icon: "location.fill",
-                        iconForeground: Color("InfoBlue"),
-                        iconBackground: Color("InfoBlueSoft"),
-                        title: "Location",
-                        description: "Nearby discovery, distance and location-aware alerts.",
-                        actionTitle: locationActionTitle,
-                        actionForeground: locationActionForeground,
-                        actionBackground: locationActionBackground,
-                        actionEnabled: locationStatus == .notDetermined,
-                        action: onAllowLocation
-                    )
-
-                    permissionCard(
-                        icon: "bell.fill",
-                        iconForeground: Color("DonorRed"),
-                        iconBackground: Color("DonorRedSoft"),
-                        title: "Notifications",
-                        description: "Donation reminders, campaign reminders and urgent needs.",
-                        actionTitle: notificationActionTitle,
-                        actionForeground: notificationActionForeground,
-                        actionBackground: notificationActionBackground,
-                        actionEnabled: notificationStatus == .notDetermined,
-                        action: onAllowNotifications
-                    )
-
-                    permissionCard(
-                        icon: "faceid",
-                        iconForeground: faceIDIconForeground,
-                        iconBackground: faceIDIconBackground,
-                        title: "Face ID",
-                        description: "Protect access to personal donor information.",
-                        actionTitle: faceIDActionTitle,
-                        actionForeground: faceIDActionForeground,
-                        actionBackground: faceIDActionBackground,
-                        actionEnabled: false,
-                        action: nil
-                    )
-                }
-
-                Spacer()
-                    .frame(height: 16)
-
-                HStack(
-                    alignment: .top,
-                    spacing: 10
-                ) {
-
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(
-                                Color("InfoBlue")
-                                    .opacity(0.10)
-                            )
-                            .frame(
-                                width: 36,
-                                height: 36
-                            )
-
-                        Image(systemName: "info.circle.fill")
-                            .font(
-                                .system(
-                                    size: 18,
-                                    weight: .semibold
-                                )
-                            )
-                            .foregroundStyle(Color("InfoBlue"))
-                    }
-                    .accessibilityHidden(true)
-
-                    Text(
-                        "Privacy: permission-dependent features still show a clear fallback when access is declined."
-                    )
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color("TextPrimary"))
-                    .lineSpacing(2)
-
-                    Spacer(minLength: 0)
-                }
-                .padding(14)
-                .background(Color("InfoBlueSoft"))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(
-                            Color("InfoBlue").opacity(0.18),
-                            lineWidth: 1
-                        )
-                }
-                .clipShape(
-                    RoundedRectangle(cornerRadius: 16)
-                )
-
-                Spacer()
-                    .frame(height: 20)
-
-                Button {
-                    onContinue()
-                } label: {
-                    Text("Continue")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(
-                            maxWidth: .infinity,
-                            minHeight: 48
-                        )
-                        .background(Color("DonorRed"))
-                        .clipShape(
-                            RoundedRectangle(cornerRadius: 14)
-                        )
-                }
-                .buttonStyle(.plain)
-
-                Spacer()
-                    .frame(height: 26)
+                .padding(.horizontal, 18)
+                .padding(.top, 18)
             }
-            .padding(.horizontal, 18)
-            .padding(.top, 18)
         }
         .background(Color("BackgroundPrimary"))
     }

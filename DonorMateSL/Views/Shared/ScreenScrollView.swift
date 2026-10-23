@@ -23,6 +23,8 @@ struct ScreenScrollView<Content: View>: View {
                 .padding(.bottom, 12)
         }
         .scrollDismissesKeyboard(.interactively)
+        .scrollBounceBehavior(.basedOnSize)
+        .scrollClipDisabled(false)
         .background(Color("BackgroundPrimary"))
     }
 }
@@ -31,6 +33,7 @@ private struct TabBarContentClearanceModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
+            .scrollBounceBehavior(.basedOnSize)
             .safeAreaInset(
                 edge: .bottom,
                 spacing: 0

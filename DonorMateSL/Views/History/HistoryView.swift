@@ -142,6 +142,7 @@ struct HistoryView: View {
                                 .padding(.bottom, 20)
                         }
                         .scrollDismissesKeyboard(.interactively)
+                        .scrollBounceBehavior(.basedOnSize)
                     }
                 }
             }
@@ -227,7 +228,7 @@ struct HistoryView: View {
             donorRecordsStore
                 .recordsNewestFirst
 
-        return VStack(spacing: 0) {
+        return LazyVStack(spacing: 0) {
             ForEach(
                 records.indices,
                 id: \.self

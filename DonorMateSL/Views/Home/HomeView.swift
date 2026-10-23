@@ -93,36 +93,36 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 0) {
+            VStack(spacing: 0) {
+                homeHeader
+                    .padding(.horizontal, 18)
+                    .padding(.top, 18)
+                    .padding(.bottom, 16)
+                    .background(Color("BackgroundPrimary"))
 
-                    homeHeader
+                ScreenScrollView {
+                    VStack(spacing: 0) {
+                        donorStatusContent
 
-                    Spacer()
-                        .frame(height: 16)
+                        if presentation.isLinked,
+                           presentation.latestRecord != nil {
 
-                    donorStatusContent
+                            Spacer()
+                                .frame(height: 14)
 
-                    if presentation.isLinked,
-                       presentation.latestRecord != nil {
+                            donationMetrics
+                        }
+
+                        additionalHomeContent
 
                         Spacer()
-                            .frame(height: 14)
-
-                        donationMetrics
+                            .frame(height: 28)
                     }
-
-                    additionalHomeContent
-
-                    Spacer()
-                        .frame(height: 28)
+                    .padding(.horizontal, 18)
+                    .padding(.top, 12)
                 }
-                .padding(.horizontal, 18)
-                .padding(.top, 18)
             }
-            .background(
-                Color("BackgroundPrimary")
-            )
+            .background(Color("BackgroundPrimary"))
         }
         .tabBarContentClearance()
         .onChange(of: scenePhase) {
