@@ -11,6 +11,7 @@ nonisolated enum DonorDemoData {
 
     static let profile =
         DonorProfile(
+            donorRecordID: "DM-248013",
             displayName: "Sample Donor",
             bloodGroup: "A+",
             reportedDonationCount: 6

@@ -7,18 +7,20 @@
 
 import SwiftUI
 
-struct AccountRecoveryView:
-    View {
+struct AccountRecoveryView: View {
 
-    @State private var displayName = ""
+    @State private var displayName: String
+    @State private var nationalIdentityNumber = ""
+    @State private var validationErrorMessage: String?
 
     let isLoading: Bool
     let errorMessage: String?
     let requiresName: Bool
+    let requiresNationalIdentityNumber: Bool
     let hasPendingProfile: Bool
 
-    let onCompleteName:
-        (String) async -> Void
+    let onCompleteProfile:
+        (String, String) async -> Void
 
     let onRetrySetup:
         () async -> Void
@@ -28,6 +30,46 @@ struct AccountRecoveryView:
 
     let onSignOut:
         () -> Void
+
+    init(
+        initialDisplayName: String?,
+        isLoading: Bool,
+        errorMessage: String?,
+        requiresName: Bool,
+        requiresNationalIdentityNumber: Bool,
+        hasPendingProfile: Bool,
+        onCompleteProfile:
+            @escaping (String, String) async -> Void,
+        onRetrySetup:
+            @escaping () async -> Void,
+        onRetryLoad:
+            @escaping () async -> Void,
+        onSignOut:
+            @escaping () -> Void
+    ) {
+        _displayName = State(
+            initialValue:
+                initialDisplayName ?? ""
+        )
+
+        self.isLoading = isLoading
+        self.errorMessage = errorMessage
+        self.requiresName = requiresName
+        self.requiresNationalIdentityNumber =
+            requiresNationalIdentityNumber
+        self.hasPendingProfile =
+            hasPendingProfile
+        self.onCompleteProfile =
+            onCompleteProfile
+        self.onRetrySetup = onRetrySetup
+        self.onRetryLoad = onRetryLoad
+        self.onSignOut = onSignOut
+    }
+
+    private var displayedErrorMessage: String? {
+        validationErrorMessage
+        ?? errorMessage
+    }
 
     var body: some View {
         ScrollView {
@@ -70,17 +112,7 @@ struct AccountRecoveryView:
                     .padding(.top, 10)
 
                 if requiresName {
-
-                    Text("Full name")
-                        .font(
-                            .system(
-                                size: 12,
-                                weight: .semibold
-                            )
-                        )
-                        .foregroundStyle(
-                            Color("TextPrimary")
-                        )
+                    fieldLabel("Full name")
                         .padding(.top, 24)
 
                     TextField(
@@ -118,9 +150,59 @@ struct AccountRecoveryView:
                     .padding(.top, 6)
                 }
 
-                if let errorMessage {
+                if requiresNationalIdentityNumber {
+                    fieldLabel("NIC number")
+                        .padding(.top, 18)
 
-                    Text(errorMessage)
+                    TextField(
+                        "12 digits or old NIC ending V/X",
+                        text: $nationalIdentityNumber
+                    )
+                    .font(.system(size: 14))
+                    .foregroundStyle(
+                        Color("TextPrimary")
+                    )
+                    .textInputAutocapitalization(
+                        .characters
+                    )
+                    .autocorrectionDisabled()
+                    .keyboardType(.asciiCapable)
+                    .disabled(isLoading)
+                    .padding(.horizontal, 14)
+                    .frame(height: 52)
+                    .background(
+                        Color("SurfacePrimary")
+                    )
+                    .overlay {
+                        RoundedRectangle(
+                            cornerRadius: 13
+                        )
+                        .stroke(
+                            Color("BorderPrimary"),
+                            lineWidth: 1
+                        )
+                    }
+                    .clipShape(
+                        RoundedRectangle(
+                            cornerRadius: 13
+                        )
+                    )
+                    .padding(.top, 6)
+
+                    Text(
+                        "Your NIC is saved to your private account profile and is used later to verify that a donor record belongs to this account."
+                    )
+                    .font(.system(size: 11))
+                    .foregroundStyle(
+                        Color("TextSecondary")
+                    )
+                    .lineSpacing(2)
+                    .padding(.top, 8)
+                }
+
+                if let displayedErrorMessage {
+
+                    Text(displayedErrorMessage)
                         .font(.system(size: 12))
                         .foregroundStyle(
                             Color("DonorRed")
@@ -169,18 +251,7 @@ struct AccountRecoveryView:
                     )
                 }
                 .buttonStyle(.plain)
-                .disabled(
-                    isLoading
-                    || (
-                        requiresName
-                        && displayName
-                            .trimmingCharacters(
-                                in:
-                                    .whitespacesAndNewlines
-                            )
-                            .isEmpty
-                    )
-                )
+                .disabled(isLoading)
                 .padding(.top, 24)
 
                 Button {
@@ -213,8 +284,11 @@ struct AccountRecoveryView:
         )
     }
 
-    private var recoveryDescription:
-        String {
+    private var recoveryDescription: String {
+
+        if requiresNationalIdentityNumber {
+            return "Your Firebase session is valid, but your account needs its NIC identity before donor-linked information can be accessed."
+        }
 
         if requiresName {
             return "Your Firebase account is signed in, but your profile needs your name before setup can continue."
@@ -227,10 +301,10 @@ struct AccountRecoveryView:
         return "Your Firebase session is still valid, but your account profile could not be loaded. Check your connection and try again."
     }
 
-    private var primaryButtonTitle:
-        String {
+    private var primaryButtonTitle: String {
 
-        if requiresName {
+        if requiresName
+            || requiresNationalIdentityNumber {
             return "Complete Profile"
         }
 
@@ -241,35 +315,93 @@ struct AccountRecoveryView:
         return "Retry"
     }
 
+    private func fieldLabel(
+        _ title: String
+    ) -> some View {
+
+        Text(title)
+            .font(
+                .system(
+                    size: 12,
+                    weight: .semibold
+                )
+            )
+            .foregroundStyle(
+                Color("TextPrimary")
+            )
+    }
+
     private func performPrimaryAction() {
 
         guard !isLoading else {
             return
         }
 
-        Task {
-            if requiresName {
+        if requiresName
+            || requiresNationalIdentityNumber {
 
-                let cleanedName =
-                    displayName
-                        .trimmingCharacters(
-                            in:
-                                .whitespacesAndNewlines
-                        )
+            let cleanedName =
+                displayName
+                    .trimmingCharacters(
+                        in: .whitespacesAndNewlines
+                    )
 
-                await onCompleteName(
-                    cleanedName
+            guard !cleanedName.isEmpty else {
+                validationErrorMessage =
+                    "Enter your full name."
+                return
+            }
+
+            let cleanedNIC =
+                NationalIdentityNumberValidator
+                    .normalized(
+                        nationalIdentityNumber
+                    )
+
+            guard NationalIdentityNumberValidator
+                    .isValid(cleanedNIC) else {
+                validationErrorMessage =
+                    "Enter a valid Sri Lankan NIC number."
+                return
+            }
+
+            validationErrorMessage = nil
+
+            Task {
+                await onCompleteProfile(
+                    cleanedName,
+                    cleanedNIC
                 )
+            }
 
-            } else if hasPendingProfile {
+            return
+        }
 
+        validationErrorMessage = nil
+
+        Task {
+            if hasPendingProfile {
                 await onRetrySetup()
-
             } else {
-
                 await onRetryLoad()
             }
         }
     }
 }
 
+#Preview {
+    AccountRecoveryView(
+        initialDisplayName: "Kushad Dissanayake",
+        isLoading: false,
+        errorMessage: nil,
+        requiresName: false,
+        requiresNationalIdentityNumber: true,
+        hasPendingProfile: false,
+        onCompleteProfile: {
+            _, _ in
+        },
+        onRetrySetup: {},
+        onRetryLoad: {},
+        onSignOut: {}
+    )
+}

@@ -36,9 +36,10 @@ nonisolated enum DonationReadinessPresentationBuilder {
             )
         }
 
-        let latestDonationText = formattedDate(
-            latestRecord.date
-        )
+        let latestDonationText =
+            formattedDate(
+                latestRecord.date
+            )
 
         let readiness =
             DonationReadinessCalculator.readiness(
@@ -53,16 +54,30 @@ nonisolated enum DonationReadinessPresentationBuilder {
             return DonationReadinessPresentation(
                 badgeTitle: "Date check",
                 title: "Minimum wait completed",
-                detail: "Based on your latest recorded donation on \(latestDonationText), the recorded minimum waiting period has passed.",
+                detail: "Based on your latest recorded whole-blood donation on \(latestDonationText), the minimum four-month waiting period has passed.",
                 compactMessage: "Recorded minimum waiting period completed. Final eligibility is confirmed by authorised staff.",
                 style: .success
             )
 
         case let .notReady(daysRemaining):
+
+            guard let effectiveDate =
+                    DonationWaitingPeriodPolicy
+                        .effectiveNextPossibleDonationDate(
+                            for: latestRecord,
+                            calendar: calendar
+                        ) else {
+
+                return unknownPresentation(
+                    latestDonationText:
+                        latestDonationText
+                )
+            }
+
             let nextPossibleText =
-                latestRecord.nextPossibleDonationDate
-                    .map(formattedDate)
-                    ?? "the recorded next date"
+                formattedDate(
+                    effectiveDate
+                )
 
             let dayWord =
                 daysRemaining == 1
@@ -72,20 +87,30 @@ nonisolated enum DonationReadinessPresentationBuilder {
             return DonationReadinessPresentation(
                 badgeTitle: "Date check",
                 title: "\(daysRemaining) \(dayWord) remaining",
-                detail: "Based on your latest recorded donation on \(latestDonationText), the recorded next possible donation date is \(nextPossibleText).",
+                detail: "Based on your latest recorded whole-blood donation on \(latestDonationText), the effective next possible donation date is \(nextPossibleText).",
                 compactMessage: "\(daysRemaining) \(dayWord) remain in the recorded minimum waiting period.",
                 style: .warning
             )
 
         case .unknown:
-            return DonationReadinessPresentation(
-                badgeTitle: "Date check unavailable",
-                title: "Waiting-period status unavailable",
-                detail: "Your latest recorded donation is \(latestDonationText), but the linked record does not contain a valid next possible donation date for this check.",
-                compactMessage: "Waiting-period status is unavailable from the linked donor record.",
-                style: .neutral
+            return unknownPresentation(
+                latestDonationText:
+                    latestDonationText
             )
         }
+    }
+
+    private static func unknownPresentation(
+        latestDonationText: String
+    ) -> DonationReadinessPresentation {
+
+        DonationReadinessPresentation(
+            badgeTitle: "Date check unavailable",
+            title: "Waiting-period status unavailable",
+            detail: "Your latest recorded donation is \(latestDonationText), but DonorMate cannot safely calculate a whole-blood waiting-period status from the available record.",
+            compactMessage: "Waiting-period status is unavailable from the linked donor record.",
+            style: .neutral
+        )
     }
 
     private static func formattedDate(
@@ -105,4 +130,3 @@ nonisolated enum DonationReadinessPresentationBuilder {
         )
     }
 }
-

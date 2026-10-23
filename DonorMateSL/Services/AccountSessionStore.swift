@@ -34,6 +34,12 @@ final class AccountSessionStore:
     @Published private(set)
     var requiresProfileName = false
 
+    @Published private(set)
+    var requiresNationalIdentityNumber = false
+
+    @Published private(set)
+    var recoveryDisplayName: String?
+
     private let accountService:
         AccountServicing
 
@@ -74,6 +80,7 @@ final class AccountSessionStore:
     var needsProfileSetup: Bool {
         pendingProfile != nil
         || requiresProfileName
+        || requiresNationalIdentityNumber
     }
 
     var needsAccountRecovery: Bool {
@@ -81,12 +88,20 @@ final class AccountSessionStore:
             return false
         }
 
-        return profile?.uid !=
-            authenticatedUserID
+        guard let profile,
+              profile.uid ==
+                authenticatedUserID else {
+            return true
+        }
+
+        return !profile.hasNationalIdentityNumber
+            || requiresProfileName
+            || requiresNationalIdentityNumber
     }
 
     func createAccount(
         displayName: String,
+        nationalIdentityNumber: String,
         email: String,
         password: String
     ) async -> Bool {
@@ -112,6 +127,8 @@ final class AccountSessionStore:
                     .createAccount(
                         displayName:
                             displayName,
+                        nationalIdentityNumber:
+                            nationalIdentityNumber,
                         email:
                             email,
                         password:
@@ -131,15 +148,9 @@ final class AccountSessionStore:
                 return false
             }
 
-            authenticatedUserID =
-                loadedProfile.uid
-
-            profile =
+            applyLoadedProfile(
                 loadedProfile
-
-            pendingProfile = nil
-            requiresProfileName = false
-            errorMessage = nil
+            )
 
             deferredProfileUserID = nil
 
@@ -218,15 +229,9 @@ final class AccountSessionStore:
                 return false
             }
 
-            authenticatedUserID =
-                loadedProfile.uid
-
-            profile =
+            applyLoadedProfile(
                 loadedProfile
-
-            pendingProfile = nil
-            requiresProfileName = false
-            errorMessage = nil
+            )
 
             deferredProfileUserID = nil
 
@@ -317,16 +322,9 @@ final class AccountSessionStore:
                 return false
             }
 
-            authenticatedUserID =
-                expectedUserID
-
-            profile =
+            applyLoadedProfile(
                 pendingProfile
-
-            self.pendingProfile = nil
-
-            requiresProfileName = false
-            errorMessage = nil
+            )
 
             return true
 
@@ -352,7 +350,8 @@ final class AccountSessionStore:
     }
 
     func completeMissingProfile(
-        displayName: String
+        displayName: String,
+        nationalIdentityNumber: String
     ) async -> Bool {
 
         guard !isLoading else {
@@ -387,7 +386,9 @@ final class AccountSessionStore:
                 try await accountService
                     .completeCurrentProfile(
                         displayName:
-                            displayName
+                            displayName,
+                        nationalIdentityNumber:
+                            nationalIdentityNumber
                     )
 
             guard isManualOperationCurrent(
@@ -404,12 +405,9 @@ final class AccountSessionStore:
                 return false
             }
 
-            profile =
+            applyLoadedProfile(
                 completedProfile
-
-            pendingProfile = nil
-            requiresProfileName = false
-            errorMessage = nil
+            )
 
             return true
 
@@ -511,12 +509,9 @@ final class AccountSessionStore:
                 return false
             }
 
-            profile =
+            applyLoadedProfile(
                 loadedProfile
-
-            pendingProfile = nil
-            requiresProfileName = false
-            errorMessage = nil
+            )
 
             return true
 
@@ -729,6 +724,8 @@ final class AccountSessionStore:
             }
 
             requiresProfileName = false
+            requiresNationalIdentityNumber = false
+            recoveryDisplayName = nil
             errorMessage = nil
 
             deferredProfileUserID =
@@ -755,6 +752,8 @@ final class AccountSessionStore:
         }
 
         requiresProfileName = false
+        requiresNationalIdentityNumber = false
+        recoveryDisplayName = nil
         errorMessage = nil
 
         guard let observedUserID else {
@@ -829,12 +828,9 @@ final class AccountSessionStore:
                         return
                     }
 
-                    profile =
+                    applyLoadedProfile(
                         loadedProfile
-
-                    pendingProfile = nil
-                    requiresProfileName = false
-                    errorMessage = nil
+                    )
 
                 } catch let error
                             as AccountServiceError {
@@ -1034,6 +1030,8 @@ final class AccountSessionStore:
         pendingProfile = nil
 
         requiresProfileName = false
+        requiresNationalIdentityNumber = false
+        recoveryDisplayName = nil
         errorMessage = nil
 
         deferredProfileUserID = nil
@@ -1055,6 +1053,8 @@ final class AccountSessionStore:
             profile = nil
             pendingProfile = nil
             requiresProfileName = false
+            requiresNationalIdentityNumber = false
+            recoveryDisplayName = nil
 
             return
         }
@@ -1085,6 +1085,8 @@ final class AccountSessionStore:
             pendingProfile = nil
 
             requiresProfileName = false
+            requiresNationalIdentityNumber = false
+            recoveryDisplayName = nil
 
             errorMessage =
                 error.localizedDescription
@@ -1146,13 +1148,23 @@ final class AccountSessionStore:
                 pendingProfile
 
             requiresProfileName = false
+            requiresNationalIdentityNumber =
+                !pendingProfile.hasNationalIdentityNumber
+            recoveryDisplayName =
+                pendingProfile.displayName
 
-        case .profileRecoveryRequired:
+        case let .profileRecoveryRequired(
+            displayName
+        ):
 
             profile = nil
             pendingProfile = nil
 
-            requiresProfileName = true
+            requiresProfileName =
+                displayName == nil
+            requiresNationalIdentityNumber = true
+            recoveryDisplayName =
+                displayName
 
         default:
 
@@ -1169,10 +1181,34 @@ final class AccountSessionStore:
             }
 
             requiresProfileName = false
+            requiresNationalIdentityNumber = false
+            recoveryDisplayName = nil
         }
 
         errorMessage =
             error.localizedDescription
+    }
+
+    private func applyLoadedProfile(
+        _ loadedProfile: AccountProfile
+    ) {
+
+        authenticatedUserID =
+            loadedProfile.uid
+
+        profile =
+            loadedProfile
+
+        pendingProfile = nil
+
+        requiresProfileName = false
+        requiresNationalIdentityNumber =
+            !loadedProfile.hasNationalIdentityNumber
+
+        recoveryDisplayName =
+            loadedProfile.displayName
+
+        errorMessage = nil
     }
 
     private func isManualOperationCurrent(
@@ -1200,4 +1236,3 @@ final class AccountSessionStore:
             uid
     }
 }
-

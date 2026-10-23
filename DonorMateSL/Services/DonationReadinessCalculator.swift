@@ -19,11 +19,6 @@ nonisolated enum DonationReadinessCalculator {
             return .unknown
         }
 
-        guard let nextPossibleDonationDate =
-                latestRecord.nextPossibleDonationDate else {
-            return .unknown
-        }
-
         let donationDay =
             calendar.startOfDay(
                 for: latestRecord.date
@@ -34,16 +29,16 @@ nonisolated enum DonationReadinessCalculator {
                 for: currentDate
             )
 
-        let nextPossibleDay =
-            calendar.startOfDay(
-                for: nextPossibleDonationDate
-            )
-
         guard donationDay <= currentDay else {
             return .unknown
         }
 
-        guard nextPossibleDay > donationDay else {
+        guard let nextPossibleDay =
+                DonationWaitingPeriodPolicy
+                    .effectiveNextPossibleDonationDate(
+                        for: latestRecord,
+                        calendar: calendar
+                    ) else {
             return .unknown
         }
 

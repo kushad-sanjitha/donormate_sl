@@ -15,6 +15,7 @@ nonisolated enum AccountServiceError:
 
     case invalidDisplayName
     case invalidEmail
+    case invalidNationalIdentityNumber
     case missingAuthenticatedUser
     case missingEmail
     case profileNotFound
@@ -24,7 +25,9 @@ nonisolated enum AccountServiceError:
         profile: AccountProfile
     )
 
-    case profileRecoveryRequired
+    case profileRecoveryRequired(
+        displayName: String?
+    )
 
     var errorDescription: String? {
 
@@ -35,6 +38,9 @@ nonisolated enum AccountServiceError:
 
         case .invalidEmail:
             return "Enter a valid email address."
+
+        case .invalidNationalIdentityNumber:
+            return "Enter a valid Sri Lankan NIC number. Use the 12-digit format or the older 9-digit format ending in V or X."
 
         case .missingAuthenticatedUser:
             return "No authenticated account is available."
@@ -52,7 +58,7 @@ nonisolated enum AccountServiceError:
             return "Your account is signed in, but profile setup could not be completed. Please try again."
 
         case .profileRecoveryRequired:
-            return "Your account is signed in, but your full name is required to finish profile setup."
+            return "Your account is signed in, but identity details are required to finish profile setup."
         }
     }
 }
@@ -66,6 +72,7 @@ protocol AccountServicing: AnyObject {
 
     func createAccount(
         displayName: String,
+        nationalIdentityNumber: String,
         email: String,
         password: String
     ) async throws -> AccountProfile
@@ -84,7 +91,8 @@ protocol AccountServicing: AnyObject {
     ) async throws
 
     func completeCurrentProfile(
-        displayName: String
+        displayName: String,
+        nationalIdentityNumber: String
     ) async throws -> AccountProfile
 
     func sendPasswordReset(
@@ -126,6 +134,7 @@ final class FirebaseAccountService:
 
     func createAccount(
         displayName: String,
+        nationalIdentityNumber: String,
         email: String,
         password: String
     ) async throws -> AccountProfile {
@@ -135,12 +144,22 @@ final class FirebaseAccountService:
                 displayName
             )
 
+        let cleanedNIC =
+            try validatedNationalIdentityNumber(
+                nationalIdentityNumber
+            )
+
         let cleanedEmail =
             email
                 .trimmingCharacters(
                     in: .whitespacesAndNewlines
                 )
                 .lowercased()
+
+        guard !cleanedEmail.isEmpty else {
+            throw AccountServiceError
+                .invalidEmail
+        }
 
         let result =
             try await auth.createUser(
@@ -159,7 +178,9 @@ final class FirebaseAccountService:
             AccountProfile(
                 uid: result.user.uid,
                 displayName: cleanedName,
-                email: authenticatedEmail
+                email: authenticatedEmail,
+                nationalIdentityNumber:
+                    cleanedNIC
             )
 
         do {
@@ -221,9 +242,13 @@ final class FirebaseAccountService:
         } catch AccountServiceError
                     .profileNotFound {
 
-            return try await recoverMissingProfile(
-                for: currentUser
-            )
+            throw AccountServiceError
+                .profileRecoveryRequired(
+                    displayName:
+                        validatedDisplayNameOrNil(
+                            currentUser.displayName
+                        )
+                )
         }
     }
 
@@ -243,6 +268,18 @@ final class FirebaseAccountService:
         let cleanedName =
             try validatedDisplayName(
                 profile.displayName
+            )
+
+        guard let rawNIC =
+                profile.nationalIdentityNumber else {
+
+            throw AccountServiceError
+                .invalidNationalIdentityNumber
+        }
+
+        let cleanedNIC =
+            try validatedNationalIdentityNumber(
+                rawNIC
             )
 
         guard let authenticatedEmail =
@@ -284,7 +321,9 @@ final class FirebaseAccountService:
                 .updateData(
                     [
                         "displayName":
-                            cleanedName
+                            cleanedName,
+                        "nationalIdentityNumber":
+                            cleanedNIC
                     ]
                 )
 
@@ -297,6 +336,8 @@ final class FirebaseAccountService:
                             cleanedName,
                         "email":
                             authenticatedEmail,
+                        "nationalIdentityNumber":
+                            cleanedNIC,
                         "createdAt":
                             FieldValue
                                 .serverTimestamp()
@@ -306,7 +347,8 @@ final class FirebaseAccountService:
     }
 
     func completeCurrentProfile(
-        displayName: String
+        displayName: String,
+        nationalIdentityNumber: String
     ) async throws -> AccountProfile {
 
         guard let currentUser =
@@ -328,11 +370,18 @@ final class FirebaseAccountService:
                 displayName
             )
 
+        let cleanedNIC =
+            try validatedNationalIdentityNumber(
+                nationalIdentityNumber
+            )
+
         let profile =
             AccountProfile(
                 uid: currentUser.uid,
                 displayName: cleanedName,
-                email: email
+                email: email,
+                nationalIdentityNumber:
+                    cleanedNIC
             )
 
         try await completeProfile(
@@ -443,64 +492,29 @@ final class FirebaseAccountService:
                 .invalidProfile
         }
 
+        let nationalIdentityNumber:
+            String?
+
+        if let storedNIC =
+            data["nationalIdentityNumber"]
+                as? String {
+
+            nationalIdentityNumber =
+                try validatedNationalIdentityNumber(
+                    storedNIC
+                )
+
+        } else {
+            nationalIdentityNumber = nil
+        }
+
         return AccountProfile(
             uid: uid,
             displayName: cleanedName,
-            email: email
+            email: email,
+            nationalIdentityNumber:
+                nationalIdentityNumber
         )
-    }
-
-    private func recoverMissingProfile(
-        for user: User
-    ) async throws -> AccountProfile {
-
-        guard auth.currentUser?.uid ==
-                user.uid else {
-
-            throw AccountServiceError
-                .missingAuthenticatedUser
-        }
-
-        guard let email =
-                user.email else {
-
-            throw AccountServiceError
-                .missingEmail
-        }
-
-        guard let displayName =
-                user.displayName else {
-
-            throw AccountServiceError
-                .profileRecoveryRequired
-        }
-
-        let cleanedName =
-            try validatedDisplayName(
-                displayName
-            )
-
-        let profile =
-            AccountProfile(
-                uid: user.uid,
-                displayName: cleanedName,
-                email: email
-            )
-
-        do {
-            try await completeProfile(
-                profile
-            )
-
-            return profile
-
-        } catch {
-
-            throw AccountServiceError
-                .profileSetupRequired(
-                    profile: profile
-                )
-        }
     }
 
     private func validatedDisplayName(
@@ -522,5 +536,32 @@ final class FirebaseAccountService:
 
         return cleanedName
     }
-}
 
+    private func validatedDisplayNameOrNil(
+        _ displayName: String?
+    ) -> String? {
+
+        guard let displayName else {
+            return nil
+        }
+
+        return try? validatedDisplayName(
+            displayName
+        )
+    }
+
+    private func validatedNationalIdentityNumber(
+        _ value: String
+    ) throws -> String {
+
+        guard let normalizedValue =
+                NationalIdentityNumberValidator
+                    .validated(value) else {
+
+            throw AccountServiceError
+                .invalidNationalIdentityNumber
+        }
+
+        return normalizedValue
+    }
+}

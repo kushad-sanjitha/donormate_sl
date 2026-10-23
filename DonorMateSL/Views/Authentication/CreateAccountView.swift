@@ -10,6 +10,7 @@ import SwiftUI
 struct CreateAccountView: View {
 
     @State private var fullName = ""
+    @State private var nationalIdentityNumber = ""
     @State private var email = ""
     @State private var password = ""
     @State private var confirmPassword = ""
@@ -26,8 +27,8 @@ struct CreateAccountView: View {
     var onBack: () -> Void = {}
 
     var onCreateAccount:
-        (String, String, String) async -> Void =
-            { _, _, _ in }
+        (String, String, String, String) async -> Void =
+            { _, _, _, _ in }
 
     private var displayedErrorMessage: String? {
         validationErrorMessage
@@ -213,6 +214,65 @@ struct CreateAccountView: View {
                                 cornerRadius: 13
                             )
                         )
+                    }
+
+                    VStack(
+                        alignment: .leading,
+                        spacing: 6
+                    ) {
+
+                        fieldLabel("NIC number")
+
+                        TextField(
+                            "12 digits or old NIC ending V/X",
+                            text: $nationalIdentityNumber
+                        )
+                        .font(.system(size: 14))
+                        .foregroundStyle(
+                            Color("TextPrimary")
+                        )
+                        .textInputAutocapitalization(
+                            .characters
+                        )
+                        .autocorrectionDisabled()
+                        .keyboardType(.asciiCapable)
+                        .submitLabel(.next)
+                        .disabled(isLoading)
+                        .padding(
+                            .horizontal,
+                            14
+                        )
+                        .frame(height: 52)
+                        .background(
+                            Color(
+                                "SurfacePrimary"
+                            )
+                        )
+                        .overlay {
+                            RoundedRectangle(
+                                cornerRadius: 13
+                            )
+                            .stroke(
+                                Color(
+                                    "BorderPrimary"
+                                ),
+                                lineWidth: 1
+                            )
+                        }
+                        .clipShape(
+                            RoundedRectangle(
+                                cornerRadius: 13
+                            )
+                        )
+
+                        Text(
+                            "Used later to match this account with a donor record. Format validation does not by itself verify identity ownership."
+                        )
+                        .font(.system(size: 11))
+                        .foregroundStyle(
+                            Color("TextSecondary")
+                        )
+                        .lineSpacing(2)
                     }
 
                     VStack(
@@ -524,6 +584,12 @@ struct CreateAccountView: View {
                 in: .whitespacesAndNewlines
             )
 
+        let cleanedNIC =
+            NationalIdentityNumberValidator
+                .normalized(
+                    nationalIdentityNumber
+                )
+
         let cleanedEmail =
             email.trimmingCharacters(
                 in: .whitespacesAndNewlines
@@ -532,6 +598,13 @@ struct CreateAccountView: View {
         guard !cleanedName.isEmpty else {
             validationErrorMessage =
                 "Enter your full name."
+            return
+        }
+
+        guard NationalIdentityNumberValidator
+                .isValid(cleanedNIC) else {
+            validationErrorMessage =
+                "Enter a valid Sri Lankan NIC number."
             return
         }
 
@@ -560,6 +633,7 @@ struct CreateAccountView: View {
         Task {
             await onCreateAccount(
                 cleanedName,
+                cleanedNIC,
                 cleanedEmail,
                 password
             )
@@ -576,11 +650,12 @@ struct CreateAccountView: View {
         },
         onCreateAccount: {
             fullName,
+            nationalIdentityNumber,
             email,
             _ in
 
             print(
-                "Create account submitted for \(fullName), \(email)"
+                "Create account submitted for \(fullName), \(nationalIdentityNumber), \(email)"
             )
         }
     )

@@ -56,6 +56,15 @@ struct ProfileView: View {
                             Text(accountProfile.email)
                                 .font(.system(size: 13))
                                 .foregroundStyle(Color("TextSecondary"))
+
+                            if let maskedNIC =
+                                accountProfile
+                                    .maskedNationalIdentityNumber {
+
+                                Text("NIC \(maskedNIC)")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundStyle(Color("TextSecondary"))
+                            }
                         }
 
                         Spacer()
@@ -169,7 +178,9 @@ struct ProfileView: View {
             AccountProfile(
                 uid: "preview-user",
                 displayName: "Kushad Dissanayake",
-                email: "kushad@example.com"
+                email: "kushad@example.com",
+                nationalIdentityNumber:
+                    "198554200159"
             ),
         isLoading: false,
         errorMessage: nil,
@@ -178,4 +189,3 @@ struct ProfileView: View {
         }
     )
 }
-
