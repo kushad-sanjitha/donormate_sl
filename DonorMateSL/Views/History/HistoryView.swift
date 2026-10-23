@@ -185,7 +185,7 @@ struct HistoryView: View {
             InfoMessageCard(
                 systemImage: "info.circle.fill",
                 title: "Sample donation records",
-                detail: "These records are demo data used for prototype testing. No live blood-bank record service is connected yet."
+                detail: "These sample records are provided for demonstration and are not verified blood-bank records."
             )
 
             Spacer()

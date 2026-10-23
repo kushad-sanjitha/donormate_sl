@@ -36,86 +36,17 @@ struct CreateAccountView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-
-                HStack {
-
-                    Button {
-                        onBack()
-                    } label: {
-                        Image(
-                            systemName:
-                                "chevron.left"
-                        )
-                        .font(
-                            .system(
-                                size: 16,
-                                weight: .bold
-                            )
-                        )
-                        .foregroundStyle(
-                            Color("TextPrimary")
-                        )
-                        .frame(
-                            width: 38,
-                            height: 38
-                        )
-                        .background(
-                            Color("SurfacePrimary")
-                        )
-                        .overlay {
-                            RoundedRectangle(
-                                cornerRadius: 12
-                            )
-                            .stroke(
-                                Color(
-                                    "BorderPrimary"
-                                ),
-                                lineWidth: 1
-                            )
-                        }
-                        .clipShape(
-                            RoundedRectangle(
-                                cornerRadius: 12
-                            )
-                        )
-                        .frame(
-                            width: 44,
-                            height: 44
-                        )
-                        .contentShape(
-                            Rectangle()
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(isLoading)
-                    .accessibilityLabel("Back")
-
-                    Spacer()
-
-                    Text("Create Account")
-                        .font(
-                            .system(
-                                size: 15,
-                                weight: .bold
-                            )
-                        )
-                        .foregroundStyle(
-                            Color("TextPrimary")
-                        )
-
-                    Spacer()
-
-                    Color.clear
-                        .frame(
-                            width: 44,
-                            height: 44
-                        )
+        VStack(spacing: 0) {
+            ScreenNavigationHeader(
+                title: "Create Account",
+                isBackDisabled: isLoading,
+                onBack: {
+                    onBack()
                 }
+            )
 
-                Spacer()
-                    .frame(height: 18)
+            ScrollView {
+                VStack(spacing: 0) {
 
                 VStack(
                     alignment: .leading,
@@ -148,7 +79,7 @@ struct CreateAccountView: View {
                     .padding(.top, 10)
 
                     Text(
-                        "This account gives you secure access to the donor companion."
+                        "This account gives you secure access to your DonorMate profile and linked donation information."
                     )
                     .font(.system(size: 14))
                     .foregroundStyle(
@@ -266,7 +197,7 @@ struct CreateAccountView: View {
                         )
 
                         Text(
-                            "Used later to match this account with a donor record. Format validation does not by itself verify identity ownership."
+                            "Used to match your account with donor records. Format validation alone does not verify identity ownership."
                         )
                         .font(.system(size: 11))
                         .foregroundStyle(
@@ -457,6 +388,7 @@ struct CreateAccountView: View {
             }
             .padding(.horizontal, 18)
             .padding(.top, 18)
+        }
         }
         .background(
             Color("BackgroundPrimary")

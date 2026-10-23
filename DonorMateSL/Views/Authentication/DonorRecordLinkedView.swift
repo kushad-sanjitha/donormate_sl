@@ -35,7 +35,7 @@ struct DonorRecordLinkedView: View {
     private var supportingText: String {
 
         if isDemoData {
-            return "Demo data is shown for prototype testing. No real blood-bank record lookup has been performed."
+            return "Sample donor information is being used. No authorised donor-record lookup has been completed."
         }
 
         return "We found the donor-linked information associated with the details you provided."
@@ -79,7 +79,7 @@ struct DonorRecordLinkedView: View {
 
                 Text(
                     isDemoData
-                        ? "Demo donor record loaded"
+                        ? "Sample donor record connected"
                         : "Donor record connected"
                 )
                 .font(
@@ -270,7 +270,7 @@ struct DonorRecordLinkedView: View {
 
                 Text(
                     isDemoData
-                        ? "This sample donor information is used only for prototype testing. Real donation records must come from an authorised linked service."
+                        ? "Sample donor information is read-only and provided for demonstration. Verified records must come from an authorised donor-record service."
                         : "Donation records are supplied by the linked service and cannot be changed by you in DonorMate."
                 )
                 .font(
