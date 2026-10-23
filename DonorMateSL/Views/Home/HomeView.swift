@@ -18,6 +18,9 @@ struct HomeView: View {
 
     let accountProfile: AccountProfile
 
+    @ObservedObject var donationLocationStore: DonationLocationStore
+    @ObservedObject var currentLocationService: CurrentLocationService
+
     var onConnectDonorRecord: () -> Void = {}
     var onFindNearby: () -> Void = {}
 
@@ -153,7 +156,7 @@ struct HomeView: View {
                 spacing: 4
             ) {
 
-                Text("Good morning")
+                Text("Welcome back")
                     .font(
                         .system(size: 12)
                     )
@@ -272,9 +275,7 @@ struct HomeView: View {
 
                 HomeReadyCard(
                     onFindOpportunity: {
-                        print(
-                            "Find opportunity tapped"
-                        )
+                        onFindNearby()
                     }
                 )
 
@@ -477,7 +478,7 @@ struct HomeView: View {
                 alignment: .center
             ) {
 
-                Text("Nearby this week")
+                Text("Donation camps")
                     .font(
                         .system(
                             size: 15,
@@ -491,9 +492,7 @@ struct HomeView: View {
                 Spacer()
 
                 Button {
-                    print(
-                        "See all tapped"
-                    )
+                    onFindNearby()
                 } label: {
                     Text("See all")
                         .font(
@@ -512,18 +511,21 @@ struct HomeView: View {
             Spacer()
                 .frame(height: 8)
 
-            HomeInfoRow(
-                title:
-                    "Matara Donation Camp",
-                detail:
-                    "Sat · 9:00 AM · 2.4 km",
-                systemImage:
-                    "location.fill",
-                iconBackground:
-                    Color("InfoBlueSoft"),
-                iconForeground:
-                    Color("InfoBlue")
-            )
+            if let camp = nearestLocation(ofType: .camp) {
+                HomeInfoRow(
+                    title: camp.name,
+                    detail: details(for: camp),
+                    systemImage: "location.fill",
+                    iconBackground: Color("InfoBlueSoft"),
+                    iconForeground: Color("InfoBlue")
+                )
+            } else {
+                NeutralMessageCard(
+                    systemImage: "mappin.slash",
+                    title: "No donation camps available",
+                    detail: "Check Nearby for updated locations."
+                )
+            }
 
             Spacer()
                 .frame(height: 16)
@@ -545,7 +547,7 @@ struct HomeView: View {
             ) {
 
                 Text(
-                    "Closest opportunity"
+                    "Nearby blood bank"
                 )
                 .font(
                     .system(
@@ -560,9 +562,7 @@ struct HomeView: View {
                 Spacer()
 
                 Button {
-                    print(
-                        "View map tapped"
-                    )
+                        onFindNearby()
                 } label: {
                     Text("View map")
                         .font(
@@ -581,18 +581,21 @@ struct HomeView: View {
             Spacer()
                 .frame(height: 8)
 
-            HomeInfoRow(
-                title:
-                    "Matara Blood Bank",
-                detail:
-                    "Open today · 2.1 km",
-                systemImage:
-                    "location.fill",
-                iconBackground:
-                    Color("InfoBlueSoft"),
-                iconForeground:
-                    Color("InfoBlue")
-            )
+            if let bank = nearestLocation(ofType: .bloodBank) {
+                HomeInfoRow(
+                    title: bank.name,
+                    detail: details(for: bank),
+                    systemImage: "location.fill",
+                    iconBackground: Color("InfoBlueSoft"),
+                    iconForeground: Color("InfoBlue")
+                )
+            } else {
+                NeutralMessageCard(
+                    systemImage: "mappin.slash",
+                    title: "No blood bank available",
+                    detail: "Check Nearby for updated locations."
+                )
+            }
 
             Spacer()
                 .frame(height: 14)
@@ -674,22 +677,49 @@ struct HomeView: View {
                 }
                 .buttonStyle(.plain)
 
-                HomeQuickActionCard(
-                    title:
-                        "Find Nearby",
-                    systemImage:
-                        "map.fill",
-                    iconBackground:
-                        Color(
-                            "InfoBlueSoft"
-                        ),
-                    iconForeground:
-                        Color(
-                            "InfoBlue"
-                        )
-                )
+                Button(action: onFindNearby) {
+                    HomeQuickActionCard(
+                        title: "Find Nearby",
+                        systemImage: "map.fill",
+                        iconBackground: Color("InfoBlueSoft"),
+                        iconForeground: Color("InfoBlue")
+                    )
+                }
+                .buttonStyle(.plain)
             }
         }
+    }
+
+    private func nearestLocation(
+        ofType type: DonationLocation.LocationType
+    ) -> DonationLocation? {
+        let matching = donationLocationStore.locations.filter {
+            $0.type == type
+        }
+
+        guard let userLocation = currentLocationService.currentLocation else {
+            return matching.first
+        }
+
+        return matching.min {
+            LocationDistanceCalculator.distanceInMetres(
+                from: userLocation, to: $0
+            ) < LocationDistanceCalculator.distanceInMetres(
+                from: userLocation, to: $1
+            )
+        }
+    }
+
+    private func details(for location: DonationLocation) -> String {
+        guard let userLocation = currentLocationService.currentLocation else {
+            return location.detail
+        }
+
+        let distance = LocationDistanceCalculator.formattedDistance(
+            from: userLocation,
+            to: location
+        )
+        return "\(location.detail) · \(distance)"
     }
 
     private func formattedFullDate(
@@ -727,7 +757,9 @@ struct HomeView: View {
                 uid: "preview-user",
                 displayName: "Kushad Dissanayake",
                 email: "kushad@example.com"
-            )
+            ),
+        donationLocationStore: DonationLocationStore(),
+        currentLocationService: CurrentLocationService()
     )
 }
 
@@ -740,7 +772,9 @@ struct HomeView: View {
                 uid: "preview-user",
                 displayName: "Kushad Dissanayake",
                 email: "kushad@example.com"
-            )
+            ),
+        donationLocationStore: DonationLocationStore(),
+        currentLocationService: CurrentLocationService()
     )
 }
 
@@ -760,6 +794,8 @@ struct HomeView: View {
                 uid: "preview-user",
                 displayName: "Kushad Dissanayake",
                 email: "kushad@example.com"
-            )
+            ),
+        donationLocationStore: DonationLocationStore(),
+        currentLocationService: CurrentLocationService()
     )
 }

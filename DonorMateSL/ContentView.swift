@@ -61,8 +61,10 @@ struct ContentView: View {
     @State private var showBiometricUnlockFailure =
         false
 
-    @StateObject private var donorRecordsStore =
-        DonorRecordsStore()
+    @StateObject private var donorRecordsStore = DonorRecordsStore()
+    @StateObject private var donationLocationStore = DonationLocationStore()
+
+    private let donorRecordProvider = DemoDonorRecordProvider()
 
     @StateObject private var accountSessionStore =
         AccountSessionStore()
@@ -417,8 +419,9 @@ struct ContentView: View {
                             $selectedMainTab,
                         donorRecordsStore:
                             donorRecordsStore,
-                        accountProfile:
-                            accountProfile,
+                        accountProfile: accountProfile,
+                        donationLocationStore: donationLocationStore,
+                        locationPermissionService: locationPermissionService,
                         isAccountLoading:
                             accountSessionStore
                                 .isLoading,
@@ -447,6 +450,14 @@ struct ContentView: View {
         }
         .onAppear {
             refreshSetupStatuses()
+        }
+        .onReceive(donationLocationStore.$locations) { locations in
+            Task {
+                await NearbyAlertMonitorService.shared
+                    .replaceLocations(locations)
+                await NearbyAlertMonitorService.shared
+                    .startObservingEvents()
+            }
         }
         .onChange(of: scenePhase) {
             _,
@@ -698,9 +709,8 @@ struct ContentView: View {
             onFindRecord: {
                 donorRecordID in
 
-                guard loadDemoDonorData(
-                    donorRecordID:
-                        donorRecordID
+                guard await loadDonorData(
+                    donorRecordID: donorRecordID
                 ) else {
                     return false
                 }
@@ -736,7 +746,7 @@ struct ContentView: View {
                 donationCount:
                     profile
                         .reportedDonationCount,
-                isDemoData: true,
+                isDemoData: !donorRecordsStore.isVerified,
                 onContinue: {
                     handleDonorRecordLinkedContinue()
                 }
@@ -905,40 +915,36 @@ struct ContentView: View {
             .accountRecovery
     }
 
-    @discardableResult
-    private func loadDemoDonorData(
+    private func loadDonorData(
         donorRecordID: String
-    ) -> Bool {
-
-        guard hasValidAccountProfile else {
-            currentFlow =
-                .accountRecovery
-
+    ) async -> Bool {
+        guard let account = validAccountProfile else {
+            currentFlow = .accountRecovery
             return false
         }
 
-        guard let expectedRecordID =
-                DonorDemoData.profile
-                    .donorRecordID,
-              donorRecordID
-                .trimmingCharacters(
-                    in: .whitespacesAndNewlines
-                )
-                .uppercased() ==
-                expectedRecordID
-                    .uppercased() else {
-            return false
-        }
+        do {
+            guard let result = try await donorRecordProvider.findRecord(
+                account: account,
+                donorRecordID: donorRecordID
+            ) else {
+                return false
+            }
 
-        donorRecordsStore
-            .replaceLinkedData(
-                profile:
-                    DonorDemoData.profile,
-                records:
-                    DonorDemoData.records
+            guard validAccountProfile?.uid == account.uid,
+                  currentFlow == .connectDonorRecord else {
+                return false
+            }
+
+            donorRecordsStore.replaceLinkedData(
+                profile: result.profile,
+                records: result.records,
+                isVerified: result.isVerified
             )
-
-        return true
+            return true
+        } catch {
+            return false
+        }
     }
 
     private func openAuthenticatedEntryFlow() {

@@ -11,8 +11,9 @@ import Foundation
 
 struct NearbyView: View {
 
-    @ObservedObject var donorRecordsStore:
-        DonorRecordsStore
+    @ObservedObject var donorRecordsStore: DonorRecordsStore
+    @ObservedObject var donationLocationStore: DonationLocationStore
+    @ObservedObject var currentLocationService: CurrentLocationService
 
     private enum NearbyMode {
         case map
@@ -31,12 +32,6 @@ struct NearbyView: View {
     @State private var selectedFilter: NearbyFilter = .all
     @State private var selectedLocation: DonationLocation?
 
-    @StateObject private var locationPermissionService =
-        LocationPermissionService()
-
-    @StateObject private var currentLocationService =
-        CurrentLocationService()
-
     @State private var hasCenteredOnUser = false
 
     @State private var cameraPosition: MapCameraPosition = .region(
@@ -53,7 +48,7 @@ struct NearbyView: View {
     )
 
     private var locations: [DonationLocation] {
-        DonationLocationCatalog.locations
+        donationLocationStore.locations
     }
 
     private var filteredLocations: [DonationLocation] {
@@ -245,21 +240,6 @@ struct NearbyView: View {
                 alignment: .top
             )
             .background(Color("BackgroundPrimary"))
-            .onAppear {
-                locationPermissionService.refreshStatus()
-
-                if locationPermissionService.status == .authorized {
-                    currentLocationService.requestCurrentLocation()
-                }
-            }
-            .onChange(
-                of: locationPermissionService.status
-            ) { _, newStatus in
-
-                if newStatus == .authorized {
-                    currentLocationService.requestCurrentLocation()
-                }
-            }
             .onChange(
                 of: currentLocationService.currentLocation
             ) { _, newLocation in
@@ -284,6 +264,13 @@ struct NearbyView: View {
 
                 hasCenteredOnUser = true
             }
+            .onReceive(donationLocationStore.$locations) { locations in
+                if let selected = selectedLocation {
+                    selectedLocation = locations.first {
+                        $0.id == selected.id
+                    }
+                }
+            }
             .navigationDestination(
                 for: NearbyRoute.self
             ) { route in
@@ -304,17 +291,15 @@ struct NearbyView: View {
 
         case .details(let locationID):
             if let location =
-                DonationLocationCatalog.location(
-                    for: locationID
-                ) {
+                donationLocationStore.location(for: locationID) {
 
                 switch location.type {
 
                 case .camp:
                     CampaignDetailsView(
                         location: location,
-                        donorRecordsStore:
-                            donorRecordsStore,
+                        donorRecordsStore: donorRecordsStore,
+                        currentLocationService: currentLocationService,
                         onDirections: { location in
                             navigationPath.append(
                                 .route(
@@ -334,8 +319,8 @@ struct NearbyView: View {
                 case .bloodBank:
                     BloodBankDetailsView(
                         location: location,
-                        donorRecordsStore:
-                            donorRecordsStore,
+                        donorRecordsStore: donorRecordsStore,
+                        currentLocationService: currentLocationService,
                         onDirections: { location in
                             navigationPath.append(
                                 .route(
@@ -352,30 +337,40 @@ struct NearbyView: View {
                         }
                     )
                 }
+            } else {
+                unavailableLocation
             }
 
         case .route(let locationID):
             if let location =
-                DonationLocationCatalog.location(
-                    for: locationID
-                ) {
+                donationLocationStore.location(for: locationID) {
 
                 RoutePreviewView(
                     location: location
                 )
+            } else {
+                unavailableLocation
             }
 
         case .alert(let locationID):
             if let location =
-                DonationLocationCatalog.location(
-                    for: locationID
-                ) {
+                donationLocationStore.location(for: locationID) {
 
                 NearbyAlertView(
                     location: location
                 )
+            } else {
+                unavailableLocation
             }
         }
+    }
+
+    private var unavailableLocation: some View {
+        ContentUnavailableView(
+            "Location unavailable",
+            systemImage: "mappin.slash",
+            description: Text("This location is no longer listed.")
+        )
     }
 
     private func switchMode() {
@@ -481,6 +476,8 @@ struct NearbyView: View {
                     ),
                 records:
                     DonorDemoData.records
-            )
+            ),
+        donationLocationStore: DonationLocationStore(),
+        currentLocationService: CurrentLocationService()
     )
 }

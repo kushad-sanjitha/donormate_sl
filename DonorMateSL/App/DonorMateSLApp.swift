@@ -31,10 +31,6 @@ struct DonorMateSLApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .task {
-                    await NearbyAlertMonitorService.shared
-                        .startObservingEvents()
-                }
         }
     }
 }
