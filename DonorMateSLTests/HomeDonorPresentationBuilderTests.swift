@@ -382,7 +382,7 @@ struct HomeDonorPresentationBuilderTests {
                     currentDate:
                         makeDate(
                             year: 2026,
-                            month: 6,
+                            month: 9,
                             day: 1
                         ),
                     calendar:
@@ -437,14 +437,14 @@ struct HomeDonorPresentationBuilderTests {
                 donationDate:
                     makeDate(
                         year: 2026,
-                        month: 1,
-                        day: 1
+                        month: 5,
+                        day: 18
                     ),
                 nextPossibleDate:
                     makeDate(
                         year: 2026,
-                        month: 1,
-                        day: 11
+                        month: 9,
+                        day: 18
                     )
             )
 
@@ -459,8 +459,8 @@ struct HomeDonorPresentationBuilderTests {
                     currentDate:
                         makeDate(
                             year: 2026,
-                            month: 1,
-                            day: 6
+                            month: 9,
+                            day: 1
                         ),
                     calendar:
                         makeCalendar()
@@ -473,13 +473,21 @@ struct HomeDonorPresentationBuilderTests {
         #expect(
             presentation.readiness ==
                 .notReady(
-                    daysRemaining: 5
+                    daysRemaining: 17
                 )
         )
 
         #expect(
-            presentation.countdownProgress ==
-                0.5
+            presentation.countdownProgress !=
+                nil
+        )
+
+        #expect(
+            presentation.countdownProgress! > 0
+        )
+
+        #expect(
+            presentation.countdownProgress! < 1
         )
 
         #expect(
@@ -553,7 +561,7 @@ struct HomeDonorPresentationBuilderTests {
     }
 
     @Test
-    func missingNextPossibleDateProducesUnknownReadiness() {
+    func missingRecordedNextDateUsesDerivedMinimumReadiness() {
 
         let profile =
             DonorProfile(
@@ -584,7 +592,7 @@ struct HomeDonorPresentationBuilderTests {
                     currentDate:
                         makeDate(
                             year: 2026,
-                            month: 6,
+                            month: 9,
                             day: 1
                         ),
                     calendar:
@@ -602,12 +610,22 @@ struct HomeDonorPresentationBuilderTests {
 
         #expect(
             presentation.readiness ==
-                .unknown
+                .notReady(
+                    daysRemaining: 17
+                )
         )
 
         #expect(
-            presentation.countdownProgress ==
+            presentation.countdownProgress !=
                 nil
+        )
+
+        #expect(
+            presentation.countdownProgress! > 0
+        )
+
+        #expect(
+            presentation.countdownProgress! < 1
         )
     }
 

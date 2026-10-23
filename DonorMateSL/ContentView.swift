@@ -220,6 +220,7 @@ struct ContentView: View {
                     },
                     onCreateAccount: {
                         fullName,
+                        nationalIdentityNumber,
                         email,
                         password in
 
@@ -228,6 +229,8 @@ struct ContentView: View {
                                 .createAccount(
                                     displayName:
                                         fullName,
+                                    nationalIdentityNumber:
+                                        nationalIdentityNumber,
                                     email:
                                         email,
                                     password:
@@ -589,7 +592,8 @@ struct ContentView: View {
               let profile =
                 accountSessionStore
                     .profile,
-              profile.uid == userID else {
+              profile.uid == userID,
+              profile.hasNationalIdentityNumber else {
 
             return nil
         }
@@ -607,6 +611,12 @@ struct ContentView: View {
         some View {
 
         AccountRecoveryView(
+            initialDisplayName:
+                accountSessionStore
+                    .recoveryDisplayName
+                ?? accountSessionStore
+                    .profile?
+                    .displayName,
             isLoading:
                 accountSessionStore
                     .isLoading,
@@ -616,17 +626,23 @@ struct ContentView: View {
             requiresName:
                 accountSessionStore
                     .requiresProfileName,
+            requiresNationalIdentityNumber:
+                accountSessionStore
+                    .requiresNationalIdentityNumber,
             hasPendingProfile:
                 accountSessionStore
                     .pendingProfile != nil,
-            onCompleteName: {
-                displayName in
+            onCompleteProfile: {
+                displayName,
+                nationalIdentityNumber in
 
                 let succeeded =
                     await accountSessionStore
                         .completeMissingProfile(
                             displayName:
-                                displayName
+                                displayName,
+                            nationalIdentityNumber:
+                                nationalIdentityNumber
                         )
 
                 guard succeeded,
@@ -672,16 +688,27 @@ struct ContentView: View {
         some View {
 
         ConnectDonorRecordView(
+            maskedNationalIdentityNumber:
+                validAccountProfile?
+                    .maskedNationalIdentityNumber
+                ?? "Unavailable",
             onBack: {
                 handleConnectDonorRecordBack()
             },
             onFindRecord: {
-                guard loadDemoDonorData() else {
-                    return
+                donorRecordID in
+
+                guard loadDemoDonorData(
+                    donorRecordID:
+                        donorRecordID
+                ) else {
+                    return false
                 }
 
                 currentFlow =
                     .donorRecordLinked
+
+                return true
             },
             onLinkLater: {
                 handleLinkLater()
@@ -879,12 +906,27 @@ struct ContentView: View {
     }
 
     @discardableResult
-    private func loadDemoDonorData() -> Bool {
+    private func loadDemoDonorData(
+        donorRecordID: String
+    ) -> Bool {
 
         guard hasValidAccountProfile else {
             currentFlow =
                 .accountRecovery
 
+            return false
+        }
+
+        guard let expectedRecordID =
+                DonorDemoData.profile
+                    .donorRecordID,
+              donorRecordID
+                .trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                )
+                .uppercased() ==
+                expectedRecordID
+                    .uppercased() else {
             return false
         }
 
@@ -1175,4 +1217,3 @@ struct ContentView: View {
 #Preview {
     ContentView()
 }
-

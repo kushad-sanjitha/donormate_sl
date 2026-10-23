@@ -8,11 +8,19 @@
 import SwiftUI
 
 struct ConnectDonorRecordView: View {
-    @State private var nicNumber = ""
-    @State private var donorReference = ""
+
+    @State private var donorRecordID = ""
+    @State private var lookupErrorMessage: String?
+    @State private var isFindingRecord = false
+
+    let maskedNationalIdentityNumber: String
 
     var onBack: () -> Void = {}
-    var onFindRecord: () -> Void = {}
+
+    var onFindRecord:
+        (String) async -> Bool =
+            { _ in false }
+
     var onLinkLater: () -> Void = {}
     var onNeedHelp: () -> Void = {}
 
@@ -44,6 +52,7 @@ struct ConnectDonorRecordView: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .disabled(isFindingRecord)
                     .accessibilityLabel("Back")
 
                     Spacer()
@@ -76,7 +85,7 @@ struct ConnectDonorRecordView: View {
                         .padding(.top, 10)
 
                     Text(
-                        "Enter the details requested by the service to find your existing blood-bank record. DonorMate does not create donation records."
+                        "Your DonorMate account identity is used for donor-record verification. Enter the donor record reference issued by the blood service."
                     )
                     .font(.system(size: 14))
                     .foregroundStyle(Color("TextSecondary"))
@@ -91,73 +100,101 @@ struct ConnectDonorRecordView: View {
                 Spacer()
                     .frame(height: 24)
 
-                VStack(spacing: 16) {
+                VStack(
+                    alignment: .leading,
+                    spacing: 6
+                ) {
 
-                    VStack(
-                        alignment: .leading,
-                        spacing: 6
-                    ) {
-
-                        Text("NIC number")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(Color("TextPrimary"))
-
-                        TextField(
-                            "Enter your NIC number",
-                            text: $nicNumber
-                        )
-                        .font(.system(size: 14))
+                    Text("Account identity")
+                        .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Color("TextPrimary"))
-                        .textInputAutocapitalization(.characters)
-                        .autocorrectionDisabled()
-                        .submitLabel(.next)
-                        .padding(.horizontal, 14)
-                        .frame(height: 52)
-                        .background(Color("SurfacePrimary"))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 13)
-                                .stroke(
-                                    Color("BorderPrimary"),
-                                    lineWidth: 1
-                                )
+
+                    HStack(spacing: 10) {
+
+                        Image(systemName: "person.text.rectangle")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(Color("InfoBlue"))
+                            .accessibilityHidden(true)
+
+                        VStack(
+                            alignment: .leading,
+                            spacing: 2
+                        ) {
+                            Text("NIC linked to this account")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(Color("TextPrimary"))
+
+                            Text(maskedNationalIdentityNumber)
+                                .font(.system(size: 13, weight: .bold, design: .monospaced))
+                                .foregroundStyle(Color("TextSecondary"))
                         }
-                        .clipShape(
-                            RoundedRectangle(cornerRadius: 13)
-                        )
+
+                        Spacer()
                     }
+                    .padding(.horizontal, 14)
+                    .frame(minHeight: 58)
+                    .background(Color("InfoBlueSoft"))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 13)
+                            .stroke(
+                                Color("InfoBlue").opacity(0.18),
+                                lineWidth: 1
+                            )
+                    }
+                    .clipShape(
+                        RoundedRectangle(cornerRadius: 13)
+                    )
+                }
 
-                    VStack(
-                        alignment: .leading,
-                        spacing: 6
-                    ) {
+                Spacer()
+                    .frame(height: 16)
 
-                        Text("Donor record reference")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(Color("TextPrimary"))
+                VStack(
+                    alignment: .leading,
+                    spacing: 6
+                ) {
 
-                        TextField(
-                            "e.g. DM-248013",
-                            text: $donorReference
-                        )
-                        .font(.system(size: 14))
+                    Text("Donor record reference")
+                        .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Color("TextPrimary"))
-                        .textInputAutocapitalization(.characters)
-                        .autocorrectionDisabled()
-                        .submitLabel(.done)
-                        .padding(.horizontal, 14)
-                        .frame(height: 52)
-                        .background(Color("SurfacePrimary"))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 13)
-                                .stroke(
-                                    Color("BorderPrimary"),
-                                    lineWidth: 1
-                                )
-                        }
-                        .clipShape(
-                            RoundedRectangle(cornerRadius: 13)
-                        )
+
+                    TextField(
+                        "e.g. DM-248013",
+                        text: $donorRecordID
+                    )
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color("TextPrimary"))
+                    .textInputAutocapitalization(.characters)
+                    .autocorrectionDisabled()
+                    .submitLabel(.done)
+                    .disabled(isFindingRecord)
+                    .padding(.horizontal, 14)
+                    .frame(height: 52)
+                    .background(Color("SurfacePrimary"))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 13)
+                            .stroke(
+                                Color("BorderPrimary"),
+                                lineWidth: 1
+                            )
                     }
+                    .clipShape(
+                        RoundedRectangle(cornerRadius: 13)
+                    )
+                    .onSubmit {
+                        submitLookup()
+                    }
+                }
+
+                if let lookupErrorMessage {
+                    Text(lookupErrorMessage)
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color("DonorRed"))
+                        .frame(
+                            maxWidth: .infinity,
+                            alignment: .leading
+                        )
+                        .padding(.top, 10)
                 }
 
                 Spacer()
@@ -180,7 +217,7 @@ struct ConnectDonorRecordView: View {
                     .accessibilityHidden(true)
 
                     Text(
-                        "Your linked blood group and donation history will be view-only in DonorMate."
+                        "Your linked blood group and donation history will be view-only in DonorMate. The current lookup remains an explicitly labelled demo until a trusted donor-record service is connected."
                     )
                     .font(.system(size: 12))
                     .foregroundStyle(Color("TextPrimary"))
@@ -207,21 +244,29 @@ struct ConnectDonorRecordView: View {
                 VStack(spacing: 10) {
 
                     Button {
-                        onFindRecord()
+                        submitLookup()
                     } label: {
-                        Text("Find My Donor Record")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundStyle(.white)
-                            .frame(
-                                maxWidth: .infinity,
-                                minHeight: 48
-                            )
-                            .background(Color("DonorRed"))
-                            .clipShape(
-                                RoundedRectangle(cornerRadius: 14)
-                            )
+                        Group {
+                            if isFindingRecord {
+                                ProgressView()
+                                    .tint(.white)
+                            } else {
+                                Text("Find My Donor Record")
+                                    .font(.system(size: 15, weight: .bold))
+                                    .foregroundStyle(.white)
+                            }
+                        }
+                        .frame(
+                            maxWidth: .infinity,
+                            minHeight: 48
+                        )
+                        .background(Color("DonorRed"))
+                        .clipShape(
+                            RoundedRectangle(cornerRadius: 14)
+                        )
                     }
                     .buttonStyle(.plain)
+                    .disabled(isFindingRecord)
 
                     Button {
                         onLinkLater()
@@ -246,6 +291,7 @@ struct ConnectDonorRecordView: View {
                             )
                     }
                     .buttonStyle(.plain)
+                    .disabled(isFindingRecord)
 
                     Button {
                         onNeedHelp()
@@ -256,6 +302,7 @@ struct ConnectDonorRecordView: View {
                             .padding(.vertical, 8)
                     }
                     .buttonStyle(.plain)
+                    .disabled(isFindingRecord)
                 }
 
                 Spacer()
@@ -266,15 +313,60 @@ struct ConnectDonorRecordView: View {
         }
         .background(Color("BackgroundPrimary"))
     }
+
+    private func submitLookup() {
+
+        guard !isFindingRecord else {
+            return
+        }
+
+        let cleanedRecordID =
+            donorRecordID
+                .trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                )
+                .uppercased()
+
+        guard !cleanedRecordID.isEmpty else {
+            lookupErrorMessage =
+                "Enter your donor record reference."
+            return
+        }
+
+        lookupErrorMessage = nil
+        isFindingRecord = true
+
+        Task {
+            let succeeded =
+                await onFindRecord(
+                    cleanedRecordID
+                )
+
+            isFindingRecord = false
+
+            if !succeeded {
+                lookupErrorMessage =
+                    "No matching prototype donor record was found for that reference."
+            }
+        }
+    }
 }
 
 #Preview {
     ConnectDonorRecordView(
+        maskedNationalIdentityNumber:
+            "••••••••5678",
         onBack: {
             print("Back tapped")
         },
         onFindRecord: {
-            print("Find record tapped")
+            donorRecordID in
+
+            print(
+                "Find record tapped: \(donorRecordID)"
+            )
+
+            return true
         },
         onLinkLater: {
             print("Link later tapped")

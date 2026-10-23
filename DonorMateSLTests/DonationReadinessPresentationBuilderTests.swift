@@ -195,7 +195,7 @@ struct DonationReadinessPresentationBuilderTests {
     }
 
     @Test
-    func invalidNextPossibleDateShowsUnknownState() {
+    func unsupportedDonationTypeShowsUnknownState() {
 
         let record =
             DonationRecord(
@@ -206,7 +206,7 @@ struct DonationReadinessPresentationBuilderTests {
                         day: 18
                     ),
                 location: "Matara",
-                donationType: "Whole blood",
+                donationType: "Platelets",
                 recordLabel: "Test record",
                 recordReference: nil,
                 nextPossibleDonationDate: nil
@@ -267,4 +267,3 @@ private func makeDate(
             )
     )!
 }
-

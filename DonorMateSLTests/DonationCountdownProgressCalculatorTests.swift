@@ -21,28 +21,226 @@ struct DonationCountdownProgressCalculatorTests {
                     currentDate:
                         makeDate(
                             year: 2026,
-                            month: 1,
-                            day: 5
+                            month: 6,
+                            day: 1
                         ),
                     calendar:
                         makeCalendar()
                 )
 
-        #expect(
-            progress == nil
-        )
+        #expect(progress == nil)
     }
 
     @Test
-    func missingNextPossibleDateReturnsNil() {
+    func missingRecordedDateUsesFourMonthInterval() throws {
 
         let record =
             makeRecord(
                 donationDate:
                     makeDate(
                         year: 2026,
-                        month: 1,
-                        day: 1
+                        month: 5,
+                        day: 18
+                    ),
+                nextPossibleDate: nil
+            )
+
+        let progress =
+            try #require(
+                DonationCountdownProgressCalculator
+                    .progress(
+                        for: record,
+                        currentDate:
+                            makeDate(
+                                year: 2026,
+                                month: 5,
+                                day: 18
+                            ),
+                        calendar:
+                            makeCalendar()
+                    )
+            )
+
+        #expect(progress == 0)
+    }
+
+    @Test
+    func earlierRecordedDateCannotShortenProgressInterval() throws {
+
+        let calendar = makeCalendar()
+
+        let recordWithEarlyDate =
+            makeRecord(
+                donationDate:
+                    makeDate(
+                        year: 2026,
+                        month: 5,
+                        day: 18
+                    ),
+                nextPossibleDate:
+                    makeDate(
+                        year: 2026,
+                        month: 6,
+                        day: 18
+                    )
+            )
+
+        let recordWithoutDate =
+            makeRecord(
+                donationDate:
+                    makeDate(
+                        year: 2026,
+                        month: 5,
+                        day: 18
+                    ),
+                nextPossibleDate: nil
+            )
+
+        let currentDate =
+            makeDate(
+                year: 2026,
+                month: 7,
+                day: 18
+            )
+
+        let earlyProgress =
+            try #require(
+                DonationCountdownProgressCalculator
+                    .progress(
+                        for: recordWithEarlyDate,
+                        currentDate: currentDate,
+                        calendar: calendar
+                    )
+            )
+
+        let minimumProgress =
+            try #require(
+                DonationCountdownProgressCalculator
+                    .progress(
+                        for: recordWithoutDate,
+                        currentDate: currentDate,
+                        calendar: calendar
+                    )
+            )
+
+        #expect(earlyProgress == minimumProgress)
+    }
+
+    @Test
+    func laterRecordedDeferralExtendsProgressInterval() throws {
+
+        let record =
+            makeRecord(
+                donationDate:
+                    makeDate(
+                        year: 2026,
+                        month: 5,
+                        day: 18
+                    ),
+                nextPossibleDate:
+                    makeDate(
+                        year: 2026,
+                        month: 10,
+                        day: 18
+                    )
+            )
+
+        let progress =
+            try #require(
+                DonationCountdownProgressCalculator
+                    .progress(
+                        for: record,
+                        currentDate:
+                            makeDate(
+                                year: 2026,
+                                month: 9,
+                                day: 18
+                            ),
+                        calendar:
+                            makeCalendar()
+                    )
+            )
+
+        #expect(progress > 0)
+        #expect(progress < 1)
+    }
+
+    @Test
+    func effectiveThresholdProducesCompletedProgress() throws {
+
+        let record =
+            makeRecord(
+                donationDate:
+                    makeDate(
+                        year: 2026,
+                        month: 5,
+                        day: 18
+                    ),
+                nextPossibleDate: nil
+            )
+
+        let progress =
+            try #require(
+                DonationCountdownProgressCalculator
+                    .progress(
+                        for: record,
+                        currentDate:
+                            makeDate(
+                                year: 2026,
+                                month: 9,
+                                day: 18
+                            ),
+                        calendar:
+                            makeCalendar()
+                    )
+            )
+
+        #expect(progress == 1)
+    }
+
+    @Test
+    func dateAfterThresholdRemainsCompleted() throws {
+
+        let record =
+            makeRecord(
+                donationDate:
+                    makeDate(
+                        year: 2026,
+                        month: 5,
+                        day: 18
+                    ),
+                nextPossibleDate: nil
+            )
+
+        let progress =
+            try #require(
+                DonationCountdownProgressCalculator
+                    .progress(
+                        for: record,
+                        currentDate:
+                            makeDate(
+                                year: 2026,
+                                month: 10,
+                                day: 20
+                            ),
+                        calendar:
+                            makeCalendar()
+                    )
+            )
+
+        #expect(progress == 1)
+    }
+
+    @Test
+    func futureDonationDateReturnsNil() {
+
+        let record =
+            makeRecord(
+                donationDate:
+                    makeDate(
+                        year: 2026,
+                        month: 10,
+                        day: 21
                     ),
                 nextPossibleDate: nil
             )
@@ -54,35 +252,32 @@ struct DonationCountdownProgressCalculatorTests {
                     currentDate:
                         makeDate(
                             year: 2026,
-                            month: 1,
-                            day: 5
+                            month: 10,
+                            day: 20
                         ),
                     calendar:
                         makeCalendar()
                 )
 
-        #expect(
-            progress == nil
-        )
+        #expect(progress == nil)
     }
 
     @Test
-    func futureDonationDateReturnsNil() {
+    func unsupportedDonationTypeReturnsNil() {
 
         let record =
-            makeRecord(
-                donationDate:
+            DonationRecord(
+                date:
                     makeDate(
                         year: 2026,
-                        month: 1,
-                        day: 10
+                        month: 5,
+                        day: 18
                     ),
-                nextPossibleDate:
-                    makeDate(
-                        year: 2026,
-                        month: 1,
-                        day: 20
-                    )
+                location: "Matara",
+                donationType: "Platelets",
+                recordLabel: "Blood-bank record",
+                recordReference: nil,
+                nextPossibleDonationDate: nil
             )
 
         let progress =
@@ -92,337 +287,14 @@ struct DonationCountdownProgressCalculatorTests {
                     currentDate:
                         makeDate(
                             year: 2026,
-                            month: 1,
-                            day: 5
+                            month: 6,
+                            day: 18
                         ),
                     calendar:
                         makeCalendar()
                 )
 
-        #expect(
-            progress == nil
-        )
-    }
-
-    @Test
-    func nextPossibleDateBeforeDonationDateReturnsNil() {
-
-        let record =
-            makeRecord(
-                donationDate:
-                    makeDate(
-                        year: 2026,
-                        month: 1,
-                        day: 10
-                    ),
-                nextPossibleDate:
-                    makeDate(
-                        year: 2026,
-                        month: 1,
-                        day: 5
-                    )
-            )
-
-        let progress =
-            DonationCountdownProgressCalculator
-                .progress(
-                    for: record,
-                    currentDate:
-                        makeDate(
-                            year: 2026,
-                            month: 1,
-                            day: 10
-                        ),
-                    calendar:
-                        makeCalendar()
-                )
-
-        #expect(
-            progress == nil
-        )
-    }
-
-    @Test
-    func donationDayStartsAtZeroProgress() throws {
-
-        let record =
-            makeRecord(
-                donationDate:
-                    makeDate(
-                        year: 2026,
-                        month: 1,
-                        day: 1
-                    ),
-                nextPossibleDate:
-                    makeDate(
-                        year: 2026,
-                        month: 1,
-                        day: 11
-                    )
-            )
-
-        let progress =
-            try #require(
-                DonationCountdownProgressCalculator
-                    .progress(
-                        for: record,
-                        currentDate:
-                            makeDate(
-                                year: 2026,
-                                month: 1,
-                                day: 1
-                            ),
-                        calendar:
-                            makeCalendar()
-                    )
-            )
-
-        #expect(
-            progress == 0
-        )
-    }
-
-    @Test
-    func midpointProducesHalfProgress() throws {
-
-        let record =
-            makeRecord(
-                donationDate:
-                    makeDate(
-                        year: 2026,
-                        month: 1,
-                        day: 1
-                    ),
-                nextPossibleDate:
-                    makeDate(
-                        year: 2026,
-                        month: 1,
-                        day: 11
-                    )
-            )
-
-        let progress =
-            try #require(
-                DonationCountdownProgressCalculator
-                    .progress(
-                        for: record,
-                        currentDate:
-                            makeDate(
-                                year: 2026,
-                                month: 1,
-                                day: 6
-                            ),
-                        calendar:
-                            makeCalendar()
-                    )
-            )
-
-        #expect(
-            progress == 0.5
-        )
-    }
-
-    @Test
-    func thresholdDayProducesCompletedProgress() throws {
-
-        let record =
-            makeRecord(
-                donationDate:
-                    makeDate(
-                        year: 2026,
-                        month: 1,
-                        day: 1
-                    ),
-                nextPossibleDate:
-                    makeDate(
-                        year: 2026,
-                        month: 1,
-                        day: 11
-                    )
-            )
-
-        let progress =
-            try #require(
-                DonationCountdownProgressCalculator
-                    .progress(
-                        for: record,
-                        currentDate:
-                            makeDate(
-                                year: 2026,
-                                month: 1,
-                                day: 11
-                            ),
-                        calendar:
-                            makeCalendar()
-                    )
-            )
-
-        #expect(
-            progress == 1
-        )
-    }
-
-    @Test
-    func dateAfterThresholdRemainsCompleted() throws {
-
-        let record =
-            makeRecord(
-                donationDate:
-                    makeDate(
-                        year: 2026,
-                        month: 1,
-                        day: 1
-                    ),
-                nextPossibleDate:
-                    makeDate(
-                        year: 2026,
-                        month: 1,
-                        day: 11
-                    )
-            )
-
-        let progress =
-            try #require(
-                DonationCountdownProgressCalculator
-                    .progress(
-                        for: record,
-                        currentDate:
-                            makeDate(
-                                year: 2026,
-                                month: 1,
-                                day: 20
-                            ),
-                        calendar:
-                            makeCalendar()
-                    )
-            )
-
-        #expect(
-            progress == 1
-        )
-    }
-
-    @Test
-    func sameDayDonationAndNextPossibleDateReturnsNil() {
-
-        let date =
-            makeDate(
-                year: 2026,
-                month: 1,
-                day: 1
-            )
-
-        let record =
-            makeRecord(
-                donationDate: date,
-                nextPossibleDate: date
-            )
-
-        let progress =
-            DonationCountdownProgressCalculator
-                .progress(
-                    for: record,
-                    currentDate: date,
-                    calendar:
-                        makeCalendar()
-                )
-
-        #expect(
-            progress == nil
-        )
-    }
-
-    @Test
-    func leapYearDatesUseCalendarDayProgress() throws {
-
-        let record =
-            makeRecord(
-                donationDate:
-                    makeDate(
-                        year: 2028,
-                        month: 2,
-                        day: 28
-                    ),
-                nextPossibleDate:
-                    makeDate(
-                        year: 2028,
-                        month: 3,
-                        day: 1
-                    )
-            )
-
-        let progress =
-            try #require(
-                DonationCountdownProgressCalculator
-                    .progress(
-                        for: record,
-                        currentDate:
-                            makeDate(
-                                year: 2028,
-                                month: 2,
-                                day: 29
-                            ),
-                        calendar:
-                            makeCalendar()
-                    )
-            )
-
-        #expect(
-            progress == 0.5
-        )
-    }
-
-    @Test
-    func asiaColomboCalendarUsesLocalCalendarDays() throws {
-
-        let calendar =
-            makeCalendar(
-                timeZoneIdentifier:
-                    "Asia/Colombo"
-            )
-
-        let record =
-            makeRecord(
-                donationDate:
-                    makeDate(
-                        year: 2026,
-                        month: 5,
-                        day: 18,
-                        hour: 1,
-                        calendar: calendar
-                    ),
-                nextPossibleDate:
-                    makeDate(
-                        year: 2026,
-                        month: 5,
-                        day: 20,
-                        hour: 23,
-                        calendar: calendar
-                    )
-            )
-
-        let currentDate =
-            makeDate(
-                year: 2026,
-                month: 5,
-                day: 19,
-                hour: 22,
-                calendar: calendar
-            )
-
-        let progress =
-            try #require(
-                DonationCountdownProgressCalculator
-                    .progress(
-                        for: record,
-                        currentDate: currentDate,
-                        calendar: calendar
-                    )
-            )
-
-        #expect(
-            progress == 0.5
-        )
+        #expect(progress == nil)
     }
 
     private func makeRecord(

@@ -153,6 +153,8 @@ struct AccountSessionStoreTests {
             await store.createAccount(
                 displayName:
                     profile.displayName,
+                nationalIdentityNumber:
+                    profile.nationalIdentityNumber ?? "",
                 email:
                     profile.email,
                 password:
@@ -307,6 +309,108 @@ struct AccountSessionStoreTests {
     }
 
     @Test
+    func restoredLegacyProfileWithoutNICRequiresIdentityRecovery() async {
+
+        let legacyProfile =
+            AccountProfile(
+                uid: "legacy-user",
+                displayName: "Legacy User",
+                email: "legacy@example.com"
+            )
+
+        let service =
+            FakeAccountService()
+
+        service.loadProfile =
+            legacyProfile
+
+        let store =
+            AccountSessionStore(
+                accountService: service
+            )
+
+        service.emitAuthState(
+            legacyProfile.uid
+        )
+
+        await allowAutomaticWorkToFinish()
+
+        #expect(
+            store.profile ==
+                legacyProfile
+        )
+        #expect(
+            store.requiresNationalIdentityNumber
+        )
+        #expect(
+            store.needsAccountRecovery
+        )
+    }
+
+    @Test
+    func completingMissingNICClearsRecoveryState() async {
+
+        let legacyProfile =
+            AccountProfile(
+                uid: "legacy-user",
+                displayName: "Legacy User",
+                email: "legacy@example.com"
+            )
+
+        let completedProfile =
+            AccountProfile(
+                uid: legacyProfile.uid,
+                displayName:
+                    legacyProfile.displayName,
+                email:
+                    legacyProfile.email,
+                nationalIdentityNumber:
+                    "198554200159"
+            )
+
+        let service =
+            FakeAccountService()
+
+        service.loadProfile =
+            legacyProfile
+        service.completeCurrentProfileValue =
+            completedProfile
+
+        let store =
+            AccountSessionStore(
+                accountService: service
+            )
+
+        service.emitAuthState(
+            legacyProfile.uid
+        )
+
+        await allowAutomaticWorkToFinish()
+
+        let succeeded =
+            await store.completeMissingProfile(
+                displayName:
+                    legacyProfile.displayName,
+                nationalIdentityNumber:
+                    "198554200159"
+            )
+
+        #expect(succeeded)
+        #expect(
+            store.profile ==
+                completedProfile
+        )
+        #expect(
+            store.requiresNationalIdentityNumber ==
+                false
+        )
+        #expect(
+            store.needsAccountRecovery ==
+                false
+        )
+    }
+
+    @Test
     func passwordResetSuccessDoesNotChangeSessionIdentity() async {
 
         let service =
@@ -342,7 +446,9 @@ struct AccountSessionStoreTests {
         AccountProfile(
             uid: uid,
             displayName: "Test User",
-            email: "test@example.com"
+            email: "test@example.com",
+            nationalIdentityNumber:
+                "198554200159"
         )
     }
 
@@ -429,6 +535,7 @@ private final class FakeAccountService:
 
     func createAccount(
         displayName: String,
+        nationalIdentityNumber: String,
         email: String,
         password: String
     ) async throws -> AccountProfile {
@@ -506,7 +613,8 @@ private final class FakeAccountService:
     }
 
     func completeCurrentProfile(
-        displayName: String
+        displayName: String,
+        nationalIdentityNumber: String
     ) async throws -> AccountProfile {
 
         if let completeCurrentProfileError {
@@ -587,4 +695,3 @@ private final class FakeAccountService:
         }
     }
 }
-

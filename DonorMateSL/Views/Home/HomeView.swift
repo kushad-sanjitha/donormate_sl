@@ -240,10 +240,13 @@ struct HomeView: View {
                 daysRemaining
             ):
 
-                if let nextPossibleDate =
-                        presentation
-                            .latestRecord?
-                            .nextPossibleDonationDate,
+                if let latestRecord =
+                        presentation.latestRecord,
+                   let nextPossibleDate =
+                        DonationWaitingPeriodPolicy
+                            .effectiveNextPossibleDonationDate(
+                                for: latestRecord
+                            ),
                    let progress =
                         presentation
                             .countdownProgress {
@@ -759,3 +762,4 @@ struct HomeView: View {
             )
     )
 }
+

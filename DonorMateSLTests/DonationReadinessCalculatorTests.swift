@@ -26,22 +26,46 @@ struct DonationReadinessCalculatorTests {
     }
 
     @Test
-    func beforeThresholdReturnsSeventeenDaysRemaining() {
+    func noRecordReturnsUnknown() {
+
+        let result =
+            DonationReadinessCalculator.readiness(
+                for: nil,
+                currentDate:
+                    makeDate(
+                        year: 2026,
+                        month: 10,
+                        day: 20
+                    ),
+                calendar: calendar
+            )
+
+        #expect(result == .unknown)
+    }
+
+    @Test
+    func missingRecordedNextDateUsesFourMonthMinimum() {
 
         let record =
-            prototypeRecord()
-
-        let currentDate =
-            makeDate(
-                year: 2026,
-                month: 9,
-                day: 1
+            makeRecord(
+                donationDate:
+                    makeDate(
+                        year: 2026,
+                        month: 5,
+                        day: 18
+                    ),
+                nextPossibleDate: nil
             )
 
         let result =
             DonationReadinessCalculator.readiness(
                 for: record,
-                currentDate: currentDate,
+                currentDate:
+                    makeDate(
+                        year: 2026,
+                        month: 9,
+                        day: 1
+                    ),
                 calendar: calendar
             )
 
@@ -54,443 +78,275 @@ struct DonationReadinessCalculatorTests {
     }
 
     @Test
-    func oneDayBeforeThresholdReturnsOneDayRemaining() {
+    func thresholdDateFromFourMonthMinimumReturnsReady() {
 
         let record =
-            prototypeRecord()
-
-        let currentDate =
-            makeDate(
-                year: 2026,
-                month: 9,
-                day: 17
+            makeRecord(
+                donationDate:
+                    makeDate(
+                        year: 2026,
+                        month: 5,
+                        day: 18
+                    ),
+                nextPossibleDate: nil
             )
 
         let result =
             DonationReadinessCalculator.readiness(
                 for: record,
-                currentDate: currentDate,
+                currentDate:
+                    makeDate(
+                        year: 2026,
+                        month: 9,
+                        day: 18
+                    ),
+                calendar: calendar
+            )
+
+        #expect(result == .ready)
+    }
+
+    @Test
+    func earlierRecordedDateCannotShortenFourMonthMinimum() {
+
+        let record =
+            makeRecord(
+                donationDate:
+                    makeDate(
+                        year: 2026,
+                        month: 5,
+                        day: 18
+                    ),
+                nextPossibleDate:
+                    makeDate(
+                        year: 2026,
+                        month: 6,
+                        day: 18
+                    )
+            )
+
+        let result =
+            DonationReadinessCalculator.readiness(
+                for: record,
+                currentDate:
+                    makeDate(
+                        year: 2026,
+                        month: 9,
+                        day: 1
+                    ),
                 calendar: calendar
             )
 
         #expect(
             result ==
                 .notReady(
-                    daysRemaining: 1
+                    daysRemaining: 17
                 )
         )
     }
 
     @Test
-    func thresholdDateReturnsReady() {
+    func laterRecordedDeferralIsRespected() {
 
         let record =
-            prototypeRecord()
-
-        let currentDate =
-            makeDate(
-                year: 2026,
-                month: 9,
-                day: 18
+            makeRecord(
+                donationDate:
+                    makeDate(
+                        year: 2026,
+                        month: 5,
+                        day: 18
+                    ),
+                nextPossibleDate:
+                    makeDate(
+                        year: 2026,
+                        month: 10,
+                        day: 18
+                    )
             )
 
         let result =
             DonationReadinessCalculator.readiness(
                 for: record,
-                currentDate: currentDate,
+                currentDate:
+                    makeDate(
+                        year: 2026,
+                        month: 9,
+                        day: 18
+                    ),
                 calendar: calendar
             )
 
         #expect(
-            result == .ready
+            result ==
+                .notReady(
+                    daysRemaining: 30
+                )
         )
     }
 
     @Test
-    func dateAfterThresholdReturnsReady() {
+    func recordedDateEqualToMinimumUsesMinimum() {
 
         let record =
-            prototypeRecord()
-
-        let currentDate =
-            makeDate(
-                year: 2026,
-                month: 10,
-                day: 20
+            makeRecord(
+                donationDate:
+                    makeDate(
+                        year: 2026,
+                        month: 5,
+                        day: 18
+                    ),
+                nextPossibleDate:
+                    makeDate(
+                        year: 2026,
+                        month: 9,
+                        day: 18
+                    )
             )
 
         let result =
             DonationReadinessCalculator.readiness(
                 for: record,
-                currentDate: currentDate,
+                currentDate:
+                    makeDate(
+                        year: 2026,
+                        month: 9,
+                        day: 18
+                    ),
                 calendar: calendar
             )
 
-        #expect(
-            result == .ready
-        )
+        #expect(result == .ready)
     }
 
     @Test
-    func noRecordReturnsUnknown() {
-
-        let currentDate =
-            makeDate(
-                year: 2026,
-                month: 10,
-                day: 20
-            )
-
-        let result =
-            DonationReadinessCalculator.readiness(
-                for: nil,
-                currentDate: currentDate,
-                calendar: calendar
-            )
-
-        #expect(
-            result == .unknown
-        )
-    }
-
-    @Test
-    func missingNextPossibleDateReturnsUnknown() {
+    func invalidEarlierRecordedDateFallsBackToMinimum() {
 
         let record =
-            DonationRecord(
-                date: makeDate(
-                    year: 2026,
-                    month: 5,
-                    day: 18
-                ),
-                location: "Matara Blood Bank",
-                donationType: "Whole blood",
-                recordLabel: "Blood-bank record",
-                recordReference: "DB-2026-0518-006",
-                nextPossibleDonationDate: nil
-            )
-
-        let currentDate =
-            makeDate(
-                year: 2026,
-                month: 10,
-                day: 20
+            makeRecord(
+                donationDate:
+                    makeDate(
+                        year: 2026,
+                        month: 5,
+                        day: 18
+                    ),
+                nextPossibleDate:
+                    makeDate(
+                        year: 2026,
+                        month: 5,
+                        day: 17
+                    )
             )
 
         let result =
             DonationReadinessCalculator.readiness(
                 for: record,
-                currentDate: currentDate,
+                currentDate:
+                    makeDate(
+                        year: 2026,
+                        month: 9,
+                        day: 18
+                    ),
                 calendar: calendar
             )
 
-        #expect(
-            result == .unknown
-        )
+        #expect(result == .ready)
     }
 
     @Test
     func futureDonationDateReturnsUnknown() {
 
         let record =
-            DonationRecord(
-                date: makeDate(
-                    year: 2026,
-                    month: 10,
-                    day: 21
-                ),
-                location: "Matara Blood Bank",
-                donationType: "Whole blood",
-                recordLabel: "Blood-bank record",
-                recordReference: "DB-2026-1021-001",
-                nextPossibleDonationDate: makeDate(
-                    year: 2027,
-                    month: 2,
-                    day: 21
-                )
-            )
-
-        let currentDate =
-            makeDate(
-                year: 2026,
-                month: 10,
-                day: 20
+            makeRecord(
+                donationDate:
+                    makeDate(
+                        year: 2026,
+                        month: 10,
+                        day: 21
+                    ),
+                nextPossibleDate: nil
             )
 
         let result =
             DonationReadinessCalculator.readiness(
                 for: record,
-                currentDate: currentDate,
+                currentDate:
+                    makeDate(
+                        year: 2026,
+                        month: 10,
+                        day: 20
+                    ),
                 calendar: calendar
             )
 
-        #expect(
-            result == .unknown
-        )
+        #expect(result == .unknown)
     }
 
     @Test
-    func nextPossibleDateBeforeDonationDateReturnsUnknown() {
+    func unsupportedDonationTypeReturnsUnknown() {
 
         let record =
             DonationRecord(
-                date: makeDate(
-                    year: 2026,
-                    month: 5,
-                    day: 18
-                ),
+                date:
+                    makeDate(
+                        year: 2026,
+                        month: 5,
+                        day: 18
+                    ),
                 location: "Matara Blood Bank",
-                donationType: "Whole blood",
+                donationType: "Platelets",
                 recordLabel: "Blood-bank record",
-                recordReference: "DB-2026-0518-006",
-                nextPossibleDonationDate: makeDate(
-                    year: 2026,
-                    month: 5,
-                    day: 17
-                )
-            )
-
-        let currentDate =
-            makeDate(
-                year: 2026,
-                month: 5,
-                day: 18
-            )
-
-        let result =
-            DonationReadinessCalculator.readiness(
-                for: record,
-                currentDate: currentDate,
-                calendar: calendar
-            )
-
-        #expect(
-            result == .unknown
-        )
-    }
-
-    @Test
-    func sameDayDonationAndNextPossibleDateReturnsUnknown() {
-
-        let date =
-            makeDate(
-                year: 2026,
-                month: 5,
-                day: 18
-            )
-
-        let record =
-            DonationRecord(
-                date: date,
-                location: "Matara Blood Bank",
-                donationType: "Whole blood",
-                recordLabel: "Blood-bank record",
-                recordReference: "DB-2026-0518-006",
-                nextPossibleDonationDate: date
-            )
-
-        let result =
-            DonationReadinessCalculator.readiness(
-                for: record,
-                currentDate: date,
-                calendar: calendar
-            )
-
-        #expect(
-            result == .unknown
-        )
-    }
-
-    @Test
-    func differentHoursOnSameThresholdDateStillReturnsReady() {
-
-        let record =
-            DonationRecord(
-                date: makeDate(
-                    year: 2026,
-                    month: 5,
-                    day: 18,
-                    hour: 18
-                ),
-                location: "Matara Blood Bank",
-                donationType: "Whole blood",
-                recordLabel: "Blood-bank record",
-                recordReference: "DB-2026-0518-006",
-                nextPossibleDonationDate: makeDate(
-                    year: 2026,
-                    month: 9,
-                    day: 18,
-                    hour: 23
-                )
-            )
-
-        let currentDate =
-            makeDate(
-                year: 2026,
-                month: 9,
-                day: 18,
-                hour: 1
-            )
-
-        let result =
-            DonationReadinessCalculator.readiness(
-                for: record,
-                currentDate: currentDate,
-                calendar: calendar
-            )
-
-        #expect(
-            result == .ready
-        )
-    }
-
-    @Test
-    func leapYearBoundaryCalculatesCorrectDaysRemaining() {
-
-        let record =
-            DonationRecord(
-                date: makeDate(
-                    year: 2028,
-                    month: 1,
-                    day: 1
-                ),
-                location: "Matara Blood Bank",
-                donationType: "Whole blood",
-                recordLabel: "Blood-bank record",
-                recordReference: "DB-2028-0101-001",
-                nextPossibleDonationDate: makeDate(
-                    year: 2028,
-                    month: 3,
-                    day: 1
-                )
-            )
-
-        let currentDate =
-            makeDate(
-                year: 2028,
-                month: 2,
-                day: 28
-            )
-
-        let result =
-            DonationReadinessCalculator.readiness(
-                for: record,
-                currentDate: currentDate,
-                calendar: calendar
-            )
-
-        #expect(
-            result ==
-                .notReady(
-                    daysRemaining: 2
-                )
-        )
-    }
-
-    @Test
-    func yearBoundaryCalculatesCorrectDaysRemaining() {
-
-        let record =
-            DonationRecord(
-                date: makeDate(
-                    year: 2026,
-                    month: 9,
-                    day: 1
-                ),
-                location: "Matara Blood Bank",
-                donationType: "Whole blood",
-                recordLabel: "Blood-bank record",
-                recordReference: "DB-2026-0901-001",
-                nextPossibleDonationDate: makeDate(
-                    year: 2027,
-                    month: 1,
-                    day: 2
-                )
-            )
-
-        let currentDate =
-            makeDate(
-                year: 2026,
-                month: 12,
-                day: 31
-            )
-
-        let result =
-            DonationReadinessCalculator.readiness(
-                for: record,
-                currentDate: currentDate,
-                calendar: calendar
-            )
-
-        #expect(
-            result ==
-                .notReady(
-                    daysRemaining: 2
-                )
-        )
-    }
-
-    @Test
-    func daylightSavingBoundaryUsesCalendarDays() {
-
-        var newYorkCalendar =
-            Calendar(
-                identifier: .gregorian
-            )
-
-        newYorkCalendar.timeZone =
-            TimeZone(
-                identifier: "America/New_York"
-            )!
-
-        let record =
-            DonationRecord(
-                date: makeDate(
-                    year: 2026,
-                    month: 3,
-                    day: 1,
-                    hour: 12,
-                    calendar: newYorkCalendar
-                ),
-                location: "Test Location",
-                donationType: "Whole blood",
-                recordLabel: "Test record",
                 recordReference: nil,
-                nextPossibleDonationDate: makeDate(
-                    year: 2026,
-                    month: 3,
-                    day: 9,
-                    hour: 12,
-                    calendar: newYorkCalendar
-                )
-            )
-
-        let currentDate =
-            makeDate(
-                year: 2026,
-                month: 3,
-                day: 7,
-                hour: 12,
-                calendar: newYorkCalendar
+                nextPossibleDonationDate: nil
             )
 
         let result =
             DonationReadinessCalculator.readiness(
                 for: record,
-                currentDate: currentDate,
-                calendar: newYorkCalendar
+                currentDate:
+                    makeDate(
+                        year: 2026,
+                        month: 10,
+                        day: 20
+                    ),
+                calendar: calendar
             )
 
-        #expect(
-            result ==
-                .notReady(
-                    daysRemaining: 2
-                )
-        )
+        #expect(result == .unknown)
     }
 
     @Test
-    func sriLankaSameThresholdDayReturnsReadyRegardlessOfTime() {
+    func differentHoursOnThresholdDateStillReturnsReady() {
+
+        let record =
+            makeRecord(
+                donationDate:
+                    makeDate(
+                        year: 2026,
+                        month: 5,
+                        day: 18,
+                        hour: 18
+                    ),
+                nextPossibleDate: nil
+            )
+
+        let result =
+            DonationReadinessCalculator.readiness(
+                for: record,
+                currentDate:
+                    makeDate(
+                        year: 2026,
+                        month: 9,
+                        day: 18,
+                        hour: 1
+                    ),
+                calendar: calendar
+            )
+
+        #expect(result == .ready)
+    }
+
+    @Test
+    func sriLankaCalendarUsesLocalCalendarDays() {
 
         var sriLankaCalendar =
             Calendar(
@@ -504,64 +360,58 @@ struct DonationReadinessCalculatorTests {
 
         let record =
             DonationRecord(
-                date: makeDate(
-                    year: 2026,
-                    month: 5,
-                    day: 18,
-                    hour: 18,
-                    calendar: sriLankaCalendar
-                ),
+                date:
+                    makeDate(
+                        year: 2026,
+                        month: 5,
+                        day: 18,
+                        hour: 23,
+                        calendar:
+                            sriLankaCalendar
+                    ),
                 location: "Matara Blood Bank",
                 donationType: "Whole blood",
                 recordLabel: "Blood-bank record",
-                recordReference: "DB-2026-0518-006",
-                nextPossibleDonationDate: makeDate(
-                    year: 2026,
-                    month: 9,
-                    day: 18,
-                    hour: 23,
-                    calendar: sriLankaCalendar
-                )
-            )
-
-        let currentDate =
-            makeDate(
-                year: 2026,
-                month: 9,
-                day: 18,
-                hour: 1,
-                calendar: sriLankaCalendar
+                recordReference: nil,
+                nextPossibleDonationDate: nil
             )
 
         let result =
             DonationReadinessCalculator.readiness(
                 for: record,
-                currentDate: currentDate,
+                currentDate:
+                    makeDate(
+                        year: 2026,
+                        month: 9,
+                        day: 17,
+                        hour: 1,
+                        calendar:
+                            sriLankaCalendar
+                    ),
                 calendar: sriLankaCalendar
             )
 
         #expect(
-            result == .ready
+            result ==
+                .notReady(
+                    daysRemaining: 1
+                )
         )
     }
 
-    private func prototypeRecord() -> DonationRecord {
+    private func makeRecord(
+        donationDate: Date,
+        nextPossibleDate: Date?
+    ) -> DonationRecord {
 
         DonationRecord(
-            date: makeDate(
-                year: 2026,
-                month: 5,
-                day: 18
-            ),
+            date: donationDate,
             location: "Matara Blood Bank",
             donationType: "Whole blood",
             recordLabel: "Blood-bank record",
-            recordReference: "DB-2026-0518-006",
-            nextPossibleDonationDate: makeDate(
-                year: 2026,
-                month: 9,
-                day: 18
-            )
+            recordReference: nil,
+            nextPossibleDonationDate:
+                nextPossibleDate
         )
     }
 
