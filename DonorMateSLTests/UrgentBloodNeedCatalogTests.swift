@@ -12,245 +12,109 @@ import Testing
 struct UrgentBloodNeedCatalogTests {
 
     @Test
-    func catalogContainsOneUrgentNeed() {
-
-        #expect(
-            UrgentBloodNeedCatalog.urgentNeeds.count == 1
-        )
+    func catalogContainsOneDemonstrationRequest() {
+        #expect(UrgentBloodNeedCatalog.urgentNeeds.count == 1)
     }
 
     @Test
-    func urgentNeedIdentifiersAreUnique() {
-
-        let identifiers =
-            UrgentBloodNeedCatalog.urgentNeeds.map(
-                \.id
-            )
-
-        #expect(
-            Set(identifiers).count ==
-                identifiers.count
-        )
+    func requestIdentifiersAreUnique() {
+        let identifiers = UrgentBloodNeedCatalog.urgentNeeds.map(\.id)
+        #expect(Set(identifiers).count == identifiers.count)
     }
 
     @Test
-    func knownUrgentNeedLookupReturnsExpectedRequest() throws {
-
-        let urgentNeed =
-            try #require(
-                UrgentBloodNeedCatalog.urgentNeed(
-                    for: "matara-a-positive-urgent"
-                )
-            )
-
-        #expect(
-            urgentNeed.id ==
-                "matara-a-positive-urgent"
+    func knownRequestLookupReturnsMatchingData() throws {
+        let need = try #require(
+            UrgentBloodNeedCatalog.urgentNeed(for: "matara-a-positive-urgent")
         )
-
-        #expect(
-            urgentNeed.bloodGroup ==
-                "A+"
-        )
-
-        #expect(
-            urgentNeed.locationID ==
-                "matara-blood-bank"
-        )
-
-        #expect(
-            urgentNeed.alertStatus ==
-                "Active today"
-        )
-
-        #expect(
-            urgentNeed.sourceText ==
-                "Prototype data unless an authorised official source is connected."
-        )
+        #expect(need.bloodGroup == "A+")
+        #expect(need.locationID == "matara-blood-bank")
+        #expect(need.status == .active)
     }
 
     @Test
-    func unknownUrgentNeedIdentifierReturnsNil() {
-
-        let urgentNeed =
-            UrgentBloodNeedCatalog.urgentNeed(
-                for: "unknown-urgent-need"
-            )
-
-        #expect(
-            urgentNeed == nil
-        )
+    func unknownRequestIDReturnsNil() {
+        #expect(UrgentBloodNeedCatalog.urgentNeed(for: "unknown") == nil)
     }
 
     @Test
-    func emptyUrgentNeedIdentifierReturnsNil() {
-
-        let urgentNeed =
-            UrgentBloodNeedCatalog.urgentNeed(
-                for: ""
-            )
-
-        #expect(
-            urgentNeed == nil
-        )
+    func emptyRequestIDReturnsNil() {
+        #expect(UrgentBloodNeedCatalog.urgentNeed(for: "") == nil)
     }
 
     @Test
-    func everyCatalogUrgentNeedCanBeLookedUp() throws {
-
-        for expectedUrgentNeed in
-            UrgentBloodNeedCatalog.urgentNeeds {
-
-            let resolvedUrgentNeed =
-                try #require(
-                    UrgentBloodNeedCatalog.urgentNeed(
-                        for: expectedUrgentNeed.id
-                    )
-                )
-
-            #expect(
-                resolvedUrgentNeed.id ==
-                    expectedUrgentNeed.id
+    func everyRequestCanBeLookedUp() throws {
+        for need in UrgentBloodNeedCatalog.urgentNeeds {
+            let resolved = try #require(
+                UrgentBloodNeedCatalog.urgentNeed(for: need.id)
             )
-
-            #expect(
-                resolvedUrgentNeed.bloodGroup ==
-                    expectedUrgentNeed.bloodGroup
-            )
-
-            #expect(
-                resolvedUrgentNeed.locationID ==
-                    expectedUrgentNeed.locationID
-            )
-
-            #expect(
-                resolvedUrgentNeed.alertStatus ==
-                    expectedUrgentNeed.alertStatus
-            )
-
-            #expect(
-                resolvedUrgentNeed.sourceText ==
-                    expectedUrgentNeed.sourceText
-            )
+            #expect(resolved == need)
         }
     }
 
     @Test
-    func allUrgentNeedsHaveRequiredInformation() {
-
-        for urgentNeed in
-            UrgentBloodNeedCatalog.urgentNeeds {
-
-            #expect(
-                !urgentNeed.id
-                    .trimmingCharacters(
-                        in: .whitespacesAndNewlines
-                    )
-                    .isEmpty
-            )
-
-            #expect(
-                !urgentNeed.bloodGroup
-                    .trimmingCharacters(
-                        in: .whitespacesAndNewlines
-                    )
-                    .isEmpty
-            )
-
-            #expect(
-                !urgentNeed.locationID
-                    .trimmingCharacters(
-                        in: .whitespacesAndNewlines
-                    )
-                    .isEmpty
-            )
-
-            #expect(
-                !urgentNeed.alertStatus
-                    .trimmingCharacters(
-                        in: .whitespacesAndNewlines
-                    )
-                    .isEmpty
-            )
-
-            #expect(
-                !urgentNeed.sourceText
-                    .trimmingCharacters(
-                        in: .whitespacesAndNewlines
-                    )
-                    .isEmpty
-            )
+    func requiredFieldsArePresent() {
+        for need in UrgentBloodNeedCatalog.urgentNeeds {
+            #expect(!need.id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            #expect(!need.bloodGroup.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            #expect(!need.locationID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            #expect(!need.sourceText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            #expect(need.publishedAt < need.expiresAt)
         }
     }
 
     @Test
-    func everyUrgentNeedReferencesExistingDonationLocation() {
-
-        for urgentNeed in
-            UrgentBloodNeedCatalog.urgentNeeds {
-
-            let location =
-                DonationLocationCatalog.location(
-                    for: urgentNeed.locationID
-                )
-
-            #expect(
-                location != nil
-            )
+    func everyRequestReferencesExistingLocation() {
+        for need in UrgentBloodNeedCatalog.urgentNeeds {
+            #expect(DonationLocationCatalog.location(for: need.locationID) != nil)
         }
     }
 
     @Test
-    func aPositiveUrgentNeedReferencesMataraBloodBank() throws {
-
-        let urgentNeed =
-            try #require(
-                UrgentBloodNeedCatalog.urgentNeed(
-                    for: "matara-a-positive-urgent"
-                )
-            )
-
-        let location =
-            try #require(
-                DonationLocationCatalog.location(
-                    for: urgentNeed.locationID
-                )
-            )
-
-        #expect(
-            urgentNeed.bloodGroup ==
-                "A+"
-        )
-
-        #expect(
-            location.id ==
-                "matara-blood-bank"
-        )
-
-        #expect(
-            location.name ==
-                "Matara Blood Bank"
-        )
-
-        #expect(
-            location.type ==
-                .bloodBank
-        )
+    func demonstrationRequestDoesNotClaimAuthorisedPublication() throws {
+        let need = try #require(UrgentBloodNeedCatalog.urgentNeeds.first)
+        #expect(need.isDemonstration)
+        #expect(need.sourceText.contains("Demonstration"))
     }
 
     @Test
-    func prototypeSourceDisclosureIsPresent() throws {
+    func activeWindowUsesInclusiveStartAndExclusiveExpiry() throws {
+        let need = try #require(UrgentBloodNeedCatalog.urgentNeeds.first)
+        #expect(!need.isActive(at: need.publishedAt.addingTimeInterval(-1)))
+        #expect(need.isActive(at: need.publishedAt))
+        #expect(need.isActive(at: need.expiresAt.addingTimeInterval(-1)))
+        #expect(!need.isActive(at: need.expiresAt))
+    }
 
-        let urgentNeed =
-            try #require(
-                UrgentBloodNeedCatalog.urgentNeed(
-                    for: "matara-a-positive-urgent"
-                )
-            )
-
-        #expect(
-            urgentNeed.sourceText ==
-                "Prototype data unless an authorised official source is connected."
+    @Test
+    func closedRequestIsNeverActive() throws {
+        let need = try #require(UrgentBloodNeedCatalog.urgentNeeds.first)
+        let closed = UrgentBloodNeed(
+            id: need.id,
+            bloodGroup: need.bloodGroup,
+            locationID: need.locationID,
+            status: .closed,
+            publishedAt: need.publishedAt,
+            expiresAt: need.expiresAt,
+            sourceText: need.sourceText,
+            isDemonstration: need.isDemonstration
         )
+        #expect(!closed.isActive(at: need.publishedAt))
+    }
+
+    @Test
+    func invalidTimeWindowCanNeverBecomeActive() throws {
+        let need = try #require(UrgentBloodNeedCatalog.urgentNeeds.first)
+        let invalid = UrgentBloodNeed(
+            id: need.id,
+            bloodGroup: need.bloodGroup,
+            locationID: need.locationID,
+            status: .active,
+            publishedAt: need.expiresAt,
+            expiresAt: need.publishedAt,
+            sourceText: need.sourceText,
+            isDemonstration: need.isDemonstration
+        )
+        #expect(!invalid.isActive(at: need.publishedAt))
     }
 }
