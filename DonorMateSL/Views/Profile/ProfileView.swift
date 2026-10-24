@@ -10,6 +10,10 @@ import SwiftUI
 struct ProfileView: View {
 
     let accountProfile: AccountProfile
+    @ObservedObject var donorRecordsStore: DonorRecordsStore
+    @ObservedObject var donationLocationStore: DonationLocationStore
+    @ObservedObject var savedItemsStore: SavedItemsStore
+    @ObservedObject var currentLocationService: CurrentLocationService
     let isLoading: Bool
     let errorMessage: String?
 
@@ -85,6 +89,40 @@ struct ProfileView: View {
                         .clipShape(
                             RoundedRectangle(cornerRadius: 18)
                         )
+
+                        NavigationLink {
+                            SavedCampaignsView(
+                                savedItemsStore: savedItemsStore,
+                                donationLocationStore: donationLocationStore,
+                                donorRecordsStore: donorRecordsStore,
+                                currentLocationService: currentLocationService
+                            )
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "bookmark.fill")
+                                    .foregroundStyle(Color("DonorRed"))
+                                    .frame(width: 28)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Saved Campaigns")
+                                        .font(.system(size: 16, weight: .bold))
+                                        .foregroundStyle(Color("TextPrimary"))
+                                    Text("Your saved camps and blood banks")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(Color("TextSecondary"))
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundStyle(Color("TextSecondary"))
+                            }
+                            .padding(16)
+                            .background(Color("SurfacePrimary"))
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(Color("BorderPrimary"), lineWidth: 1)
+                            }
+                        }
+                        .buttonStyle(.plain)
 
                         if let errorMessage {
                             Text(errorMessage)
@@ -189,6 +227,10 @@ struct ProfileView: View {
                 nationalIdentityNumber:
                     "198554200159"
             ),
+        donorRecordsStore: DonorRecordsStore(),
+        donationLocationStore: DonationLocationStore(),
+        savedItemsStore: SavedItemsStore(),
+        currentLocationService: CurrentLocationService(),
         isLoading: false,
         errorMessage: nil,
         onSignOut: {

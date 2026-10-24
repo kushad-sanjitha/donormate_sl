@@ -12,6 +12,7 @@ struct HomeUrgentCard: View {
     let title: String
     let detail: String
     let isDemonstration: Bool
+    let isSaved: Bool
     let onViewAlert: () -> Void
     let onSave: (() -> Void)?
 
@@ -91,7 +92,7 @@ struct HomeUrgentCard: View {
 
                 if let onSave {
                     Button(action: onSave) {
-                        Text("Save")
+                        Text(isSaved ? "Saved" : "Save")
                             .font(.system(size: 15, weight: .bold))
                             .foregroundStyle(Color("TextPrimary"))
                             .frame(maxWidth: .infinity, minHeight: 48)
@@ -103,6 +104,7 @@ struct HomeUrgentCard: View {
                             .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
                     .buttonStyle(.plain)
+                    .disabled(isSaved)
                 }
             }
         }
@@ -137,6 +139,7 @@ struct HomeUrgentCard: View {
         title: "A+ blood urgently needed nearby",
         detail: "Matara Blood Bank · 2.8 km",
         isDemonstration: true,
+        isSaved: false,
         onViewAlert: {
             print("View alert tapped")
         },

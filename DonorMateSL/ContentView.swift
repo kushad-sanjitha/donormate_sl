@@ -64,6 +64,7 @@ struct ContentView: View {
     @StateObject private var donorRecordsStore = DonorRecordsStore()
     @StateObject private var donationLocationStore = DonationLocationStore()
     @StateObject private var urgentBloodNeedStore = UrgentBloodNeedStore()
+    @StateObject private var savedItemsStore = SavedItemsStore()
 
     private let donorRecordProvider = DemoDonorRecordProvider()
 
@@ -423,6 +424,7 @@ struct ContentView: View {
                         accountProfile: accountProfile,
                         donationLocationStore: donationLocationStore,
                         urgentBloodNeedStore: urgentBloodNeedStore,
+                        savedItemsStore: savedItemsStore,
                         locationPermissionService: locationPermissionService,
                         isAccountLoading:
                             accountSessionStore
@@ -452,6 +454,9 @@ struct ContentView: View {
         }
         .onAppear {
             refreshSetupStatuses()
+            Task {
+                await savedItemsStore.activate(for: accountSessionStore.authenticatedUserID)
+            }
         }
         .onReceive(donationLocationStore.$locations) { locations in
             Task {
@@ -483,6 +488,9 @@ struct ContentView: View {
                 newUserID:
                     newUserID
             )
+            Task {
+                await savedItemsStore.activate(for: newUserID)
+            }
         }
         .onChange(
             of:

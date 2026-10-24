@@ -24,6 +24,8 @@ struct CampaignDetailsView: View {
         )
     }
 
+    let isSaved: Bool
+    let onToggleSave: (DonationLocation) -> Void
     let onDirections: (DonationLocation) -> Void
     let onNearbyAlert: (DonationLocation) -> Void
 
@@ -60,13 +62,13 @@ struct CampaignDetailsView: View {
         VStack(spacing: 0) {
             ScreenNavigationHeader(
                 title: "Campaign Details",
-                trailingSystemImage: "heart",
-                trailingAccessibilityLabel: "Favourite campaign",
+                trailingSystemImage: isSaved ? "heart.fill" : "heart",
+                trailingAccessibilityLabel: isSaved ? "Remove saved campaign" : "Save campaign",
                 onBack: {
                     dismiss()
                 },
                 onTrailingAction: {
-                    print("Favourite campaign tapped")
+                    onToggleSave(location)
                 }
             )
 
@@ -203,9 +205,9 @@ struct CampaignDetailsView: View {
                     .buttonStyle(.plain)
 
                     Button {
-                        print("Save tapped")
+                        onToggleSave(location)
                     } label: {
-                        Text("Save")
+                        Text(isSaved ? "Saved" : "Save")
                             .font(.system(size: 15, weight: .bold))
                             .foregroundStyle(Color("TextPrimary"))
                             .frame(
@@ -289,6 +291,8 @@ struct CampaignDetailsView: View {
                         DonorDemoData.records
                 ),
             currentLocationService: CurrentLocationService(),
+            isSaved: false,
+            onToggleSave: { _ in },
             onDirections: { location in
                 print(
                     "Directions tapped:",
