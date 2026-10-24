@@ -13,6 +13,7 @@ struct ProfileView: View {
     @ObservedObject var donorRecordsStore: DonorRecordsStore
     @ObservedObject var donationLocationStore: DonationLocationStore
     @ObservedObject var savedItemsStore: SavedItemsStore
+    @ObservedObject var notificationInboxStore: NotificationInboxStore
     @ObservedObject var currentLocationService: CurrentLocationService
     let isLoading: Bool
     let errorMessage: String?
@@ -89,6 +90,19 @@ struct ProfileView: View {
                         .clipShape(
                             RoundedRectangle(cornerRadius: 18)
                         )
+
+                        NavigationLink {
+                            NotificationsView(inboxStore: notificationInboxStore)
+                        } label: {
+                            HomeInfoRow(
+                                title: "Notifications",
+                                detail: "Donation reminders and relevant alerts",
+                                systemImage: "bell.fill",
+                                iconBackground: Color("DonorRedSoft"),
+                                iconForeground: Color("DonorRed")
+                            )
+                        }
+                        .buttonStyle(.plain)
 
                         NavigationLink {
                             SavedCampaignsView(
@@ -230,6 +244,7 @@ struct ProfileView: View {
         donorRecordsStore: DonorRecordsStore(),
         donationLocationStore: DonationLocationStore(),
         savedItemsStore: SavedItemsStore(),
+        notificationInboxStore: NotificationInboxStore(),
         currentLocationService: CurrentLocationService(),
         isLoading: false,
         errorMessage: nil,

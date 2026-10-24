@@ -41,6 +41,8 @@ nonisolated enum NearbyAlertNotificationService {
 
         try await UNUserNotificationCenter.current()
             .add(request)
+
+        await NotificationInboxStore.shared.recordNearbyAlert(for: location)
     }
 
     private static func notificationIdentifier(
