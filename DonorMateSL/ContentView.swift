@@ -65,6 +65,7 @@ struct ContentView: View {
     @StateObject private var donationLocationStore = DonationLocationStore()
     @StateObject private var urgentBloodNeedStore = UrgentBloodNeedStore()
     @StateObject private var savedItemsStore = SavedItemsStore()
+    @StateObject private var notificationInboxStore = NotificationInboxStore()
 
     private let donorRecordProvider = DemoDonorRecordProvider()
 
@@ -425,6 +426,7 @@ struct ContentView: View {
                         donationLocationStore: donationLocationStore,
                         urgentBloodNeedStore: urgentBloodNeedStore,
                         savedItemsStore: savedItemsStore,
+                        notificationInboxStore: notificationInboxStore,
                         locationPermissionService: locationPermissionService,
                         isAccountLoading:
                             accountSessionStore
@@ -839,6 +841,8 @@ struct ContentView: View {
 
             donorRecordsStore
                 .unlink()
+
+            notificationInboxStore.replaceItems(with: [])
 
             if previousUserID != nil {
                 faceIDProtectionEnabled =

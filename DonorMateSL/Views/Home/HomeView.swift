@@ -21,6 +21,7 @@ struct HomeView: View {
     @ObservedObject var donationLocationStore: DonationLocationStore
     @ObservedObject var urgentBloodNeedStore: UrgentBloodNeedStore
     @ObservedObject var savedItemsStore: SavedItemsStore
+    @ObservedObject var notificationInboxStore: NotificationInboxStore
     @ObservedObject var currentLocationService: CurrentLocationService
 
     var onConnectDonorRecord: () -> Void = {}
@@ -241,6 +242,36 @@ struct HomeView: View {
             }
 
             Spacer()
+
+            NavigationLink {
+                NotificationsView(inboxStore: notificationInboxStore)
+            } label: {
+                Image(systemName: "bell")
+                    .font(.system(size: 19, weight: .semibold))
+                    .foregroundStyle(Color("TextPrimary"))
+                    .frame(width: 40, height: 40)
+                    .background(Color("SurfacePrimary"))
+                    .clipShape(Circle())
+                    .overlay(alignment: .topTrailing) {
+                        if notificationInboxStore.unreadCount > 0 {
+                            Circle()
+                                .fill(Color("DonorRed"))
+                                .frame(width: 10, height: 10)
+                                .overlay {
+                                    Circle()
+                                        .stroke(Color("BackgroundPrimary"), lineWidth: 2)
+                                }
+                        }
+                    }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Notifications")
+            .accessibilityValue(
+                notificationInboxStore.unreadCount == 0
+                    ? "No unread notifications"
+                    : "\(notificationInboxStore.unreadCount) unread"
+            )
+            .padding(.trailing, 8)
 
             ZStack {
                 Circle()
@@ -873,6 +904,7 @@ struct HomeView: View {
         donationLocationStore: DonationLocationStore(),
         urgentBloodNeedStore: UrgentBloodNeedStore(),
         savedItemsStore: SavedItemsStore(),
+        notificationInboxStore: NotificationInboxStore(),
         currentLocationService: CurrentLocationService()
     )
 }
@@ -890,6 +922,7 @@ struct HomeView: View {
         donationLocationStore: DonationLocationStore(),
         urgentBloodNeedStore: UrgentBloodNeedStore(),
         savedItemsStore: SavedItemsStore(),
+        notificationInboxStore: NotificationInboxStore(),
         currentLocationService: CurrentLocationService()
     )
 }
@@ -914,6 +947,7 @@ struct HomeView: View {
         donationLocationStore: DonationLocationStore(),
         urgentBloodNeedStore: UrgentBloodNeedStore(),
         savedItemsStore: SavedItemsStore(),
+        notificationInboxStore: NotificationInboxStore(),
         currentLocationService: CurrentLocationService()
     )
 }
