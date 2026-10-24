@@ -19,12 +19,15 @@ struct HomeView: View {
     let accountProfile: AccountProfile
 
     @ObservedObject var donationLocationStore: DonationLocationStore
+    @ObservedObject var urgentBloodNeedStore: UrgentBloodNeedStore
     @ObservedObject var currentLocationService: CurrentLocationService
 
     var onConnectDonorRecord: () -> Void = {}
     var onFindNearby: () -> Void = {}
 
     @State private var currentDate = Date()
+    @State private var selectedUrgentNeedID: String?
+    @State private var selectedDirectionsLocationID: String?
 
     private let calendar = Calendar.current
 
@@ -107,6 +110,21 @@ struct HomeView: View {
                     VStack(spacing: 0) {
                         donorStatusContent
 
+                        if let featuredUrgent {
+                            Spacer().frame(height: 14)
+
+                            HomeUrgentCard(
+                                matchText: featuredUrgent.presentation.matchText,
+                                title: featuredUrgent.presentation.requestTitle,
+                                detail: urgentLocationDetail(for: featuredUrgent.location),
+                                isDemonstration: featuredUrgent.need.isDemonstration,
+                                onViewAlert: {
+                                    selectedUrgentNeedID = featuredUrgent.need.id
+                                },
+                                onSave: nil
+                            )
+                        }
+
                         if presentation.isLinked,
                            presentation.latestRecord != nil {
 
@@ -126,6 +144,39 @@ struct HomeView: View {
                 }
             }
             .background(Color("BackgroundPrimary"))
+            .navigationDestination(item: $selectedUrgentNeedID) { needID in
+                if let need = urgentBloodNeedStore.need(for: needID),
+                   let location = donationLocationStore.location(for: need.locationID) {
+                    UrgentNeedView(
+                        urgentNeed: need,
+                        location: location,
+                        presentation: urgentPresentation(for: need),
+                        distanceText: urgentDistance(for: location),
+                        onDirections: {
+                            selectedDirectionsLocationID = location.id
+                        },
+                        onSave: nil,
+                        onRemind: nil
+                    )
+                } else {
+                    NeutralMessageCard(
+                        systemImage: "mappin.slash",
+                        title: "Request unavailable",
+                        detail: "The request or location is no longer available."
+                    )
+                }
+            }
+            .navigationDestination(item: $selectedDirectionsLocationID) { locationID in
+                if let location = donationLocationStore.location(for: locationID) {
+                    RoutePreviewView(location: location)
+                } else {
+                    NeutralMessageCard(
+                        systemImage: "mappin.slash",
+                        title: "Location unavailable",
+                        detail: "This destination is no longer available."
+                    )
+                }
+            }
         }
         .tabBarContentClearance()
         .onChange(of: scenePhase) {
@@ -690,6 +741,56 @@ struct HomeView: View {
         }
     }
 
+    private var featuredUrgent: (
+        need: UrgentBloodNeed,
+        location: DonationLocation,
+        presentation: UrgentNeedPresentation
+    )? {
+        for need in urgentBloodNeedStore.activeNeeds(at: currentDate) {
+            guard let location = donationLocationStore.location(for: need.locationID) else {
+                continue
+            }
+
+            let result = urgentPresentation(for: need)
+            switch result.state {
+            case .ready, .waiting, .readinessUnknown:
+                return (need, location, result)
+            case .inactive, .unlinked, .bloodGroupUnavailable, .notMatching:
+                continue
+            }
+        }
+
+        return nil
+    }
+
+    private func urgentPresentation(for need: UrgentBloodNeed) -> UrgentNeedPresentation {
+        UrgentNeedPresentationBuilder.presentation(
+            for: need,
+            linkState: donorRecordsStore.linkState,
+            readiness: presentation.readiness,
+            currentDate: currentDate
+        )
+    }
+
+    private func urgentDistance(for location: DonationLocation) -> String {
+        guard let currentLocation = currentLocationService.currentLocation else {
+            return ""
+        }
+
+        return LocationDistanceCalculator.formattedDistance(
+            from: currentLocation,
+            to: location
+        )
+    }
+
+    private func urgentLocationDetail(for location: DonationLocation) -> String {
+        let distance = urgentDistance(for: location)
+        if distance.isEmpty {
+            return location.name
+        }
+        return "\(location.name) · \(distance)"
+    }
+
     private func nearestLocation(
         ofType type: DonationLocation.LocationType
     ) -> DonationLocation? {
@@ -759,6 +860,7 @@ struct HomeView: View {
                 email: "kushad@example.com"
             ),
         donationLocationStore: DonationLocationStore(),
+        urgentBloodNeedStore: UrgentBloodNeedStore(),
         currentLocationService: CurrentLocationService()
     )
 }
@@ -774,6 +876,7 @@ struct HomeView: View {
                 email: "kushad@example.com"
             ),
         donationLocationStore: DonationLocationStore(),
+        urgentBloodNeedStore: UrgentBloodNeedStore(),
         currentLocationService: CurrentLocationService()
     )
 }
@@ -796,6 +899,7 @@ struct HomeView: View {
                 email: "kushad@example.com"
             ),
         donationLocationStore: DonationLocationStore(),
+        urgentBloodNeedStore: UrgentBloodNeedStore(),
         currentLocationService: CurrentLocationService()
     )
 }

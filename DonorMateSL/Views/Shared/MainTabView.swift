@@ -26,6 +26,7 @@ struct MainTabView: View {
     let accountProfile: AccountProfile
 
     @ObservedObject var donationLocationStore: DonationLocationStore
+    @ObservedObject var urgentBloodNeedStore: UrgentBloodNeedStore
     @ObservedObject var locationPermissionService: LocationPermissionService
 
     @StateObject private var currentLocationService = CurrentLocationService()
@@ -46,6 +47,7 @@ struct MainTabView: View {
                 accountProfile:
                     accountProfile,
                 donationLocationStore: donationLocationStore,
+                urgentBloodNeedStore: urgentBloodNeedStore,
                 currentLocationService: currentLocationService,
                 onConnectDonorRecord:
                     onConnectDonorRecord,
@@ -160,6 +162,7 @@ struct MainTabView: View {
                 email: "kushad@example.com"
             ),
         donationLocationStore: DonationLocationStore(),
+        urgentBloodNeedStore: UrgentBloodNeedStore(),
         locationPermissionService: LocationPermissionService(),
         isAccountLoading: false,
         accountErrorMessage: nil

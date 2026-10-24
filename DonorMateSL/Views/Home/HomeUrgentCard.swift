@@ -11,8 +11,9 @@ struct HomeUrgentCard: View {
     let matchText: String
     let title: String
     let detail: String
+    let isDemonstration: Bool
     let onViewAlert: () -> Void
-    let onSave: () -> Void
+    let onSave: (() -> Void)?
 
     var body: some View {
         VStack(
@@ -22,7 +23,7 @@ struct HomeUrgentCard: View {
 
             HStack(alignment: .center) {
 
-                Text("Urgent")
+                Text(isDemonstration ? "DEMO REQUEST" : "Urgent")
                     .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(Color("DonorRed"))
                     .padding(.horizontal, 10)
@@ -88,29 +89,21 @@ struct HomeUrgentCard: View {
                 }
                 .buttonStyle(.plain)
 
-                Button {
-                    onSave()
-                } label: {
-                    Text("Save")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(Color("TextPrimary"))
-                        .frame(
-                            maxWidth: .infinity,
-                            minHeight: 48
-                        )
-                        .background(Color("SurfacePrimary"))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 14)
-                                .stroke(
-                                    Color("BorderPrimary"),
-                                    lineWidth: 1
-                                )
-                        }
-                        .clipShape(
-                            RoundedRectangle(cornerRadius: 14)
-                        )
+                if let onSave {
+                    Button(action: onSave) {
+                        Text("Save")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(Color("TextPrimary"))
+                            .frame(maxWidth: .infinity, minHeight: 48)
+                            .background(Color("SurfacePrimary"))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Color("BorderPrimary"), lineWidth: 1)
+                            }
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
         }
         .padding(14)
@@ -143,6 +136,7 @@ struct HomeUrgentCard: View {
         matchText: "A+ match",
         title: "A+ blood urgently needed nearby",
         detail: "Matara Blood Bank · 2.8 km",
+        isDemonstration: true,
         onViewAlert: {
             print("View alert tapped")
         },
