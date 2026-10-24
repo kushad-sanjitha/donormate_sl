@@ -63,6 +63,7 @@ struct ContentView: View {
 
     @StateObject private var donorRecordsStore = DonorRecordsStore()
     @StateObject private var donationLocationStore = DonationLocationStore()
+    @StateObject private var urgentBloodNeedStore = UrgentBloodNeedStore()
 
     private let donorRecordProvider = DemoDonorRecordProvider()
 
@@ -421,6 +422,7 @@ struct ContentView: View {
                             donorRecordsStore,
                         accountProfile: accountProfile,
                         donationLocationStore: donationLocationStore,
+                        urgentBloodNeedStore: urgentBloodNeedStore,
                         locationPermissionService: locationPermissionService,
                         isAccountLoading:
                             accountSessionStore

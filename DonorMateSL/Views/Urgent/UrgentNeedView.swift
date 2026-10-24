@@ -15,8 +15,8 @@ struct UrgentNeedView: View {
     let distanceText: String
 
     let onDirections: () -> Void
-    let onSave: () -> Void
-    let onRemind: () -> Void
+    let onSave: (() -> Void)?
+    let onRemind: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
 
@@ -142,9 +142,15 @@ struct UrgentNeedView: View {
                         VStack(spacing: 10) {
                             actionButton("Get Directions", primary: true, action: onDirections)
 
-                            HStack(spacing: 10) {
-                                actionButton("Save", primary: false, action: onSave)
-                                actionButton("Remind Me", primary: false, action: onRemind)
+                            if onSave != nil || onRemind != nil {
+                                HStack(spacing: 10) {
+                                    if let onSave {
+                                        actionButton("Save", primary: false, action: onSave)
+                                    }
+                                    if let onRemind {
+                                        actionButton("Remind Me", primary: false, action: onRemind)
+                                    }
+                                }
                             }
                         }
                     } else if case .waiting = presentation.state {
@@ -153,13 +159,20 @@ struct UrgentNeedView: View {
                                 .font(.system(size: 17, weight: .bold))
                                 .foregroundStyle(Color("TextPrimary"))
 
-                            NeutralMessageCard(
-                                systemImage: "bookmark.fill",
-                                title: "Save this location",
-                                detail: "Keep this location for a future donation opportunity."
-                            )
-
-                            actionButton("Save Location", primary: false, action: onSave)
+                            if let onSave {
+                                NeutralMessageCard(
+                                    systemImage: "bookmark.fill",
+                                    title: "Save this location",
+                                    detail: "Keep this location for a future donation opportunity."
+                                )
+                                actionButton("Save Location", primary: false, action: onSave)
+                            } else {
+                                NeutralMessageCard(
+                                    systemImage: "info.circle.fill",
+                                    title: "Plan your next donation",
+                                    detail: "You can review donation locations while your waiting period continues. Final eligibility is confirmed by blood-bank staff."
+                                )
+                            }
                             actionButton("Back to Home", primary: true) { dismiss() }
                         }
                     } else {
@@ -288,4 +301,3 @@ private struct UrgentNeedPreview: View {
 #Preview("Waiting - Screen 28") {
     UrgentNeedPreview(readiness: .notReady(daysRemaining: 17))
 }
-
