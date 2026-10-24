@@ -7,14 +7,14 @@
 
 import Foundation
 
-nonisolated enum NotificationInboxKind: String, Equatable, Sendable {
+nonisolated enum NotificationInboxKind: String, Codable, Equatable, Sendable {
     case urgentNeed
     case donationReady
     case campaignReminder
     case nearbyAlert
 }
 
-nonisolated struct NotificationInboxItem: Identifiable, Equatable, Sendable {
+nonisolated struct NotificationInboxItem: Identifiable, Codable, Equatable, Sendable {
     let id: String
     let kind: NotificationInboxKind
     let title: String

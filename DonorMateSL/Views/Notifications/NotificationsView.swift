@@ -37,12 +37,25 @@ struct NotificationsView: View {
                 trailingSystemImage: "ellipsis",
                 trailingAccessibilityLabel: "Notification options",
                 onBack: { dismiss() },
-                onTrailingAction: { showingMoreOptions = true }
+                onTrailingAction: {
+                    if inboxStore.unreadCount > 0 {
+                        showingMoreOptions = true
+                    }
+                }
             )
 
             ScreenScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    if inboxStore.items.isEmpty {
+                    if let errorMessage = inboxStore.errorMessage {
+                        NeutralMessageCard(
+                            systemImage: "exclamationmark.triangle",
+                            title: "Notification storage unavailable",
+                            detail: errorMessage
+                        )
+                        .padding(.bottom, 16)
+                    }
+
+                    if inboxStore.items.isEmpty && inboxStore.errorMessage == nil {
                         NeutralMessageCard(
                             systemImage: "bell",
                             title: "No notifications yet",

@@ -65,7 +65,7 @@ struct ContentView: View {
     @StateObject private var donationLocationStore = DonationLocationStore()
     @StateObject private var urgentBloodNeedStore = UrgentBloodNeedStore()
     @StateObject private var savedItemsStore = SavedItemsStore()
-    @StateObject private var notificationInboxStore = NotificationInboxStore()
+    @StateObject private var notificationInboxStore = NotificationInboxStore.shared
 
     private let donorRecordProvider = DemoDonorRecordProvider()
 
@@ -456,6 +456,7 @@ struct ContentView: View {
         }
         .onAppear {
             refreshSetupStatuses()
+            notificationInboxStore.activate(for: accountSessionStore.authenticatedUserID)
             Task {
                 await savedItemsStore.activate(for: accountSessionStore.authenticatedUserID)
             }
@@ -490,6 +491,7 @@ struct ContentView: View {
                 newUserID:
                     newUserID
             )
+            notificationInboxStore.activate(for: newUserID)
             Task {
                 await savedItemsStore.activate(for: newUserID)
             }
@@ -841,8 +843,6 @@ struct ContentView: View {
 
             donorRecordsStore
                 .unlink()
-
-            notificationInboxStore.replaceItems(with: [])
 
             if previousUserID != nil {
                 faceIDProtectionEnabled =

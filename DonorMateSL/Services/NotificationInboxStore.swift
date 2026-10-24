@@ -10,10 +10,40 @@ import Combine
 
 @MainActor
 final class NotificationInboxStore: ObservableObject {
-    @Published private(set) var items: [NotificationInboxItem]
+    static let shared = NotificationInboxStore()
 
-    init(items: [NotificationInboxItem] = []) {
+    @Published private(set) var items: [NotificationInboxItem]
+    @Published private(set) var activeUserID: String?
+    @Published private(set) var errorMessage: String?
+
+    private let repository: any NotificationInboxRepository
+    private static let maximumItems = 200
+
+    init(
+        items: [NotificationInboxItem] = [],
+        repository: (any NotificationInboxRepository)? = nil
+    ) {
+        self.repository = repository ?? LocalNotificationInboxRepository()
         self.items = Self.validUniqueSorted(items)
+    }
+
+    func activate(for userID: String?) {
+        let cleanID = userID?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let nextID = cleanID?.isEmpty == false ? cleanID : nil
+
+        guard activeUserID != nextID || errorMessage != nil else { return }
+
+        activeUserID = nextID
+        items = []
+        errorMessage = nil
+
+        guard let nextID else { return }
+
+        do {
+            items = Self.validUniqueSorted(try repository.load(for: nextID))
+        } catch {
+            errorMessage = "Notifications could not be loaded on this device."
+        }
     }
 
     var unreadCount: Int {
@@ -32,7 +62,27 @@ final class NotificationInboxStore: ObservableObject {
     }
 
     func replaceItems(with newItems: [NotificationInboxItem]) {
-        items = Self.validUniqueSorted(newItems)
+        _ = persist(Self.validUniqueSorted(newItems))
+    }
+
+    func record(_ item: NotificationInboxItem) {
+        guard activeUserID != nil,
+              !items.contains(where: { $0.id == item.id }) else { return }
+
+        _ = persist(Self.validUniqueSorted(items + [item]))
+    }
+
+    func recordNearbyAlert(for location: DonationLocation, at date: Date = Date()) {
+        guard activeUserID != nil else { return }
+
+        record(NotificationInboxItem(
+            id: "nearby-\(UUID().uuidString)",
+            kind: .nearbyAlert,
+            title: "Nearby donation location",
+            message: "You're near \(location.name).",
+            createdAt: date,
+            locationID: location.id
+        ))
     }
 
     @discardableResult
@@ -44,17 +94,33 @@ final class NotificationInboxStore: ObservableObject {
         guard !items[index].isRead else { return true }
         var updated = items
         updated[index].isRead = true
-        items = updated
-        return true
+        return persist(updated)
     }
 
     func markAllRead() {
         guard unreadCount > 0 else { return }
-        items = items.map { item in
+        let updated = items.map { item in
             var updated = item
             updated.isRead = true
             return updated
         }
+        _ = persist(updated)
+    }
+
+    @discardableResult
+    private func persist(_ updated: [NotificationInboxItem]) -> Bool {
+        if let activeUserID {
+            do {
+                try repository.save(updated, for: activeUserID)
+            } catch {
+                errorMessage = "Notifications could not be saved on this device."
+                return false
+            }
+        }
+
+        items = updated
+        errorMessage = nil
+        return true
     }
 
     private static func validUniqueSorted(
@@ -62,7 +128,7 @@ final class NotificationInboxStore: ObservableObject {
     ) -> [NotificationInboxItem] {
         var seenIDs = Set<String>()
 
-        return incoming.filter { item in
+        return Array(incoming.filter { item in
             let id = item.id.trimmingCharacters(in: .whitespacesAndNewlines)
             let title = item.title.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !id.isEmpty, !title.isEmpty else { return false }
@@ -73,6 +139,6 @@ final class NotificationInboxStore: ObservableObject {
                 return $0.id < $1.id
             }
             return $0.createdAt > $1.createdAt
-        }
+        }.prefix(maximumItems))
     }
 }
