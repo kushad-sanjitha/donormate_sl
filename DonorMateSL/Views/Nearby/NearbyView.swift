@@ -13,6 +13,7 @@ struct NearbyView: View {
 
     @ObservedObject var donorRecordsStore: DonorRecordsStore
     @ObservedObject var donationLocationStore: DonationLocationStore
+    @ObservedObject var savedItemsStore: SavedItemsStore
     @ObservedObject var currentLocationService: CurrentLocationService
 
     private enum NearbyMode {
@@ -300,6 +301,12 @@ struct NearbyView: View {
                         location: location,
                         donorRecordsStore: donorRecordsStore,
                         currentLocationService: currentLocationService,
+                        isSaved: savedItemsStore.isSaved(location.id),
+                        onToggleSave: { location in
+                            Task {
+                                await savedItemsStore.toggle(locationID: location.id)
+                            }
+                        },
                         onDirections: { location in
                             navigationPath.append(
                                 .route(
@@ -478,6 +485,7 @@ struct NearbyView: View {
                     DonorDemoData.records
             ),
         donationLocationStore: DonationLocationStore(),
+        savedItemsStore: SavedItemsStore(),
         currentLocationService: CurrentLocationService()
     )
 }

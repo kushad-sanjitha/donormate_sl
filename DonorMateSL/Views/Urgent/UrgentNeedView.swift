@@ -13,6 +13,7 @@ struct UrgentNeedView: View {
     let location: DonationLocation
     let presentation: UrgentNeedPresentation
     let distanceText: String
+    let isSaved: Bool
 
     let onDirections: () -> Void
     let onSave: (() -> Void)?
@@ -145,7 +146,8 @@ struct UrgentNeedView: View {
                             if onSave != nil || onRemind != nil {
                                 HStack(spacing: 10) {
                                     if let onSave {
-                                        actionButton("Save", primary: false, action: onSave)
+                                        actionButton(isSaved ? "Saved" : "Save", primary: false, action: onSave)
+                                            .disabled(isSaved)
                                     }
                                     if let onRemind {
                                         actionButton("Remind Me", primary: false, action: onRemind)
@@ -165,7 +167,8 @@ struct UrgentNeedView: View {
                                     title: "Save this location",
                                     detail: "Keep this location for a future donation opportunity."
                                 )
-                                actionButton("Save Location", primary: false, action: onSave)
+                                actionButton(isSaved ? "Saved" : "Save Location", primary: false, action: onSave)
+                                    .disabled(isSaved)
                             } else {
                                 NeutralMessageCard(
                                     systemImage: "info.circle.fill",
@@ -286,6 +289,7 @@ private struct UrgentNeedPreview: View {
                     currentDate: urgentNeed.publishedAt.addingTimeInterval(3_600)
                 ),
                 distanceText: "2.8 km",
+                isSaved: false,
                 onDirections: {},
                 onSave: {},
                 onRemind: {}

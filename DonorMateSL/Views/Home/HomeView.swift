@@ -20,6 +20,7 @@ struct HomeView: View {
 
     @ObservedObject var donationLocationStore: DonationLocationStore
     @ObservedObject var urgentBloodNeedStore: UrgentBloodNeedStore
+    @ObservedObject var savedItemsStore: SavedItemsStore
     @ObservedObject var currentLocationService: CurrentLocationService
 
     var onConnectDonorRecord: () -> Void = {}
@@ -118,10 +119,15 @@ struct HomeView: View {
                                 title: featuredUrgent.presentation.requestTitle,
                                 detail: urgentLocationDetail(for: featuredUrgent.location),
                                 isDemonstration: featuredUrgent.need.isDemonstration,
+                                isSaved: savedItemsStore.isSaved(featuredUrgent.location.id),
                                 onViewAlert: {
                                     selectedUrgentNeedID = featuredUrgent.need.id
                                 },
-                                onSave: nil
+                                onSave: {
+                                    Task {
+                                        await savedItemsStore.save(locationID: featuredUrgent.location.id)
+                                    }
+                                }
                             )
                         }
 
@@ -152,10 +158,15 @@ struct HomeView: View {
                         location: location,
                         presentation: urgentPresentation(for: need),
                         distanceText: urgentDistance(for: location),
+                        isSaved: savedItemsStore.isSaved(location.id),
                         onDirections: {
                             selectedDirectionsLocationID = location.id
                         },
-                        onSave: nil,
+                        onSave: {
+                            Task {
+                                await savedItemsStore.save(locationID: location.id)
+                            }
+                        },
                         onRemind: nil
                     )
                 } else {
@@ -861,6 +872,7 @@ struct HomeView: View {
             ),
         donationLocationStore: DonationLocationStore(),
         urgentBloodNeedStore: UrgentBloodNeedStore(),
+        savedItemsStore: SavedItemsStore(),
         currentLocationService: CurrentLocationService()
     )
 }
@@ -877,6 +889,7 @@ struct HomeView: View {
             ),
         donationLocationStore: DonationLocationStore(),
         urgentBloodNeedStore: UrgentBloodNeedStore(),
+        savedItemsStore: SavedItemsStore(),
         currentLocationService: CurrentLocationService()
     )
 }
@@ -900,6 +913,7 @@ struct HomeView: View {
             ),
         donationLocationStore: DonationLocationStore(),
         urgentBloodNeedStore: UrgentBloodNeedStore(),
+        savedItemsStore: SavedItemsStore(),
         currentLocationService: CurrentLocationService()
     )
 }

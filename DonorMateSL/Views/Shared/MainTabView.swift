@@ -27,6 +27,7 @@ struct MainTabView: View {
 
     @ObservedObject var donationLocationStore: DonationLocationStore
     @ObservedObject var urgentBloodNeedStore: UrgentBloodNeedStore
+    @ObservedObject var savedItemsStore: SavedItemsStore
     @ObservedObject var locationPermissionService: LocationPermissionService
 
     @StateObject private var currentLocationService = CurrentLocationService()
@@ -48,6 +49,7 @@ struct MainTabView: View {
                     accountProfile,
                 donationLocationStore: donationLocationStore,
                 urgentBloodNeedStore: urgentBloodNeedStore,
+                savedItemsStore: savedItemsStore,
                 currentLocationService: currentLocationService,
                 onConnectDonorRecord:
                     onConnectDonorRecord,
@@ -67,6 +69,7 @@ struct MainTabView: View {
             NearbyView(
                 donorRecordsStore: donorRecordsStore,
                 donationLocationStore: donationLocationStore,
+                savedItemsStore: savedItemsStore,
                 currentLocationService: currentLocationService
             )
             .tabItem {
@@ -96,6 +99,10 @@ struct MainTabView: View {
             ProfileView(
                 accountProfile:
                     accountProfile,
+                donorRecordsStore: donorRecordsStore,
+                donationLocationStore: donationLocationStore,
+                savedItemsStore: savedItemsStore,
+                currentLocationService: currentLocationService,
                 isLoading:
                     isAccountLoading,
                 errorMessage:
@@ -163,6 +170,7 @@ struct MainTabView: View {
             ),
         donationLocationStore: DonationLocationStore(),
         urgentBloodNeedStore: UrgentBloodNeedStore(),
+        savedItemsStore: SavedItemsStore(),
         locationPermissionService: LocationPermissionService(),
         isAccountLoading: false,
         accountErrorMessage: nil
