@@ -18,9 +18,13 @@ struct ProfileView: View {
     let isLoading: Bool
     let errorMessage: String?
 
+    var onFindNearby: () -> Void = {}
+    var onReturnHome: () -> Void = {}
     var onSignOut: () -> Void = {}
 
     @State private var showSignOutConfirmation = false
+    @State private var showPreparationGuide = false
+    @State private var showPostDonationGuide = false
 
     var body: some View {
         NavigationStack {
@@ -138,6 +142,16 @@ struct ProfileView: View {
                         }
                         .buttonStyle(.plain)
 
+                        HStack(spacing: 8) {
+                            guidanceButton("Before Donation") {
+                                showPreparationGuide = true
+                            }
+
+                            guidanceButton("After Donation") {
+                                showPostDonationGuide = true
+                            }
+                        }
+
                         if let errorMessage {
                             Text(errorMessage)
                                 .font(.system(size: 12))
@@ -188,6 +202,18 @@ struct ProfileView: View {
                 }
             }
             .background(Color("BackgroundPrimary"))
+            .navigationDestination(isPresented: $showPreparationGuide) {
+                DonationPreparationGuideView(onFindNearby: {
+                    showPreparationGuide = false
+                    onFindNearby()
+                })
+            }
+            .navigationDestination(isPresented: $showPostDonationGuide) {
+                PostDonationGuideView(onDone: {
+                    showPostDonationGuide = false
+                    onReturnHome()
+                })
+            }
             .alert(
                 "Sign out of DonorMate?",
                 isPresented: $showSignOutConfirmation
@@ -203,6 +229,25 @@ struct ProfileView: View {
             }
         }
         .tabBarContentClearance()
+    }
+
+    private func guidanceButton(
+        _ title: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(Color("TextPrimary"))
+                .frame(maxWidth: .infinity, minHeight: 48)
+                .background(Color("SurfacePrimary"))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color("BorderPrimary"), lineWidth: 1)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+        }
+        .buttonStyle(.plain)
     }
 
     private var initials: String {

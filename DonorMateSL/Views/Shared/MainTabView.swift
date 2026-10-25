@@ -110,6 +110,12 @@ struct MainTabView: View {
                     isAccountLoading,
                 errorMessage:
                     accountErrorMessage,
+                onFindNearby: {
+                    selectedTab = .nearby
+                },
+                onReturnHome: {
+                    selectedTab = .home
+                },
                 onSignOut:
                     onSignOut
             )
