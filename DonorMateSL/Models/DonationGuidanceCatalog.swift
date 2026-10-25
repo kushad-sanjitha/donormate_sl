@@ -47,4 +47,27 @@ nonisolated enum DonationGuidanceCatalog {
             marker: .warning
         )
     ]
+
+    static let postDonationSteps: [DonationGuidanceStep] = [
+        DonationGuidanceStep(
+            id: "aftercare-rest",
+            text: "Rest as advised by the donation centre.",
+            marker: .check
+        ),
+        DonationGuidanceStep(
+            id: "aftercare-fluids",
+            text: "Drink enough fluids after your donation.",
+            marker: .check
+        ),
+        DonationGuidanceStep(
+            id: "aftercare-dressing",
+            text: "Follow the blood bank’s instructions for your dressing or plaster.",
+            marker: .check
+        ),
+        DonationGuidanceStep(
+            id: "aftercare-contact-staff",
+            text: "Contact qualified staff if you feel unwell or have concerns.",
+            marker: .warning
+        )
+    ]
 }
