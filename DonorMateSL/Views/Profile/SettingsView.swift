@@ -39,10 +39,16 @@ struct SettingsView: View {
                         }
                         .buttonStyle(.plain)
 
-                        settingsRow(
-                            title: "Privacy & Face ID",
-                            detail: "Biometric access and privacy information"
-                        )
+                        NavigationLink {
+                            PrivacyFaceIDView()
+                        } label: {
+                            settingsRow(
+                                title: "Privacy & Face ID",
+                                detail: "Biometric access and privacy information",
+                                showsDisclosure: true
+                            )
+                        }
+                        .buttonStyle(.plain)
 
                         settingsRow(
                             title: "Home Screen Widget",
