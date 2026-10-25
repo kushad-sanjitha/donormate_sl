@@ -30,9 +30,31 @@ struct ProfileView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Profile")
-                        .font(.system(size: 28, weight: .heavy))
-                        .foregroundStyle(Color("TextPrimary"))
+                    HStack(spacing: 10) {
+                        Text("Profile")
+                            .font(.system(size: 28, weight: .heavy))
+                            .foregroundStyle(Color("TextPrimary"))
+
+                        Spacer()
+
+                        if donorRecordsStore.profile != nil {
+                            Text(donorRecordsStore.isVerified ? "✓ Donor linked" : "Demo record")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundStyle(
+                                    donorRecordsStore.isVerified
+                                        ? Color("SuccessGreen")
+                                        : Color("DonorRed")
+                                )
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 7)
+                                .background(
+                                    donorRecordsStore.isVerified
+                                        ? Color("SuccessGreenSoft")
+                                        : Color("DonorRedSoft")
+                                )
+                                .clipShape(Capsule())
+                        }
+                    }
 
                     Text("Account and preferences")
                         .font(.system(size: 14))
@@ -66,6 +88,18 @@ struct ProfileView: View {
                                     .font(.system(size: 17, weight: .bold))
                                     .foregroundStyle(Color("TextPrimary"))
 
+                                if let donorProfile = donorRecordsStore.profile {
+                                    Text("Blood group · \(donorProfile.bloodGroup)")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(Color("TextSecondary"))
+
+                                    if let count = donorProfile.reportedDonationCount {
+                                        Text("\(count) recorded donations")
+                                            .font(.system(size: 11))
+                                            .foregroundStyle(Color("TextSecondary"))
+                                    }
+                                }
+
                                 Text(accountProfile.email)
                                     .font(.system(size: 13))
                                     .foregroundStyle(Color("TextSecondary"))
@@ -93,6 +127,18 @@ struct ProfileView: View {
                         }
                         .clipShape(
                             RoundedRectangle(cornerRadius: 18)
+                        )
+
+                        DetailInfoRow(
+                            systemImage: "drop.fill",
+                            label: "Blood group",
+                            value: bloodGroupDisplayName,
+                            supportingText: donorRecordsStore.profile == nil
+                                ? "Connect your donor record to see this information."
+                                : donorRecordsStore.isVerified
+                                    ? "From your linked donor record · view only"
+                                    : "Demonstration data · not verified",
+                            iconForeground: Color("DonorRed")
                         )
 
                         NavigationLink {
@@ -139,6 +185,22 @@ struct ProfileView: View {
                                 RoundedRectangle(cornerRadius: 16)
                                     .stroke(Color("BorderPrimary"), lineWidth: 1)
                             }
+                        }
+                        .buttonStyle(.plain)
+
+                        NavigationLink {
+                            SettingsView(
+                                onSignOut: onSignOut,
+                                isSignOutDisabled: isLoading
+                            )
+                        } label: {
+                            HomeInfoRow(
+                                title: "Settings",
+                                detail: "Notifications, privacy and app preferences",
+                                systemImage: "gearshape.fill",
+                                iconBackground: Color("NeutralSoft"),
+                                iconForeground: Color("TextSecondary")
+                            )
                         }
                         .buttonStyle(.plain)
 
@@ -250,6 +312,24 @@ struct ProfileView: View {
         .buttonStyle(.plain)
     }
 
+    private var bloodGroupDisplayName: String {
+        guard let bloodGroup = donorRecordsStore.profile?.bloodGroup else {
+            return "Not available"
+        }
+
+        switch bloodGroup {
+        case "A+": return "A Positive (A+)"
+        case "A-": return "A Negative (A-)"
+        case "B+": return "B Positive (B+)"
+        case "B-": return "B Negative (B-)"
+        case "AB+": return "AB Positive (AB+)"
+        case "AB-": return "AB Negative (AB-)"
+        case "O+": return "O Positive (O+)"
+        case "O-": return "O Negative (O-)"
+        default: return bloodGroup
+        }
+    }
+
     private var initials: String {
 
         let parts =
@@ -286,7 +366,10 @@ struct ProfileView: View {
                 nationalIdentityNumber:
                     "198554200159"
             ),
-        donorRecordsStore: DonorRecordsStore(),
+        donorRecordsStore: DonorRecordsStore(
+            linkState: .linked(profile: DonorDemoData.profile),
+            records: DonorDemoData.records
+        ),
         donationLocationStore: DonationLocationStore(),
         savedItemsStore: SavedItemsStore(),
         notificationInboxStore: NotificationInboxStore(),
@@ -297,4 +380,5 @@ struct ProfileView: View {
             print("Sign out tapped")
         }
     )
+    .environmentObject(NotificationPreferencesStore())
 }
