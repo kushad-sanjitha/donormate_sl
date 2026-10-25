@@ -9,10 +9,10 @@ import SwiftUI
 
 struct NotificationsView: View {
     @ObservedObject var inboxStore: NotificationInboxStore
+    @EnvironmentObject private var notificationPreferencesStore: NotificationPreferencesStore
     @Environment(\.dismiss) private var dismiss
 
     let referenceDate: Date
-    let onPreferences: () -> Void
     let onSelect: (NotificationInboxItem) -> Void
 
     @State private var showingMoreOptions = false
@@ -21,12 +21,10 @@ struct NotificationsView: View {
     init(
         inboxStore: NotificationInboxStore,
         referenceDate: Date = Date(),
-        onPreferences: @escaping () -> Void = {},
         onSelect: @escaping (NotificationInboxItem) -> Void = { _ in }
     ) {
         self.inboxStore = inboxStore
         self.referenceDate = referenceDate
-        self.onPreferences = onPreferences
         self.onSelect = onSelect
     }
 
@@ -76,7 +74,9 @@ struct NotificationsView: View {
                         }
                     }
 
-                    Button(action: onPreferences) {
+                    NavigationLink {
+                        NotificationPreferencesView(store: notificationPreferencesStore)
+                    } label: {
                         Text("Notification Preferences")
                             .font(.system(size: 15, weight: .bold))
                             .foregroundStyle(Color("TextPrimary"))
@@ -221,10 +221,12 @@ struct NotificationsView: View {
             referenceDate: referenceDate
         )
     }
+    .environmentObject(NotificationPreferencesStore())
 }
 
 #Preview("Screen 30 - Empty") {
     NavigationStack {
         NotificationsView(inboxStore: NotificationInboxStore())
     }
+    .environmentObject(NotificationPreferencesStore())
 }

@@ -66,6 +66,7 @@ struct ContentView: View {
     @StateObject private var urgentBloodNeedStore = UrgentBloodNeedStore()
     @StateObject private var savedItemsStore = SavedItemsStore()
     @StateObject private var notificationInboxStore = NotificationInboxStore.shared
+    @StateObject private var notificationPreferencesStore = NotificationPreferencesStore.shared
 
     private let donorRecordProvider = DemoDonorRecordProvider()
 
@@ -448,6 +449,7 @@ struct ContentView: View {
                             handleAccountSignOut()
                         }
                     )
+                    .environmentObject(notificationPreferencesStore)
 
                 } else {
                     accountRecoveryScreen
@@ -457,6 +459,7 @@ struct ContentView: View {
         .onAppear {
             refreshSetupStatuses()
             notificationInboxStore.activate(for: accountSessionStore.authenticatedUserID)
+            notificationPreferencesStore.activate(for: accountSessionStore.authenticatedUserID)
             Task {
                 await savedItemsStore.activate(for: accountSessionStore.authenticatedUserID)
             }
@@ -492,6 +495,7 @@ struct ContentView: View {
                     newUserID
             )
             notificationInboxStore.activate(for: newUserID)
+            notificationPreferencesStore.activate(for: newUserID)
             Task {
                 await savedItemsStore.activate(for: newUserID)
             }

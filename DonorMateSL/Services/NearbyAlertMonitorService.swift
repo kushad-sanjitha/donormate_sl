@@ -352,6 +352,17 @@ actor NearbyAlertMonitorService {
                 location.name
             )
 
+            let canDeliver = await NotificationPreferencesStore.shared
+                .shouldDeliverNotification(of: .nearbyAlert)
+
+            guard canDeliver else {
+                print(
+                    "Nearby alert suppressed by notification preferences:",
+                    location.name
+                )
+                return
+            }
+
             do {
                 try await NearbyAlertNotificationService.send(
                     for: location
