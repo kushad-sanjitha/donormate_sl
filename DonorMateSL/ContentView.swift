@@ -66,7 +66,7 @@ struct ContentView: View {
     @StateObject private var urgentBloodNeedStore = UrgentBloodNeedStore()
     @StateObject private var savedItemsStore = SavedItemsStore()
     @StateObject private var notificationInboxStore = NotificationInboxStore.shared
-    @StateObject private var notificationPreferencesStore = NotificationPreferencesStore()
+    @StateObject private var notificationPreferencesStore = NotificationPreferencesStore.shared
 
     private let donorRecordProvider = DemoDonorRecordProvider()
 

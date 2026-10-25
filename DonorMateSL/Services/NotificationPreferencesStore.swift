@@ -10,6 +10,8 @@ import Combine
 
 @MainActor
 final class NotificationPreferencesStore: ObservableObject {
+    static let shared = NotificationPreferencesStore()
+
     @Published private(set) var preferences: NotificationPreferences
     @Published private(set) var activeUserID: String?
     @Published private(set) var errorMessage: String?
@@ -45,6 +47,15 @@ final class NotificationPreferencesStore: ObservableObject {
 
     func isEnabled(_ kind: NotificationPreferenceKind) -> Bool {
         preferences.isEnabled(kind)
+    }
+
+    func shouldDeliverNotification(of kind: NotificationInboxKind) -> Bool {
+        guard activeUserID != nil, errorMessage == nil else { return false }
+
+        return NotificationDeliveryPolicy.shouldDeliver(
+            kind: kind,
+            preferences: preferences
+        )
     }
 
     func setEnabled(_ enabled: Bool, for kind: NotificationPreferenceKind) {
