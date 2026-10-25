@@ -20,6 +20,15 @@ struct NotificationPreferencesView: View {
 
             ScreenScrollView {
                 VStack(alignment: .leading, spacing: 0) {
+                    if let errorMessage = store.errorMessage {
+                        NeutralMessageCard(
+                            systemImage: "exclamationmark.triangle",
+                            title: "Notification preferences unavailable",
+                            detail: errorMessage
+                        )
+                        .padding(.bottom, 16)
+                    }
+
                     Text("REMINDERS")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(Color("TextSecondary"))
