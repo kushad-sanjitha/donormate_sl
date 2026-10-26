@@ -463,6 +463,14 @@ struct ContentView: View {
             Task {
                 await savedItemsStore.activate(for: accountSessionStore.authenticatedUserID)
             }
+            synchronizeWidgetSnapshot()
+        }
+        .onReceive(donorRecordsStore.$state) { updatedState in
+            guard accountSessionStore.isAuthStateResolved else { return }
+            DonorMateWidgetPublisher.synchronize(
+                userID: validAccountProfile?.uid,
+                donorState: updatedState
+            )
         }
         .onReceive(donationLocationStore.$locations) { locations in
             Task {
@@ -478,6 +486,7 @@ struct ContentView: View {
 
             if newPhase == .active {
                 refreshSetupStatuses()
+                synchronizeWidgetSnapshot()
             }
         }
         .onChange(
@@ -499,6 +508,7 @@ struct ContentView: View {
             Task {
                 await savedItemsStore.activate(for: newUserID)
             }
+            synchronizeWidgetSnapshot()
         }
         .onChange(
             of:
@@ -511,6 +521,8 @@ struct ContentView: View {
             guard isResolved else {
                 return
             }
+
+            synchronizeWidgetSnapshot()
 
             if waitingForSessionResolution {
                 routeAfterSplash()
@@ -544,6 +556,7 @@ struct ContentView: View {
             }
 
             enforceProtectedFlowAccess()
+            synchronizeWidgetSnapshot()
         }
         .onChange(
             of:
@@ -610,6 +623,14 @@ struct ContentView: View {
                 "Your Firebase session is still protected. Try Face ID again or sign in with your password."
             )
         }
+    }
+
+    private func synchronizeWidgetSnapshot() {
+        guard accountSessionStore.isAuthStateResolved else { return }
+        DonorMateWidgetPublisher.synchronize(
+            userID: validAccountProfile?.uid,
+            donorState: donorRecordsStore.state
+        )
     }
 
     private var validAccountProfile:
