@@ -381,4 +381,5 @@ struct ProfileView: View {
         }
     )
     .environmentObject(NotificationPreferencesStore())
+    .environmentObject(AccountSetupStore())
 }

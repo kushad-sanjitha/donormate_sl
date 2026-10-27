@@ -162,4 +162,5 @@ struct SettingsView: View {
         SettingsView(onSignOut: {})
     }
     .environmentObject(NotificationPreferencesStore())
+    .environmentObject(AccountSetupStore())
 }
