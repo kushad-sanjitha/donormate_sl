@@ -10,6 +10,7 @@ import SwiftUI
 struct AccountAccessView: View {
     var onSignIn: () -> Void = {}
        var onCreateAccount: () -> Void = {}
+       var onStaffSignIn: () -> Void = {}
 
        var body: some View {
            VStack(spacing: 0) {
@@ -130,6 +131,22 @@ struct AccountAccessView: View {
                    }
                    .buttonStyle(.plain)
                }
+
+               Button(action: onStaffSignIn) {
+                   Label("Staff Sign In", systemImage: "person.crop.rectangle")
+                       .font(.system(size: 15, weight: .bold))
+                       .foregroundStyle(Color("TextPrimary"))
+                       .frame(maxWidth: .infinity, minHeight: 48)
+                       .background(Color("SurfacePrimary"))
+                       .overlay {
+                           RoundedRectangle(cornerRadius: 14)
+                               .stroke(Color("BorderPrimary"), lineWidth: 1)
+                       }
+                       .clipShape(RoundedRectangle(cornerRadius: 14))
+               }
+               .buttonStyle(.plain)
+               .padding(.top, 10)
+               .accessibilityHint("Sign in using an account authorised for staff verification")
 
                Spacer()
                    .frame(height: 18)

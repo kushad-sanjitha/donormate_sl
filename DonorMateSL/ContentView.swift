@@ -13,6 +13,8 @@ struct ContentView: View {
         case splash
         case onboarding
         case accountAccess
+        case staffSignIn
+        case staffWorkspace
         case signIn
         case createAccount
         case resetPassword
@@ -72,6 +74,7 @@ struct ContentView: View {
     @StateObject private var notificationInboxStore = NotificationInboxStore.shared
     @StateObject private var notificationPreferencesStore = NotificationPreferencesStore.shared
     @StateObject private var accountSetupStore = AccountSetupStore()
+    @StateObject private var staffSessionStore = StaffSessionStore()
 
     private let donorRecordProvider = DemoDonorRecordProvider()
 
@@ -139,8 +142,43 @@ struct ContentView: View {
 
                         currentFlow =
                             .createAccount
+                    },
+                    onStaffSignIn: {
+                        currentFlow = .staffSignIn
                     }
                 )
+
+            case .staffSignIn:
+                StaffSignInView(
+                    isLoading: staffSessionStore.isLoading,
+                    errorMessage: staffSessionStore.errorMessage,
+                    onSignIn: { email, password in
+                        if await staffSessionStore.signIn(email: email, password: password) {
+                            currentFlow = .staffWorkspace
+                        }
+                    },
+                    onForgotPassword: { email in
+                        await staffSessionStore.sendPasswordReset(email: email)
+                    },
+                    onEdit: { staffSessionStore.clearError() },
+                    onBack: { currentFlow = .accountAccess }
+                )
+
+            case .staffWorkspace:
+                if let staff = staffSessionStore.staff {
+                    StaffWorkspaceView(
+                        staff: staff,
+                        onExit: {
+                            staffSessionStore.signOut()
+                            if staffSessionStore.staff == nil {
+                                currentFlow = .accountAccess
+                            }
+                        }
+                    )
+                } else {
+                    ProgressView("Checking staff authorization")
+                        .task { currentFlow = .staffSignIn }
+                }
 
             case .signIn:
                 SignInView(
@@ -488,6 +526,16 @@ struct ContentView: View {
                 synchronizeWidgetSnapshot()
             }
         }
+        .onChange(of: staffSessionStore.isResolving) { _, resolving in
+            if !resolving && waitingForSessionResolution {
+                routeAfterSplash()
+            }
+        }
+        .onChange(of: staffSessionStore.staff?.uid) { _, uid in
+            if uid == nil && currentFlow == .staffWorkspace {
+                currentFlow = .staffSignIn
+            }
+        }
         .onChange(
             of:
                 accountSessionStore
@@ -797,6 +845,11 @@ struct ContentView: View {
 
     private func handleSplashContinue() {
 
+        if staffSessionStore.isResolving {
+            waitingForSessionResolution = true
+            return
+        }
+
         if !accountSessionStore
             .isAuthStateResolved
             || accountSessionStore
@@ -812,6 +865,11 @@ struct ContentView: View {
     }
 
     private func routeAfterSplash() {
+
+        guard !staffSessionStore.isResolving else {
+            waitingForSessionResolution = true
+            return
+        }
 
         guard accountSessionStore
             .isAuthStateResolved else {
@@ -833,6 +891,11 @@ struct ContentView: View {
 
         waitingForSessionResolution =
             false
+
+        if staffSessionStore.staff != nil {
+            currentFlow = .staffWorkspace
+            return
+        }
 
         guard accountSessionStore
             .authenticatedUserID != nil else {
@@ -914,6 +977,13 @@ struct ContentView: View {
     }
 
     private func enforceProtectedFlowAccess() {
+
+        if currentFlow == .staffWorkspace {
+            if staffSessionStore.staff == nil && !staffSessionStore.isResolving {
+                currentFlow = .staffSignIn
+            }
+            return
+        }
 
         guard requiresAuthenticatedAccount(
             currentFlow
@@ -1310,6 +1380,8 @@ struct ContentView: View {
         case .splash,
              .onboarding,
              .accountAccess,
+             .staffSignIn,
+             .staffWorkspace,
              .signIn,
              .createAccount,
              .resetPassword,
