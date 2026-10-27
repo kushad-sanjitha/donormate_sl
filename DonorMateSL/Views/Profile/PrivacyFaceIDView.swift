@@ -9,8 +9,7 @@ import SwiftUI
 
 struct PrivacyFaceIDView: View {
     @Environment(\.dismiss) private var dismiss
-
-    @AppStorage("faceIDProtectionEnabled") private var faceIDProtectionEnabled = false
+    @EnvironmentObject private var accountSetupStore: AccountSetupStore
 
     @StateObject private var biometricAuthenticationService = BiometricAuthenticationService()
     @State private var isAuthenticating = false
@@ -50,12 +49,12 @@ struct PrivacyFaceIDView: View {
                         Spacer(minLength: 4)
 
                         Toggle("Face ID", isOn: Binding(
-                            get: { faceIDProtectionEnabled },
+                            get: { accountSetupStore.faceIDProtectionEnabled },
                             set: { shouldEnable in
                                 if shouldEnable {
                                     authenticate(enableProtection: true)
                                 } else {
-                                    faceIDProtectionEnabled = false
+                                    accountSetupStore.setFaceIDProtectionEnabled(false)
                                 }
                             }
                         ))
@@ -160,7 +159,8 @@ struct PrivacyFaceIDView: View {
     }
 
     private func authenticate(enableProtection: Bool) {
-        guard !isAuthenticating else { return }
+        guard !isAuthenticating,
+              let expectedUserID = accountSetupStore.activeUserID else { return }
 
         isAuthenticating = true
 
@@ -168,10 +168,12 @@ struct PrivacyFaceIDView: View {
             let result = await biometricAuthenticationService.authenticateWithFaceID()
             isAuthenticating = false
 
+            guard accountSetupStore.activeUserID == expectedUserID else { return }
+
             switch result {
             case .authenticationSucceeded:
                 if enableProtection {
-                    faceIDProtectionEnabled = true
+                    accountSetupStore.setFaceIDProtectionEnabled(true)
                     presentResult(
                         title: "Face ID enabled",
                         message: "Face ID will be requested when DonorMate restores your signed-in session after a fresh launch."
@@ -212,4 +214,5 @@ struct PrivacyFaceIDView: View {
     NavigationStack {
         PrivacyFaceIDView()
     }
+    .environmentObject(AccountSetupStore())
 }

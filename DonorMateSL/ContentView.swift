@@ -61,12 +61,17 @@ struct ContentView: View {
     @State private var showBiometricUnlockFailure =
         false
 
+    @State private var restorationToken: UUID?
+    @State private var restorationUserID: String?
+    @State private var loadedDonorUserID: String?
+
     @StateObject private var donorRecordsStore = DonorRecordsStore()
     @StateObject private var donationLocationStore = DonationLocationStore()
     @StateObject private var urgentBloodNeedStore = UrgentBloodNeedStore()
     @StateObject private var savedItemsStore = SavedItemsStore()
     @StateObject private var notificationInboxStore = NotificationInboxStore.shared
     @StateObject private var notificationPreferencesStore = NotificationPreferencesStore.shared
+    @StateObject private var accountSetupStore = AccountSetupStore()
 
     private let donorRecordProvider = DemoDonorRecordProvider()
 
@@ -82,9 +87,6 @@ struct ContentView: View {
     @StateObject private var biometricAuthenticationService =
         BiometricAuthenticationService()
 
-    @AppStorage("faceIDProtectionEnabled")
-    private var faceIDProtectionEnabled = false
-
     @State private var faceIDUnavailable = false
 
     private var faceIDStatus:
@@ -94,7 +96,7 @@ struct ContentView: View {
             return .unavailable
         }
 
-        if faceIDProtectionEnabled {
+        if accountSetupStore.faceIDProtectionEnabled {
             return .enabled
         }
 
@@ -201,11 +203,7 @@ struct ContentView: View {
                             return
                         }
 
-                        connectDonorRecordSource =
-                            .authentication
-
-                        currentFlow =
-                            .connectDonorRecord
+                        openAuthenticatedEntryFlow()
                     }
                 )
 
@@ -262,11 +260,7 @@ struct ContentView: View {
                             return
                         }
 
-                        connectDonorRecordSource =
-                            .authentication
-
-                        currentFlow =
-                            .connectDonorRecord
+                        openAuthenticatedEntryFlow()
                     }
                 )
 
@@ -334,9 +328,12 @@ struct ContentView: View {
                     },
                     onContinue: {
                         refreshBiometricAvailability()
-
-                        currentFlow =
-                            .faceIDSetup
+                        if accountSetupStore.faceIDProtectionEnabled {
+                            accountSetupStore.completeInitialSetup()
+                            currentFlow = .mainApp
+                        } else {
+                            currentFlow = .faceIDSetup
+                        }
                     }
                 )
 
@@ -347,16 +344,20 @@ struct ContentView: View {
                             .permissionSetup
                     },
                     onEnableFaceID: {
+                        guard let expectedUserID = validAccountProfile?.uid else { return }
                         Task {
                             let result =
                                 await biometricAuthenticationService
                                     .authenticateWithFaceID()
 
+                            guard validAccountProfile?.uid == expectedUserID,
+                                  accountSetupStore.activeUserID == expectedUserID else { return }
+
                             switch result {
 
                             case .authenticationSucceeded:
-                                faceIDProtectionEnabled =
-                                    true
+                                accountSetupStore.setFaceIDProtectionEnabled(true)
+                                accountSetupStore.completeInitialSetup()
 
                                 faceIDUnavailable =
                                     false
@@ -382,9 +383,7 @@ struct ContentView: View {
                         }
                     },
                     onNotNow: {
-                        faceIDProtectionEnabled =
-                            false
-
+                        accountSetupStore.completeInitialSetup()
                         faceIDUnavailable =
                             false
 
@@ -400,9 +399,7 @@ struct ContentView: View {
                             .faceIDSetup
                     },
                     onContinueWithPassword: {
-                        faceIDProtectionEnabled =
-                            false
-
+                        accountSetupStore.completeInitialSetup()
                         currentFlow =
                             .mainApp
                     },
@@ -456,8 +453,10 @@ struct ContentView: View {
                 }
             }
         }
+        .environmentObject(accountSetupStore)
         .onAppear {
             refreshSetupStatuses()
+            accountSetupStore.activate(for: accountSessionStore.authenticatedUserID)
             notificationInboxStore.activate(for: accountSessionStore.authenticatedUserID)
             notificationPreferencesStore.activate(for: accountSessionStore.authenticatedUserID)
             Task {
@@ -845,8 +844,9 @@ struct ContentView: View {
         }
 
         if hasValidAccountProfile {
+            accountSetupStore.activate(for: validAccountProfile?.uid)
 
-            if faceIDProtectionEnabled {
+            if accountSetupStore.faceIDProtectionEnabled {
                 requestRestoredSessionUnlock()
             } else {
                 openAuthenticatedEntryFlow()
@@ -866,13 +866,17 @@ struct ContentView: View {
 
         if previousUserID != newUserID {
 
-            donorRecordsStore
-                .unlink()
-
-            if previousUserID != nil {
-                faceIDProtectionEnabled =
-                    false
+            if restorationUserID != newUserID {
+                restorationToken = nil
+                restorationUserID = nil
             }
+
+            if loadedDonorUserID != newUserID {
+                donorRecordsStore.unlink()
+                loadedDonorUserID = nil
+            }
+
+            accountSetupStore.activate(for: newUserID)
         }
 
         guard accountSessionStore
@@ -927,6 +931,7 @@ struct ContentView: View {
 
             donorRecordsStore
                 .unlink()
+            loadedDonorUserID = nil
 
             selectedMainTab =
                 .home
@@ -949,6 +954,7 @@ struct ContentView: View {
 
         donorRecordsStore
             .unlink()
+        loadedDonorUserID = nil
 
         currentFlow =
             .accountRecovery
@@ -975,11 +981,17 @@ struct ContentView: View {
                 return false
             }
 
+            accountSetupStore.activate(for: account.uid)
+            guard accountSetupStore.rememberLinkedRecordID(donorRecordID) else {
+                return false
+            }
+
             donorRecordsStore.replaceLinkedData(
                 profile: result.profile,
                 records: result.records,
                 isVerified: result.isVerified
             )
+            loadedDonorUserID = account.uid
             return true
         } catch {
             return false
@@ -988,21 +1000,69 @@ struct ContentView: View {
 
     private func openAuthenticatedEntryFlow() {
 
+        guard let account = validAccountProfile else {
+            currentFlow = .accountRecovery
+            return
+        }
+
+        accountSetupStore.activate(for: account.uid)
+
         connectDonorRecordSource =
             .authentication
 
-        currentFlow =
-            .connectDonorRecord
+        guard restorationToken == nil else { return }
+
+        guard let recordID = accountSetupStore.linkedDonorRecordID else {
+            currentFlow = accountSetupStore.hasCompletedInitialSetup
+                ? .mainApp : .connectDonorRecord
+            return
+        }
+
+        let expectedToken = UUID()
+        restorationToken = expectedToken
+        restorationUserID = account.uid
+        let initialSetupComplete = accountSetupStore.hasCompletedInitialSetup
+
+        Task {
+            // Re-fetch via the existing provider. A saved ID never implies
+            // a verified record or authorizes access to medical information.
+            let result = try? await donorRecordProvider.findRecord(
+                account: account,
+                donorRecordID: recordID
+            )
+
+            guard restorationToken == expectedToken,
+                  accountSetupStore.activeUserID == account.uid,
+                  validAccountProfile?.uid == account.uid else { return }
+
+            restorationToken = nil
+            restorationUserID = nil
+
+            if let result {
+                donorRecordsStore.replaceLinkedData(
+                    profile: result.profile,
+                    records: result.records,
+                    isVerified: result.isVerified
+                )
+                loadedDonorUserID = account.uid
+            }
+
+            if initialSetupComplete {
+                currentFlow = .mainApp
+            } else {
+                currentFlow = result == nil ? .connectDonorRecord : .donorRecordLinked
+            }
+        }
     }
 
     private func requestRestoredSessionUnlock() {
 
-        guard faceIDProtectionEnabled else {
+        guard accountSetupStore.faceIDProtectionEnabled else {
             openAuthenticatedEntryFlow()
             return
         }
 
-        guard hasValidAccountProfile else {
+        guard let expectedUserID = validAccountProfile?.uid else {
             currentFlow =
                 .accountRecovery
             return
@@ -1023,11 +1083,8 @@ struct ContentView: View {
             isRestoredSessionUnlocking =
                 false
 
-            guard hasValidAccountProfile else {
-                currentFlow =
-                    .accountRecovery
-                return
-            }
+            guard validAccountProfile?.uid == expectedUserID,
+                  accountSetupStore.activeUserID == expectedUserID else { return }
 
             switch result {
 
@@ -1068,9 +1125,10 @@ struct ContentView: View {
 
         donorRecordsStore
             .unlink()
-
-        faceIDProtectionEnabled =
-            false
+        loadedDonorUserID = nil
+        restorationToken = nil
+        restorationUserID = nil
+        accountSetupStore.activate(for: nil)
 
         selectedMainTab =
             .home
@@ -1091,9 +1149,10 @@ struct ContentView: View {
 
         donorRecordsStore
             .unlink()
-
-        faceIDProtectionEnabled =
-            false
+        loadedDonorUserID = nil
+        restorationToken = nil
+        restorationUserID = nil
+        accountSetupStore.activate(for: nil)
 
         selectedMainTab =
             .home
@@ -1170,6 +1229,8 @@ struct ContentView: View {
 
         donorRecordsStore
             .unlink()
+        loadedDonorUserID = nil
+        accountSetupStore.forgetLinkedRecordID()
 
         switch connectDonorRecordSource {
 
