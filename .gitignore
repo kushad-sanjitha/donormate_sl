@@ -1,0 +1,125 @@
+# ============================================================
+# macOS
+# ============================================================
+
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Finder metadata
+._*
+
+
+# ============================================================
+# Xcode - User-specific files
+# ============================================================
+
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+
+# Xcode UI state
+UserInterfaceState.xcuserstate
+
+
+# ============================================================
+# Xcode - Build output
+# ============================================================
+
+build/
+DerivedData/
+
+*.hmap
+*.ipa
+*.dSYM
+*.dSYM.zip
+
+
+# ============================================================
+# Xcode - Temporary / generated files
+# ============================================================
+
+*.moved-aside
+*.perspectivev3
+*.perspective
+*.mode1v3
+*.mode1
+*.mode2v3
+*.mode2
+
+
+# ============================================================
+# Swift Package Manager
+# ============================================================
+
+.build/
+.swiftpm/xcode/package.xcworkspace/xcuserdata/
+
+# Keep Package.resolved tracked for an application project
+# Package.resolved
+
+
+# ============================================================
+# CocoaPods
+# ============================================================
+
+# Uncomment this only if we later decide NOT to commit Pods/
+# Pods/
+
+
+# ============================================================
+# Carthage
+# ============================================================
+
+Carthage/Build/
+
+
+# ============================================================
+# Fastlane generated files
+# ============================================================
+
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output/
+
+
+# ============================================================
+# Logs / temporary files
+# ============================================================
+
+*.log
+*.tmp
+*.swp
+*.swo
+*~
+
+
+# ============================================================
+# Environment / secrets
+# ============================================================
+
+.env
+.env.*
+!.env.example
+
+# Google/Firebase secrets or downloaded service credentials
+# Add specific secret files here when Firebase is configured.
+
+
+# ============================================================
+# IDE metadata
+# ============================================================
+
+.idea/
+.vscode/
+
+
+# ============================================================
+# Archives
+# ============================================================
+
+*.zip
+*.tar
+*.tar.gz

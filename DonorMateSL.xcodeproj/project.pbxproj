@@ -6,6 +6,14 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		D097C03F308E596C004DF8DE /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D097C024308E5744004DF8DE /* WidgetKit.framework */; };
+		D097C040308E596C004DF8DE /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D097C026308E5744004DF8DE /* SwiftUI.framework */; };
+		D097C04B308E596D004DF8DE /* DonorMateSLWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D097C03E308E596C004DF8DE /* DonorMateSLWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		D0AD1D443088D97000646406 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = D0AD1D433088D97000646406 /* FirebaseAuth */; };
+		D0AD1D463088D97000646406 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = D0AD1D453088D97000646406 /* FirebaseFirestore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		D01C9D853071F86700FA0384 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -21,17 +29,70 @@
 			remoteGlobalIDString = D01C9D763071F86600FA0384;
 			remoteInfo = DonorMateSL;
 		};
+		D097C049308E596D004DF8DE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D01C9D6F3071F86600FA0384 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D097C03D308E596C004DF8DE;
+			remoteInfo = DonorMateSLWidgetExtension;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		D097C035308E5746004DF8DE /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				D097C04B308E596D004DF8DE /* DonorMateSLWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		D01C9D773071F86600FA0384 /* DonorMateSL.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DonorMateSL.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D01C9D843071F86700FA0384 /* DonorMateSLTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DonorMateSLTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D01C9D8E3071F86700FA0384 /* DonorMateSLUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DonorMateSLUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D097C024308E5744004DF8DE /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		D097C026308E5744004DF8DE /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		D097C03E308E596C004DF8DE /* DonorMateSLWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DonorMateSLWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		D023CFBE308F0BED00051BBC /* Exceptions for "DonorMateSL" folder in "DonorMateSLWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Models/DonorMateWidgetSharedStore.swift,
+				Models/DonorMateWidgetSnapshot.swift,
+			);
+			target = D097C03D308E596C004DF8DE /* DonorMateSLWidgetExtension */;
+		};
+		D04D81B430872F7C00B7DE3B /* Exceptions for "DonorMateSL" folder in "DonorMateSL" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = D01C9D763071F86600FA0384 /* DonorMateSL */;
+		};
+		D097C04F308E596D004DF8DE /* Exceptions for "DonorMateSLWidget" folder in "DonorMateSLWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = D097C03D308E596C004DF8DE /* DonorMateSLWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		D01C9D793071F86600FA0384 /* DonorMateSL */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				D04D81B430872F7C00B7DE3B /* Exceptions for "DonorMateSL" folder in "DonorMateSL" target */,
+				D023CFBE308F0BED00051BBC /* Exceptions for "DonorMateSL" folder in "DonorMateSLWidgetExtension" target */,
+			);
 			path = DonorMateSL;
 			sourceTree = "<group>";
 		};
@@ -45,6 +106,14 @@
 			path = DonorMateSLUITests;
 			sourceTree = "<group>";
 		};
+		D097C041308E596C004DF8DE /* DonorMateSLWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				D097C04F308E596D004DF8DE /* Exceptions for "DonorMateSLWidget" folder in "DonorMateSLWidgetExtension" target */,
+			);
+			path = DonorMateSLWidget;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,6 +121,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D0AD1D443088D97000646406 /* FirebaseAuth in Frameworks */,
+				D0AD1D463088D97000646406 /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -69,6 +140,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D097C03B308E596C004DF8DE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D097C040308E596C004DF8DE /* SwiftUI.framework in Frameworks */,
+				D097C03F308E596C004DF8DE /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -78,6 +158,8 @@
 				D01C9D793071F86600FA0384 /* DonorMateSL */,
 				D01C9D873071F86700FA0384 /* DonorMateSLTests */,
 				D01C9D913071F86700FA0384 /* DonorMateSLUITests */,
+				D097C041308E596C004DF8DE /* DonorMateSLWidget */,
+				D097C023308E5744004DF8DE /* Frameworks */,
 				D01C9D783071F86600FA0384 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -88,8 +170,18 @@
 				D01C9D773071F86600FA0384 /* DonorMateSL.app */,
 				D01C9D843071F86700FA0384 /* DonorMateSLTests.xctest */,
 				D01C9D8E3071F86700FA0384 /* DonorMateSLUITests.xctest */,
+				D097C03E308E596C004DF8DE /* DonorMateSLWidgetExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		D097C023308E5744004DF8DE /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				D097C024308E5744004DF8DE /* WidgetKit.framework */,
+				D097C026308E5744004DF8DE /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -102,16 +194,20 @@
 				D01C9D733071F86600FA0384 /* Sources */,
 				D01C9D743071F86600FA0384 /* Frameworks */,
 				D01C9D753071F86600FA0384 /* Resources */,
+				D097C035308E5746004DF8DE /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				D097C04A308E596D004DF8DE /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				D01C9D793071F86600FA0384 /* DonorMateSL */,
 			);
 			name = DonorMateSL;
 			packageProductDependencies = (
+				D0AD1D433088D97000646406 /* FirebaseAuth */,
+				D0AD1D453088D97000646406 /* FirebaseFirestore */,
 			);
 			productName = DonorMateSL;
 			productReference = D01C9D773071F86600FA0384 /* DonorMateSL.app */;
@@ -163,6 +259,28 @@
 			productReference = D01C9D8E3071F86700FA0384 /* DonorMateSLUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		D097C03D308E596C004DF8DE /* DonorMateSLWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D097C04C308E596D004DF8DE /* Build configuration list for PBXNativeTarget "DonorMateSLWidgetExtension" */;
+			buildPhases = (
+				D097C03A308E596C004DF8DE /* Sources */,
+				D097C03B308E596C004DF8DE /* Frameworks */,
+				D097C03C308E596C004DF8DE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				D097C041308E596C004DF8DE /* DonorMateSLWidget */,
+			);
+			name = DonorMateSLWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = DonorMateSLWidgetExtension;
+			productReference = D097C03E308E596C004DF8DE /* DonorMateSLWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -184,6 +302,9 @@
 						CreatedOnToolsVersion = 26.2;
 						TestTargetID = D01C9D763071F86600FA0384;
 					};
+					D097C03D308E596C004DF8DE = {
+						CreatedOnToolsVersion = 26.2;
+					};
 				};
 			};
 			buildConfigurationList = D01C9D723071F86600FA0384 /* Build configuration list for PBXProject "DonorMateSL" */;
@@ -195,6 +316,9 @@
 			);
 			mainGroup = D01C9D6E3071F86600FA0384;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				D0AD1D423088D97000646406 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = D01C9D783071F86600FA0384 /* Products */;
 			projectDirPath = "";
@@ -203,6 +327,7 @@
 				D01C9D763071F86600FA0384 /* DonorMateSL */,
 				D01C9D833071F86700FA0384 /* DonorMateSLTests */,
 				D01C9D8D3071F86700FA0384 /* DonorMateSLUITests */,
+				D097C03D308E596C004DF8DE /* DonorMateSLWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -223,6 +348,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		D01C9D8C3071F86700FA0384 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D097C03C308E596C004DF8DE /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -253,6 +385,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D097C03A308E596C004DF8DE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -265,6 +404,11 @@
 			isa = PBXTargetDependency;
 			target = D01C9D763071F86600FA0384 /* DonorMateSL */;
 			targetProxy = D01C9D8F3071F86700FA0384 /* PBXContainerItemProxy */;
+		};
+		D097C04A308E596D004DF8DE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D097C03D308E596C004DF8DE /* DonorMateSLWidgetExtension */;
+			targetProxy = D097C049308E596D004DF8DE /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -393,10 +537,17 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DonorMateSL/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "DonorMate uses the camera to scan a donor's identity card during staff verification.";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "DonorMate uses Face ID to protect access to your personal donor information.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "DonorMate uses your location in the background to notify you when you enter the area around a donation location where you enabled a nearby alert.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "DonorMate uses your location to find nearby blood donation camps and blood banks and calculate distance.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -424,10 +575,17 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DonorMateSL/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "DonorMate uses the camera to scan a donor's identity card during staff verification.";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "DonorMate uses Face ID to protect access to your personal donor information.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "DonorMate uses your location in the background to notify you when you enter the area around a donation location where you enabled a nearby alert.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "DonorMate uses your location to find nearby blood donation camps and blood banks and calculate distance.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -530,6 +688,64 @@
 			};
 			name = Release;
 		};
+		D097C04D308E596D004DF8DE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DonorMateSLWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = DonorMateSLWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = iosdev.DonorMateSL.DonorMateSLWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		D097C04E308E596D004DF8DE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DonorMateSLWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = DonorMateSLWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = iosdev.DonorMateSL.DonorMateSLWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -569,7 +785,40 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		D097C04C308E596D004DF8DE /* Build configuration list for PBXNativeTarget "DonorMateSLWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D097C04D308E596D004DF8DE /* Debug */,
+				D097C04E308E596D004DF8DE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		D0AD1D423088D97000646406 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.19.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		D0AD1D433088D97000646406 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D0AD1D423088D97000646406 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		D0AD1D453088D97000646406 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D0AD1D423088D97000646406 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = D01C9D6F3071F86600FA0384 /* Project object */;
 }

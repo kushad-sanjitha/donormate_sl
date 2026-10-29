@@ -1,0 +1,567 @@
+//
+//  FirebaseAccountService.swift
+//  DonorMateSL
+//
+//  Created by user300742 on 10/22/26.
+//
+
+import Foundation
+import FirebaseAuth
+import FirebaseFirestore
+
+nonisolated enum AccountServiceError:
+    LocalizedError,
+    Sendable {
+
+    case invalidDisplayName
+    case invalidEmail
+    case invalidNationalIdentityNumber
+    case missingAuthenticatedUser
+    case missingEmail
+    case profileNotFound
+    case invalidProfile
+
+    case profileSetupRequired(
+        profile: AccountProfile
+    )
+
+    case profileRecoveryRequired(
+        displayName: String?
+    )
+
+    var errorDescription: String? {
+
+        switch self {
+
+        case .invalidDisplayName:
+            return "Enter a valid full name between 1 and 80 characters."
+
+        case .invalidEmail:
+            return "Enter a valid email address."
+
+        case .invalidNationalIdentityNumber:
+            return "Enter a valid Sri Lankan NIC number. Use the 12-digit format or the older 9-digit format ending in V or X."
+
+        case .missingAuthenticatedUser:
+            return "No authenticated account is available."
+
+        case .missingEmail:
+            return "The authenticated account does not have an email address."
+
+        case .profileNotFound:
+            return "Your account profile could not be found."
+
+        case .invalidProfile:
+            return "Your account profile contains invalid information."
+
+        case .profileSetupRequired:
+            return "Your account is signed in, but profile setup could not be completed. Please try again."
+
+        case .profileRecoveryRequired:
+            return "Your account is signed in, but identity details are required to finish profile setup."
+        }
+    }
+}
+
+@MainActor
+protocol AccountServicing: AnyObject {
+
+    var currentUserID: String? {
+        get
+    }
+
+    func createAccount(
+        displayName: String,
+        nationalIdentityNumber: String,
+        email: String,
+        password: String
+    ) async throws -> AccountProfile
+
+    func signIn(
+        email: String,
+        password: String
+    ) async throws -> AccountProfile
+
+    func loadAccountProfile(
+        uid: String
+    ) async throws -> AccountProfile
+
+    func completeProfile(
+        _ profile: AccountProfile
+    ) async throws
+
+    func completeCurrentProfile(
+        displayName: String,
+        nationalIdentityNumber: String
+    ) async throws -> AccountProfile
+
+    func sendPasswordReset(
+        email: String
+    ) async throws
+
+    func signOut() throws
+
+    func startObservingAuthentication(
+        _ handler:
+            @escaping @MainActor (String?) -> Void
+    )
+
+    func stopObservingAuthentication()
+}
+
+@MainActor
+final class FirebaseAccountService:
+    AccountServicing {
+
+    private let auth: Auth
+    private let firestore: Firestore
+
+    private var authStateHandle:
+        AuthStateDidChangeListenerHandle?
+
+    init(
+        auth: Auth = Auth.auth(),
+        firestore: Firestore =
+            Firestore.firestore()
+    ) {
+        self.auth = auth
+        self.firestore = firestore
+    }
+
+    var currentUserID: String? {
+        auth.currentUser?.uid
+    }
+
+    func createAccount(
+        displayName: String,
+        nationalIdentityNumber: String,
+        email: String,
+        password: String
+    ) async throws -> AccountProfile {
+
+        let cleanedName =
+            try validatedDisplayName(
+                displayName
+            )
+
+        let cleanedNIC =
+            try validatedNationalIdentityNumber(
+                nationalIdentityNumber
+            )
+
+        let cleanedEmail =
+            email
+                .trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                )
+                .lowercased()
+
+        guard !cleanedEmail.isEmpty else {
+            throw AccountServiceError
+                .invalidEmail
+        }
+
+        let result =
+            try await auth.createUser(
+                withEmail: cleanedEmail,
+                password: password
+            )
+
+        guard let authenticatedEmail =
+                result.user.email else {
+
+            throw AccountServiceError
+                .missingEmail
+        }
+
+        let profile =
+            AccountProfile(
+                uid: result.user.uid,
+                displayName: cleanedName,
+                email: authenticatedEmail,
+                nationalIdentityNumber:
+                    cleanedNIC
+            )
+
+        do {
+            try await completeProfile(
+                profile
+            )
+
+            return profile
+
+        } catch {
+
+            throw AccountServiceError
+                .profileSetupRequired(
+                    profile: profile
+                )
+        }
+    }
+
+    func signIn(
+        email: String,
+        password: String
+    ) async throws -> AccountProfile {
+
+        let cleanedEmail =
+            email
+                .trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                )
+                .lowercased()
+
+        let result =
+            try await auth.signIn(
+                withEmail: cleanedEmail,
+                password: password
+            )
+
+        return try await loadAccountProfile(
+            uid: result.user.uid
+        )
+    }
+
+    func loadAccountProfile(
+        uid: String
+    ) async throws -> AccountProfile {
+
+        guard let currentUser =
+                auth.currentUser,
+              currentUser.uid == uid else {
+
+            throw AccountServiceError
+                .missingAuthenticatedUser
+        }
+
+        do {
+            return try await loadProfileDocument(
+                uid: uid
+            )
+
+        } catch AccountServiceError
+                    .profileNotFound {
+
+            throw AccountServiceError
+                .profileRecoveryRequired(
+                    displayName:
+                        validatedDisplayNameOrNil(
+                            currentUser.displayName
+                        )
+                )
+        }
+    }
+
+    func completeProfile(
+        _ profile: AccountProfile
+    ) async throws {
+
+        guard let currentUser =
+                auth.currentUser,
+              currentUser.uid ==
+                profile.uid else {
+
+            throw AccountServiceError
+                .missingAuthenticatedUser
+        }
+
+        let cleanedName =
+            try validatedDisplayName(
+                profile.displayName
+            )
+
+        guard let rawNIC =
+                profile.nationalIdentityNumber else {
+
+            throw AccountServiceError
+                .invalidNationalIdentityNumber
+        }
+
+        let cleanedNIC =
+            try validatedNationalIdentityNumber(
+                rawNIC
+            )
+
+        guard let authenticatedEmail =
+                currentUser.email else {
+
+            throw AccountServiceError
+                .missingEmail
+        }
+
+        let changeRequest =
+            currentUser
+                .createProfileChangeRequest()
+
+        changeRequest.displayName =
+            cleanedName
+
+        try await changeRequest
+            .commitChanges()
+
+        let document =
+            firestore
+                .collection("users")
+                .document(profile.uid)
+
+        let snapshot =
+            try await document
+                .getDocument()
+
+        guard auth.currentUser?.uid ==
+                profile.uid else {
+
+            throw AccountServiceError
+                .missingAuthenticatedUser
+        }
+
+        if snapshot.exists {
+
+            try await document
+                .updateData(
+                    [
+                        "displayName":
+                            cleanedName,
+                        "nationalIdentityNumber":
+                            cleanedNIC
+                    ]
+                )
+
+        } else {
+
+            try await document
+                .setData(
+                    [
+                        "displayName":
+                            cleanedName,
+                        "email":
+                            authenticatedEmail,
+                        "nationalIdentityNumber":
+                            cleanedNIC,
+                        "createdAt":
+                            FieldValue
+                                .serverTimestamp()
+                    ]
+                )
+        }
+    }
+
+    func completeCurrentProfile(
+        displayName: String,
+        nationalIdentityNumber: String
+    ) async throws -> AccountProfile {
+
+        guard let currentUser =
+                auth.currentUser else {
+
+            throw AccountServiceError
+                .missingAuthenticatedUser
+        }
+
+        guard let email =
+                currentUser.email else {
+
+            throw AccountServiceError
+                .missingEmail
+        }
+
+        let cleanedName =
+            try validatedDisplayName(
+                displayName
+            )
+
+        let cleanedNIC =
+            try validatedNationalIdentityNumber(
+                nationalIdentityNumber
+            )
+
+        let profile =
+            AccountProfile(
+                uid: currentUser.uid,
+                displayName: cleanedName,
+                email: email,
+                nationalIdentityNumber:
+                    cleanedNIC
+            )
+
+        try await completeProfile(
+            profile
+        )
+
+        return profile
+    }
+
+    func sendPasswordReset(
+        email: String
+    ) async throws {
+
+        let cleanedEmail =
+            email
+                .trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                )
+                .lowercased()
+
+        guard !cleanedEmail.isEmpty else {
+            throw AccountServiceError
+                .invalidEmail
+        }
+
+        try await auth.sendPasswordReset(
+            withEmail: cleanedEmail
+        )
+    }
+
+    func signOut() throws {
+        try auth.signOut()
+    }
+
+    func startObservingAuthentication(
+        _ handler:
+            @escaping @MainActor (String?) -> Void
+    ) {
+
+        stopObservingAuthentication()
+
+        authStateHandle =
+            auth.addStateDidChangeListener {
+                _,
+                user in
+
+                let userID =
+                    user?.uid
+
+                Task { @MainActor in
+                    handler(
+                        userID
+                    )
+                }
+            }
+    }
+
+    func stopObservingAuthentication() {
+
+        guard let authStateHandle else {
+            return
+        }
+
+        auth.removeStateDidChangeListener(
+            authStateHandle
+        )
+
+        self.authStateHandle = nil
+    }
+
+    private func loadProfileDocument(
+        uid: String
+    ) async throws -> AccountProfile {
+
+        let snapshot =
+            try await firestore
+                .collection("users")
+                .document(uid)
+                .getDocument()
+
+        guard snapshot.exists else {
+
+            throw AccountServiceError
+                .profileNotFound
+        }
+
+        guard let data =
+                snapshot.data(),
+              let displayName =
+                data["displayName"]
+                    as? String,
+              let email =
+                data["email"]
+                    as? String else {
+
+            throw AccountServiceError
+                .invalidProfile
+        }
+
+        let cleanedName =
+            try validatedDisplayName(
+                displayName
+            )
+
+        guard !email.isEmpty else {
+
+            throw AccountServiceError
+                .invalidProfile
+        }
+
+        let nationalIdentityNumber:
+            String?
+
+        if let storedNIC =
+            data["nationalIdentityNumber"]
+                as? String {
+
+            nationalIdentityNumber =
+                try validatedNationalIdentityNumber(
+                    storedNIC
+                )
+
+        } else {
+            nationalIdentityNumber = nil
+        }
+
+        return AccountProfile(
+            uid: uid,
+            displayName: cleanedName,
+            email: email,
+            nationalIdentityNumber:
+                nationalIdentityNumber
+        )
+    }
+
+    private func validatedDisplayName(
+        _ displayName: String
+    ) throws -> String {
+
+        let cleanedName =
+            displayName
+                .trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                )
+
+        guard !cleanedName.isEmpty,
+              cleanedName.count <= 80 else {
+
+            throw AccountServiceError
+                .invalidDisplayName
+        }
+
+        return cleanedName
+    }
+
+    private func validatedDisplayNameOrNil(
+        _ displayName: String?
+    ) -> String? {
+
+        guard let displayName else {
+            return nil
+        }
+
+        return try? validatedDisplayName(
+            displayName
+        )
+    }
+
+    private func validatedNationalIdentityNumber(
+        _ value: String
+    ) throws -> String {
+
+        guard let normalizedValue =
+                NationalIdentityNumberValidator
+                    .validated(value) else {
+
+            throw AccountServiceError
+                .invalidNationalIdentityNumber
+        }
+
+        return normalizedValue
+    }
+}
