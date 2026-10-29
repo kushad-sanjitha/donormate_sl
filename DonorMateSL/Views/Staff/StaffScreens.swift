@@ -9,7 +9,9 @@ import SwiftUI
 
 struct StaffDashboardView: View {
     let staff: StaffIdentity
+    let recentChecks: [String]
     let onStartVerification: () -> Void
+    let onManualLookup: () -> Void
 
     var body: some View {
         StaffPageHeading(
@@ -26,20 +28,30 @@ struct StaffDashboardView: View {
                     .font(.subheadline)
                     .foregroundStyle(Color("TextSecondary"))
                 StaffActionButton(title: "Start NIC Scan", action: onStartVerification)
+                StaffActionButton(title: "Manual NIC Lookup", primary: false, action: onManualLookup)
             }
         }
 
         StaffPanel {
             VStack(alignment: .leading, spacing: 10) {
-                Text("Recent verifications").font(.headline)
-                Text("No verification events recorded for this session yet.")
-                    .font(.subheadline)
-                    .foregroundStyle(Color("TextSecondary"))
+                Text("Recent record checks").font(.headline)
+                if recentChecks.isEmpty {
+                    Text("No record checks completed in this session yet.")
+                        .font(.subheadline)
+                        .foregroundStyle(Color("TextSecondary"))
+                } else {
+                    ForEach(Array(recentChecks.enumerated()), id: \.offset) { entry in
+                        if entry.offset != 0 { Divider() }
+                        Label(entry.element, systemImage: "doc.text.magnifyingglass")
+                            .font(.subheadline)
+                            .foregroundStyle(Color("TextPrimary"))
+                    }
+                }
             }
         }
 
         StaffNotice(
-            message: "Staff identity verification does not determine medical donation eligibility."
+            message: "Review captured identity details carefully. A record comparison does not confirm medical donation eligibility."
         )
     }
 }

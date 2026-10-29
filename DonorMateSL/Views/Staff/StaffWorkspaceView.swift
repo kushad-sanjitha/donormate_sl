@@ -7,6 +7,16 @@
 
 import SwiftUI
 
+private enum StaffRecordPhase {
+    case scanning
+    case comparing
+    case comparison
+    case manualLookup
+    case recordDetail
+    case recordNotFound
+    case serviceError
+}
+
 struct StaffWorkspaceView: View {
     let staff: StaffIdentity
     let onExit: () -> Void
@@ -17,6 +27,15 @@ struct StaffWorkspaceView: View {
     @State private var scanErrorMessage: String?
     @State private var scanGeneration = UUID()
     @State private var recognitionTask: Task<Void, Never>?
+    @State private var recordPhase: StaffRecordPhase = .scanning
+    @State private var comparison: StaffIdentityComparison?
+    @State private var selectedRecord: StaffDonorIdentityRecord?
+    @State private var manualNIC = ""
+    @State private var manualError: String?
+    @State private var openedFromManualLookup = false
+    @State private var recentChecks: [String] = []
+    @State private var lookupGeneration = UUID()
+    @State private var lookupTask: Task<Void, Never>?
 
     var body: some View {
         GeometryReader { geometry in
@@ -26,7 +45,7 @@ struct StaffWorkspaceView: View {
                         staff: staff,
                         active: navigation.section,
                         onDashboard: showDashboard,
-                        onVerify: { navigation.showVerificationInstructions() },
+                        onVerify: startVerification,
                         onExit: signOut
                     )
                     .frame(width: 250)
@@ -58,7 +77,10 @@ struct StaffWorkspaceView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .background {
                 invalidatePendingScan()
+                invalidatePendingLookup()
                 scan.reset()
+                clearRecordReview()
+                navigation.showDashboard()
             }
         }
     }
@@ -68,7 +90,7 @@ struct StaffWorkspaceView: View {
             get: { navigation.section.rawValue },
             set: { newValue in
                 if newValue == StaffSection.verifyDonor.rawValue {
-                    navigation.showVerificationInstructions()
+                    startVerification()
                 } else {
                     showDashboard()
                 }
@@ -107,49 +129,117 @@ struct StaffWorkspaceView: View {
     private func staffContent(for section: StaffSection, compact: Bool) -> some View {
         ScreenScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                switch section {
-                case .dashboard:
+                if section == .dashboard {
                     StaffDashboardView(
                         staff: staff,
-                        onStartVerification: { navigation.showVerificationInstructions() }
+                        recentChecks: recentChecks,
+                        onStartVerification: startVerification,
+                        onManualLookup: openManualLookup
                     )
-
-                case .verifyDonor:
-                    switch scan.stage {
-                    case .instructions:
-                        StaffScanInstructionsView(
-                            onOpenScanner: { scan.showCapture() },
-                            onBack: showDashboard
-                        )
-
-                    case .capture:
-                        StaffScanCaptureView(
-                            onCaptured: processImages,
-                            onBack: { scan.reset() },
-                            onError: { scanErrorMessage = $0 }
-                        )
-
-                    case .processing:
-                        StaffScanProcessingView()
-
-                    case .review:
-                        if let result = scan.result {
-                            StaffScanReviewView(
-                                result: result,
-                                onScanAgain: resetForAnotherScan,
-                                onFinish: showDashboard
-                            )
-                        }
-                    }
+                } else {
+                    verificationContent
                 }
             }
             .padding(.horizontal, compact ? 18 : 28)
             .padding(.top, compact ? 18 : 28)
-            .padding(.bottom, compact ? 110 : 28)
+            .padding(.bottom, compact ? 170 : 28)
             .frame(maxWidth: 1020, alignment: .leading)
             .frame(maxWidth: .infinity, alignment: .top)
         }
         .background(Color("BackgroundPrimary"))
+    }
+
+    @ViewBuilder
+    private var verificationContent: some View {
+        switch recordPhase {
+        case .scanning:
+            scanContent
+
+        case .comparing:
+            VStack(alignment: .leading, spacing: 20) {
+                StaffPageHeading(
+                    eyebrow: "Record comparison",
+                    title: "Checking donor record",
+                    subtitle: "Comparing captured details with the available donor record."
+                )
+                StaffPanel {
+                    ProgressView("Checking record…")
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 28)
+                }
+            }
+
+        case .comparison:
+            if let comparison {
+                StaffIdentityComparisonView(
+                    comparison: comparison,
+                    onContinue: openComparedRecord,
+                    onScanAgain: resetForAnotherScan,
+                    onManualLookup: openManualLookup
+                )
+            }
+
+        case .manualLookup:
+            StaffManualLookupView(
+                nicNumber: $manualNIC,
+                error: manualError,
+                onSearch: lookupManualNIC,
+                onBack: showDashboard
+            )
+
+        case .recordDetail:
+            if let selectedRecord {
+                StaffDonorRecordDetailView(
+                    record: selectedRecord,
+                    reachedByManualLookup: openedFromManualLookup,
+                    onFinish: showDashboard,
+                    onScanAnother: resetForAnotherScan
+                )
+            }
+
+        case .recordNotFound:
+            StaffRecordNotFoundView(
+                onScanAgain: resetForAnotherScan,
+                onManualLookup: openManualLookup
+            )
+
+        case .serviceError:
+            StaffRecordServiceErrorView(
+                onRetry: { if openedFromManualLookup { lookupManualNIC() } else { compareWithRecord() } },
+                onBack: showDashboard
+            )
+        }
+    }
+
+    @ViewBuilder
+    private var scanContent: some View {
+        switch scan.stage {
+        case .instructions:
+            StaffScanInstructionsView(
+                onOpenScanner: { scan.showCapture() },
+                onBack: showDashboard
+            )
+
+        case .capture:
+            StaffScanCaptureView(
+                onCaptured: processImages,
+                onBack: { scan.reset() },
+                onError: { scanErrorMessage = $0 }
+            )
+
+        case .processing:
+            StaffScanProcessingView()
+
+        case .review:
+            if let result = scan.result {
+                StaffScanReviewView(
+                    result: result,
+                    onCompareRecord: compareWithRecord,
+                    onScanAgain: resetForAnotherScan,
+                    onFinish: showDashboard
+                )
+            }
+        }
     }
 
     private func processImages(_ images: [Data], source: StaffScanSource) {
@@ -187,22 +277,175 @@ struct StaffWorkspaceView: View {
 
     private func resetForAnotherScan() {
         invalidatePendingScan()
+        invalidatePendingLookup()
+        clearRecordReview()
         scan.showCapture()
+        navigation.showVerificationInstructions()
+    }
+
+    private func startVerification() {
+        invalidatePendingScan()
+        invalidatePendingLookup()
+        clearRecordReview()
+        scan.reset()
+        navigation.showVerificationInstructions()
+    }
+
+    private func compareWithRecord() {
+        guard let result = scan.result else { return }
+        let fields = StaffIdentityFields(result: result)
+
+        guard let nic = fields.nicNumber,
+              NationalIdentityNumberValidator.validated(nic) != nil else {
+            comparison = StaffIdentityComparison.evaluate(scanned: fields, record: nil)
+            recordPhase = .comparison
+            rememberCheck("Scan requires manual review")
+            return
+        }
+
+        invalidatePendingLookup()
+        let generation = UUID()
+        lookupGeneration = generation
+        openedFromManualLookup = false
+        recordPhase = .comparing
+
+        lookupTask = Task {
+            defer { if lookupGeneration == generation { lookupTask = nil } }
+            do {
+                let record = try await DemoStaffDonorIdentityLookup().findRecord(nicNumber: nic)
+                guard !Task.isCancelled, lookupGeneration == generation else { return }
+                comparison = StaffIdentityComparison.evaluate(scanned: fields, record: record)
+                recordPhase = .comparison
+                if let outcome = comparison?.outcome {
+                    rememberCheck(label(for: outcome))
+                }
+            } catch {
+                guard !Task.isCancelled, lookupGeneration == generation else { return }
+                recordPhase = .serviceError
+            }
+        }
+    }
+
+    private func openComparedRecord() {
+        guard let comparison,
+              comparison.canOpenSampleRecord,
+              let record = comparison.record else { return }
+        selectedRecord = record
+        openedFromManualLookup = false
+        recordPhase = .recordDetail
+    }
+
+    private func openManualLookup() {
+        invalidatePendingScan()
+        invalidatePendingLookup()
+        scan.reset()
+        clearRecordReview()
+        recordPhase = .manualLookup
+        navigation.showVerificationInstructions()
+    }
+
+    private func lookupManualNIC() {
+        guard let validated = NationalIdentityNumberValidator.validated(manualNIC) else {
+            manualError = "Enter a valid 12-digit or legacy NIC number."
+            return
+        }
+
+        manualError = nil
+        invalidatePendingLookup()
+        let generation = UUID()
+        lookupGeneration = generation
+        openedFromManualLookup = true
+        recordPhase = .comparing
+
+        lookupTask = Task {
+            defer { if lookupGeneration == generation { lookupTask = nil } }
+            do {
+                let record = try await DemoStaffDonorIdentityLookup().findRecord(nicNumber: validated)
+                guard !Task.isCancelled, lookupGeneration == generation else { return }
+                if let record {
+                    selectedRecord = record
+                    recordPhase = .recordDetail
+                    rememberCheck("Manual record lookup")
+                } else {
+                    recordPhase = .recordNotFound
+                    rememberCheck("Donor record not found")
+                }
+            } catch {
+                guard !Task.isCancelled, lookupGeneration == generation else { return }
+                recordPhase = .serviceError
+            }
+        }
+    }
+
+    private func label(for outcome: StaffComparisonOutcome) -> String {
+        switch outcome {
+        case .allFieldsAgree: return "Record details agree"
+        case .addressNeedsReview: return "Address review needed"
+        case .nameMismatch: return "Name mismatch — manual review"
+        case .recordNotFound: return "Donor record not found"
+        case .insufficientDetails: return "Scan requires manual review"
+        }
+    }
+
+    private func rememberCheck(_ label: String) {
+        recentChecks.insert(label, at: 0)
+        if recentChecks.count > 5 { recentChecks.removeLast() }
+    }
+
+    private func clearRecordReview() {
+        recordPhase = .scanning
+        comparison = nil
+        selectedRecord = nil
+        manualNIC = ""
+        manualError = nil
+        openedFromManualLookup = false
+    }
+
+    private func invalidatePendingLookup() {
+        lookupGeneration = UUID()
+        lookupTask?.cancel()
+        lookupTask = nil
     }
 
     private func showDashboard() {
         invalidatePendingScan()
+        invalidatePendingLookup()
         scan.reset()
+        clearRecordReview()
         navigation.showDashboard()
     }
 
     private func signOut() {
         invalidatePendingScan()
+        invalidatePendingLookup()
         scan.reset()
+        clearRecordReview()
+        recentChecks.removeAll()
         onExit()
     }
 
     private func handleBack() {
+        switch recordPhase {
+        case .comparing:
+            invalidatePendingLookup()
+            recordPhase = openedFromManualLookup ? .manualLookup : .scanning
+            return
+        case .comparison:
+            recordPhase = .scanning
+            return
+        case .recordDetail:
+            if openedFromManualLookup { openManualLookup() }
+            else { recordPhase = .comparison }
+            return
+        case .recordNotFound:
+            openManualLookup()
+            return
+        case .manualLookup, .serviceError:
+            showDashboard()
+            return
+        case .scanning:
+            break
+        }
         switch scan.stage {
         case .instructions:
             showDashboard()
