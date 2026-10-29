@@ -244,7 +244,7 @@ struct StaffDonorRecordDetailView: View {
             }
         }
 
-        StaffNotice(message: "This build uses a locally stored test record, not the official donor register. Confirm identity through an authorized source. Donation dates do not establish medical eligibility.")
+        StaffNotice(message: "The displayed information comes from the connected donor-records. Staff must confirm identity against the original card. Donation dates do not establish medical eligibility.")
         StaffActionButton(title: "Finish Review", action: onFinish)
         StaffActionButton(title: "Scan Another Donor", primary: false, action: onScanAnother)
     }

@@ -291,7 +291,7 @@ struct DonorRecordsStoreTests {
                 bloodGroup: "A+",
                 reportedDonationCount: 6
             ),
-            records: DonorDemoData.records
+            records: DonorTestFixtures.records
         )
 
         #expect(
@@ -315,7 +315,7 @@ struct DonorRecordsStoreTests {
                 bloodGroup: "A+",
                 reportedDonationCount: nil
             ),
-            records: DonorDemoData.records
+            records: DonorTestFixtures.records
         )
 
         #expect(
@@ -772,7 +772,7 @@ struct DonorRecordsStoreTests {
 
         store.replaceLinkedData(
             profile: makeProfile(),
-            records: DonorDemoData.records
+            records: DonorTestFixtures.records
         )
 
         store.unlink()
@@ -805,7 +805,7 @@ struct DonorRecordsStoreTests {
             DonorRecordsStore()
 
         store.replaceRecords(
-            with: DonorDemoData.records
+            with: DonorTestFixtures.records
         )
 
         #expect(

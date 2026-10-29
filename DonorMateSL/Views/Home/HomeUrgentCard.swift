@@ -24,7 +24,7 @@ struct HomeUrgentCard: View {
 
             HStack(alignment: .center) {
 
-                Text(isDemonstration ? "DEMO REQUEST" : "Urgent")
+                Text("ALERT")
                     .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(Color("DonorRed"))
                     .padding(.horizontal, 10)
@@ -60,7 +60,7 @@ struct HomeUrgentCard: View {
             Spacer()
                 .frame(height: 6)
 
-            Text(detail)
+            Text(isDemonstration ? "\(detail) · Not a live request" : detail)
                 .font(.system(size: 13))
                 .foregroundStyle(Color("TextSecondary"))
                 .fixedSize(

@@ -15,8 +15,8 @@ struct DonorDataSourceProvenanceTests {
     @Test
     func demonstrationRecordsAreNotAutomaticallyVerified() {
         let store = DonorRecordsStore(
-            linkState: .linked(profile: DonorDemoData.profile),
-            records: DonorDemoData.records
+            linkState: .linked(profile: DonorTestFixtures.profile),
+            records: DonorTestFixtures.records
         )
         #expect(store.isVerified == false)
     }
@@ -25,8 +25,8 @@ struct DonorDataSourceProvenanceTests {
     func authorisedReplacementRetainsVerificationWhenRecordsRefresh() {
         let store = DonorRecordsStore()
         store.replaceLinkedData(
-            profile: DonorDemoData.profile,
-            records: DonorDemoData.records,
+            profile: DonorTestFixtures.profile,
+            records: DonorTestFixtures.records,
             isVerified: true
         )
         store.replaceRecords(with: [])
@@ -39,8 +39,8 @@ struct DonorDataSourceProvenanceTests {
     func unlinkClearsVerificationAndDonorData() {
         let store = DonorRecordsStore()
         store.replaceLinkedData(
-            profile: DonorDemoData.profile,
-            records: DonorDemoData.records,
+            profile: DonorTestFixtures.profile,
+            records: DonorTestFixtures.records,
             isVerified: true
         )
         store.unlink()

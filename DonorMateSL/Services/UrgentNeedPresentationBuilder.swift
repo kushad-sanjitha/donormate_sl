@@ -17,7 +17,7 @@ nonisolated enum UrgentNeedPresentationBuilder {
     ) -> UrgentNeedPresentation {
         let requestedGroup = need.bloodGroup.trimmingCharacters(in: .whitespacesAndNewlines)
         let requestTitle = need.isDemonstration
-            ? "\(requestedGroup) demonstration blood request"
+            ? "\(requestedGroup) blood request"
             : "\(requestedGroup) blood needed nearby"
 
         guard need.isActive(at: currentDate) else {

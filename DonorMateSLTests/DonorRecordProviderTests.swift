@@ -11,38 +11,110 @@ import Testing
 
 @MainActor
 struct DonorRecordProviderTests {
+    private let uid = "owner-uid"
+    private let nic = "200012345678"
 
     @Test
-    func knownDemoReferenceLoadsSharedRecordsWithoutClaimingVerification() async throws {
-        let provider = DemoDonorRecordProvider()
-        let result = try #require(
-            try await provider.findRecord(
-                account: sampleAccount,
-                donorRecordID: " dm-248013 "
-            )
-        )
-
-        #expect(result.profile.donorRecordID == DonorDemoData.profile.donorRecordID)
-        #expect(result.records.count == DonorDemoData.records.count)
-        #expect(result.isVerified == false)
+    func matchingOwnerAndNICCanLink() {
+        #expect(DonorRecordAccessPolicy.canLink(
+            accountUID: uid, accountNIC: nic, ownerUID: uid, recordNIC: nic
+        ))
     }
 
     @Test
-    func unknownReferenceDoesNotLinkUnrelatedRecord() async throws {
-        let provider = DemoDonorRecordProvider()
-        let result = try await provider.findRecord(
-            account: sampleAccount,
-            donorRecordID: "DM-000000"
-        )
-
-        #expect(result?.profile == nil)
+    func knowledgeOfRecordIDAndNICIsNotEnoughForAnotherAccount() {
+        #expect(!DonorRecordAccessPolicy.canLink(
+            accountUID: "other-uid", accountNIC: nic, ownerUID: uid, recordNIC: nic
+        ))
     }
 
-    private var sampleAccount: AccountProfile {
-        AccountProfile(
-            uid: "test-user", displayName: "Test Donor",
-            email: "test@example.com", nationalIdentityNumber: "970941372V"
-        )
+    @Test
+    func invalidOrDifferentNICCannotLinkEvenWhenUIDMatches() {
+        #expect(!DonorRecordAccessPolicy.canLink(
+            accountUID: uid, accountNIC: "000000000000", ownerUID: uid, recordNIC: nic
+        ))
+        #expect(!DonorRecordAccessPolicy.canLink(
+            accountUID: uid, accountNIC: "200112345678", ownerUID: uid, recordNIC: nic
+        ))
+        #expect(!DonorRecordAccessPolicy.canLink(
+            accountUID: uid, accountNIC: nil, ownerUID: uid, recordNIC: nic
+        ))
+    }
+
+    @Test
+    func unassignedOwnerCannotLink() {
+        #expect(!DonorRecordAccessPolicy.canLink(
+            accountUID: uid, accountNIC: nic, ownerUID: nil, recordNIC: nic
+        ))
+    }
+
+    @Test
+    func serverFieldsDecodeOwnerAndVerificationWithoutDonationHistory() throws {
+        let payload = try FirestoreDonorRecordDecoder.decode(fields: [
+            "nationalIdentityNumber": nic,
+            "displayName": "Example Donor",
+            "address": "24 LAKE ROAD, MATARA",
+            "bloodGroup": "A+",
+            "ownerUID": uid,
+            "recordVerified": false,
+            "reportedDonationCount": 0,
+            "donations": [] as [[String: Any]]
+        ], recordID: "DM-248013")
+
+        #expect(payload.ownerUID == uid)
+        #expect(payload.record.profile.donorRecordID == "DM-248013")
+        #expect(payload.record.nicNumber == nic)
+        #expect(payload.record.donationRecords.isEmpty)
+        #expect(!payload.recordVerified)
+    }
+
+    @Test
+    func donationEntriesDecodeFromFirestoreFields() throws {
+        let donationDate = Date(timeIntervalSince1970: 1_800_000_000)
+        let nextDate = Date(timeIntervalSince1970: 1_810_000_000)
+        let payload = try FirestoreDonorRecordDecoder.decode(fields: [
+            "nationalIdentityNumber": nic,
+            "displayName": "Example Donor",
+            "address": "24 LAKE ROAD, MATARA",
+            "bloodGroup": "A+",
+            "ownerUID": uid,
+            "reportedDonationCount": 1,
+            "donations": [[
+                "date": donationDate,
+                "location": "Matara Blood Bank",
+                "donationType": "Whole blood",
+                "recordLabel": "Blood-bank record",
+                "recordReference": "R-001",
+                "nextPossibleDonationDate": nextDate
+            ]]
+        ], recordID: "DM-248013")
+
+        let record = try #require(payload.record.donationRecords.first)
+        #expect(record.date == donationDate)
+        #expect(record.recordReference == "R-001")
+        #expect(record.nextPossibleDonationDate == nextDate)
+    }
+
+    @Test
+    func malformedDonationArrayDoesNotSilentlyBecomeEmptyHistory() {
+        #expect(throws: FirestoreDonorDataError.self) {
+            try FirestoreDonorRecordDecoder.decode(fields: [
+                "nationalIdentityNumber": nic,
+                "displayName": "Example Donor",
+                "address": "24 LAKE ROAD, MATARA",
+                "bloodGroup": "A+",
+                "donations": "wrong-type"
+            ], recordID: "DM-248013")
+        }
+    }
+
+    @Test
+    func malformedFieldsAreRejected() {
+        #expect(throws: FirestoreDonorDataError.self) {
+            try FirestoreDonorRecordDecoder.decode(fields: [
+                "nationalIdentityNumber": nic,
+                "displayName": "Example Donor"
+            ], recordID: "DM-248013")
+        }
     }
 }
-

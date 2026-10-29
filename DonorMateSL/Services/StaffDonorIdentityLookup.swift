@@ -12,6 +12,9 @@
 //  Created by user300742 on 10/29/26.
 //
 
+import FirebaseAuth
+import FirebaseCore
+import FirebaseFirestore
 import Foundation
 
 @MainActor
@@ -19,20 +22,27 @@ protocol StaffDonorIdentityLookup {
     func findRecord(nicNumber: String) async throws -> StaffDonorIdentityRecord?
 }
 
-struct DemoStaffDonorIdentityLookup: StaffDonorIdentityLookup {
-    static let sampleNIC = "200012345678"
-    static let sampleAddress = "24 LAKE ROAD, MATARA"
+struct FirebaseStaffDonorIdentityLookup: StaffDonorIdentityLookup {
 
     func findRecord(nicNumber: String) async throws -> StaffDonorIdentityRecord? {
-        guard let nic = NationalIdentityNumberValidator.validated(nicNumber),
-              nic == Self.sampleNIC else { return nil }
+        guard let nic = NationalIdentityNumberValidator.validated(nicNumber) else { return nil }
+        guard let app = FirebaseApp.app(name: "DonorMateStaff"),
+              Auth.auth(app: app).currentUser != nil else {
+            throw StaffSignInError.notAuthorized
+        }
 
-        return StaffDonorIdentityRecord(
-            nicNumber: Self.sampleNIC,
-            name: DonorDemoData.profile.displayName,
-            address: Self.sampleAddress,
-            profile: DonorDemoData.profile,
-            donationRecords: DonorDemoData.records
-        )
+        let snapshot = try await Firestore.firestore(app: app)
+            .collection("donorRecords")
+            .whereField("nationalIdentityNumber", isEqualTo: nic)
+            .limit(to: 2)
+            .getDocuments(source: .server)
+
+        guard snapshot.documents.count <= 1 else {
+            throw FirestoreDonorDataError.duplicateNIC
+        }
+        guard let document = snapshot.documents.first else { return nil }
+
+        let payload = try FirestoreDonorRecordDecoder.decode(document)
+        return payload.record.nicNumber == nic ? payload.record : nil
     }
 }

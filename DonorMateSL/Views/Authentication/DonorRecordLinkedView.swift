@@ -12,7 +12,6 @@ struct DonorRecordLinkedView: View {
     let name: String
     let bloodGroup: String
     let donationCount: Int?
-    let isDemoData: Bool
 
     var onContinue: () -> Void = {}
 
@@ -33,12 +32,7 @@ struct DonorRecordLinkedView: View {
     }
 
     private var supportingText: String {
-
-        if isDemoData {
-            return "Sample donor information is being used. No authorised donor-record lookup has been completed."
-        }
-
-        return "We found the donor-linked information associated with the details you provided."
+        "We found the donor-linked information associated with the details you provided."
     }
 
     var body: some View {
@@ -77,11 +71,7 @@ struct DonorRecordLinkedView: View {
 
             VStack(spacing: 10) {
 
-                Text(
-                    isDemoData
-                        ? "Sample donor record connected"
-                        : "Donor record connected"
-                )
+                Text("Donor record connected")
                 .font(
                     .system(
                         size: 28,
@@ -268,11 +258,7 @@ struct DonorRecordLinkedView: View {
                 }
                 .accessibilityHidden(true)
 
-                Text(
-                    isDemoData
-                        ? "Sample donor information is read-only and provided for demonstration. Verified records must come from an authorised donor-record service."
-                        : "Donation records are supplied by the linked service and cannot be changed by you in DonorMate."
-                )
+                Text("Donation records are supplied by the linked service and cannot be changed by you in DonorMate.")
                 .font(
                     .system(size: 12)
                 )
@@ -342,19 +328,4 @@ struct DonorRecordLinkedView: View {
             Color("BackgroundPrimary")
         )
     }
-}
-
-#Preview {
-    DonorRecordLinkedView(
-        name:
-            "Sample Donor With A Longer Name",
-        bloodGroup: "A+",
-        donationCount: 6,
-        isDemoData: true,
-        onContinue: {
-            print(
-                "Continue tapped"
-            )
-        }
-    )
 }

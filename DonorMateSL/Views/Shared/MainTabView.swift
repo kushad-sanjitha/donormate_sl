@@ -156,33 +156,3 @@ struct MainTabView: View {
         }
     }
 }
-
-#Preview {
-    MainTabView(
-        selectedTab:
-            .constant(.home),
-        donorRecordsStore:
-            DonorRecordsStore(
-                linkState:
-                    .linked(
-                        profile:
-                            DonorDemoData.profile
-                    ),
-                records:
-                    DonorDemoData.records
-            ),
-        accountProfile:
-            AccountProfile(
-                uid: "preview-user",
-                displayName: "Kushad Dissanayake",
-                email: "kushad@example.com"
-            ),
-        donationLocationStore: DonationLocationStore(),
-        urgentBloodNeedStore: UrgentBloodNeedStore(),
-        savedItemsStore: SavedItemsStore(),
-        notificationInboxStore: NotificationInboxStore(),
-        locationPermissionService: LocationPermissionService(),
-        isAccountLoading: false,
-        accountErrorMessage: nil
-    )
-}

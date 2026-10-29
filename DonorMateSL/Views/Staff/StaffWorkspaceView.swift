@@ -312,7 +312,7 @@ struct StaffWorkspaceView: View {
         lookupTask = Task {
             defer { if lookupGeneration == generation { lookupTask = nil } }
             do {
-                let record = try await DemoStaffDonorIdentityLookup().findRecord(nicNumber: nic)
+                let record = try await FirebaseStaffDonorIdentityLookup().findRecord(nicNumber: nic)
                 guard !Task.isCancelled, lookupGeneration == generation else { return }
                 comparison = StaffIdentityComparison.evaluate(scanned: fields, record: record)
                 recordPhase = .comparison
@@ -328,7 +328,7 @@ struct StaffWorkspaceView: View {
 
     private func openComparedRecord() {
         guard let comparison,
-              comparison.canOpenSampleRecord,
+              comparison.canOpenRecord,
               let record = comparison.record else { return }
         selectedRecord = record
         openedFromManualLookup = false
@@ -360,7 +360,7 @@ struct StaffWorkspaceView: View {
         lookupTask = Task {
             defer { if lookupGeneration == generation { lookupTask = nil } }
             do {
-                let record = try await DemoStaffDonorIdentityLookup().findRecord(nicNumber: validated)
+                let record = try await FirebaseStaffDonorIdentityLookup().findRecord(nicNumber: validated)
                 guard !Task.isCancelled, lookupGeneration == generation else { return }
                 if let record {
                     selectedRecord = record

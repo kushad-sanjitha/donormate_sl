@@ -471,21 +471,3 @@ struct NearbyView: View {
         }
     }
 }
-
-#Preview {
-    NearbyView(
-        donorRecordsStore:
-            DonorRecordsStore(
-                linkState:
-                    .linked(
-                        profile:
-                            DonorDemoData.profile
-                    ),
-                records:
-                    DonorDemoData.records
-            ),
-        donationLocationStore: DonationLocationStore(),
-        savedItemsStore: SavedItemsStore(),
-        currentLocationService: CurrentLocationService()
-    )
-}

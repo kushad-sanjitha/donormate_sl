@@ -292,29 +292,3 @@ struct DonationReadinessView: View {
         }
     }
 }
-
-#Preview("Linked Demo Donor") {
-    NavigationStack {
-        DonationReadinessView(
-            donorRecordsStore:
-                DonorRecordsStore(
-                    linkState:
-                        .linked(
-                            profile:
-                                DonorDemoData.profile
-                        ),
-                    records:
-                        DonorDemoData.records
-                )
-        )
-    }
-}
-
-#Preview("Unlinked") {
-    NavigationStack {
-        DonationReadinessView(
-            donorRecordsStore:
-                DonorRecordsStore()
-        )
-    }
-}

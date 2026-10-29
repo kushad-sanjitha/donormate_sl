@@ -49,16 +49,16 @@ struct DonationDetailView: View {
 
                 Spacer()
 
-                Text(isVerified ? record.recordLabel : "Sample record")
+                Text(isVerified ? record.recordLabel : "Unverified record")
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(Color("SuccessGreen"))
+                    .foregroundStyle(Color(isVerified ? "SuccessGreen" : "DonorRed"))
                     .padding(.horizontal, 10)
                     .frame(height: 28)
-                    .background(Color("SuccessGreenSoft"))
+                    .background(Color(isVerified ? "SuccessGreenSoft" : "DonorRedSoft"))
                     .overlay {
                         Capsule()
                             .stroke(
-                                Color("SuccessGreenBorder"),
+                                Color(isVerified ? "SuccessGreenBorder" : "DonorRedBorder"),
                                 lineWidth: 1
                             )
                     }
@@ -158,7 +158,7 @@ struct DonationDetailView: View {
                     label: "Record source",
                     value: isVerified
                         ? "Authorised donor service"
-                        : "Demonstration data",
+                        : "Connected database · not officially verified",
                     iconForeground: Color("DonorPurple")
                 )
 
