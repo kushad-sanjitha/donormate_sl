@@ -164,6 +164,7 @@ struct StaffScanProcessingView: View {
 
 struct StaffScanReviewView: View {
     let result: StaffScanResult
+    let onCompareRecord: () -> Void
     let onScanAgain: () -> Void
     let onFinish: () -> Void
 
@@ -200,7 +201,8 @@ struct StaffScanReviewView: View {
             message: "Text recognition may contain errors and does not verify identity. Compare these details with the original card and official donor record."
         )
 
-        StaffActionButton(title: "Scan Again", action: onScanAgain)
+        StaffActionButton(title: "Compare with Donor Record", action: onCompareRecord)
+        StaffActionButton(title: "Scan Again", primary: false, action: onScanAgain)
         StaffActionButton(title: "Finish", primary: false, action: onFinish)
     }
 }
