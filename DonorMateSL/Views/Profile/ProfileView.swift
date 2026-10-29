@@ -38,7 +38,7 @@ struct ProfileView: View {
                         Spacer()
 
                         if donorRecordsStore.profile != nil {
-                            Text(donorRecordsStore.isVerified ? "✓ Donor linked" : "Demo record")
+                            Text(donorRecordsStore.isVerified ? "✓ Donor linked" : "Needs verification")
                                 .font(.system(size: 12, weight: .bold))
                                 .foregroundStyle(
                                     donorRecordsStore.isVerified
@@ -137,7 +137,7 @@ struct ProfileView: View {
                                 ? "Connect your donor record to see this information."
                                 : donorRecordsStore.isVerified
                                     ? "From your linked donor record · view only"
-                                    : "Demonstration data · not verified",
+                                    : "Linked record · not officially verified",
                             iconForeground: Color("DonorRed")
                         )
 
@@ -354,32 +354,4 @@ struct ProfileView: View {
             ? "DM"
             : value
     }
-}
-
-#Preview {
-    ProfileView(
-        accountProfile:
-            AccountProfile(
-                uid: "preview-user",
-                displayName: "Kushad Dissanayake",
-                email: "kushad@example.com",
-                nationalIdentityNumber:
-                    "198554200159"
-            ),
-        donorRecordsStore: DonorRecordsStore(
-            linkState: .linked(profile: DonorDemoData.profile),
-            records: DonorDemoData.records
-        ),
-        donationLocationStore: DonationLocationStore(),
-        savedItemsStore: SavedItemsStore(),
-        notificationInboxStore: NotificationInboxStore(),
-        currentLocationService: CurrentLocationService(),
-        isLoading: false,
-        errorMessage: nil,
-        onSignOut: {
-            print("Sign out tapped")
-        }
-    )
-    .environmentObject(NotificationPreferencesStore())
-    .environmentObject(AccountSetupStore())
 }

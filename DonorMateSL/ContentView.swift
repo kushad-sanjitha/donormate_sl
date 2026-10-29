@@ -66,6 +66,7 @@ struct ContentView: View {
     @State private var restorationToken: UUID?
     @State private var restorationUserID: String?
     @State private var loadedDonorUserID: String?
+    @State private var catalogRefreshToken = UUID()
 
     @StateObject private var donorRecordsStore = DonorRecordsStore()
     @StateObject private var donationLocationStore = DonationLocationStore()
@@ -76,7 +77,7 @@ struct ContentView: View {
     @StateObject private var accountSetupStore = AccountSetupStore()
     @StateObject private var staffSessionStore = StaffSessionStore()
 
-    private let donorRecordProvider = DemoDonorRecordProvider()
+    private let donorRecordProvider = FirebaseDonorRecordProvider()
 
     @StateObject private var accountSessionStore =
         AccountSessionStore()
@@ -494,6 +495,7 @@ struct ContentView: View {
         .environmentObject(accountSetupStore)
         .onAppear {
             refreshSetupStatuses()
+            refreshFirestoreCatalogs()
             accountSetupStore.activate(for: accountSessionStore.authenticatedUserID)
             notificationInboxStore.activate(for: accountSessionStore.authenticatedUserID)
             notificationPreferencesStore.activate(for: accountSessionStore.authenticatedUserID)
@@ -523,6 +525,7 @@ struct ContentView: View {
 
             if newPhase == .active {
                 refreshSetupStatuses()
+                refreshFirestoreCatalogs()
                 synchronizeWidgetSnapshot()
             }
         }
@@ -550,6 +553,7 @@ struct ContentView: View {
                 newUserID:
                     newUserID
             )
+            refreshFirestoreCatalogs()
             notificationInboxStore.activate(for: newUserID)
             notificationPreferencesStore.activate(for: newUserID)
             Task {
@@ -832,7 +836,6 @@ struct ContentView: View {
                 donationCount:
                     profile
                         .reportedDonationCount,
-                isDemoData: !donorRecordsStore.isVerified,
                 onContinue: {
                     handleDonorRecordLinkedContinue()
                 }
@@ -1243,6 +1246,30 @@ struct ContentView: View {
             .refreshStatus()
 
         refreshBiometricAvailability()
+    }
+
+    private func refreshFirestoreCatalogs() {
+        let requestToken = UUID()
+        catalogRefreshToken = requestToken
+
+        guard let userID = accountSessionStore.authenticatedUserID else {
+            donationLocationStore.replaceLocations(with: [])
+            urgentBloodNeedStore.replaceNeeds(with: [])
+            return
+        }
+
+        Task {
+            do {
+                let snapshot = try await FirestoreCatalogReader.load()
+                guard catalogRefreshToken == requestToken,
+                      accountSessionStore.authenticatedUserID == userID else { return }
+                donationLocationStore.replaceLocations(with: snapshot.locations)
+                urgentBloodNeedStore.replaceNeeds(with: snapshot.urgentNeeds)
+            } catch {
+                // Preserve the last successful data on a temporary network failure.
+                // A newly signed-in user sees empty stores until a server read succeeds.
+            }
+        }
     }
 
     private func refreshBiometricAvailability() {

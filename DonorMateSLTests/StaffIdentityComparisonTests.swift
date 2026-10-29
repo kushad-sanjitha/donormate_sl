@@ -10,8 +10,8 @@ import Testing
 
 @MainActor
 struct StaffIdentityComparisonTests {
-    private let sampleNIC = DemoStaffDonorIdentityLookup.sampleNIC
-    private let sampleAddress = DemoStaffDonorIdentityLookup.sampleAddress
+    private let sampleNIC = DonorTestFixtures.nic
+    private let sampleAddress = DonorTestFixtures.address
 
     @Test func extractsOnlyLabeledFieldsFromScanResult() {
         let scan = StaffScanResult(source: .photoLibrary, lines: [
@@ -33,7 +33,7 @@ struct StaffIdentityComparisonTests {
             record: sampleRecord()
         )
         #expect(result.outcome == .allFieldsAgree)
-        #expect(result.canOpenSampleRecord)
+        #expect(result.canOpenRecord)
     }
 
     @Test func addressDifferenceRequiresHumanAcknowledgement() {
@@ -42,7 +42,7 @@ struct StaffIdentityComparisonTests {
             record: sampleRecord()
         )
         #expect(result.outcome == .addressNeedsReview)
-        #expect(result.canOpenSampleRecord)
+        #expect(result.canOpenRecord)
     }
 
     @Test func absentBackOfNICAlsoRequiresAddressReview() {
@@ -59,7 +59,7 @@ struct StaffIdentityComparisonTests {
             record: sampleRecord()
         )
         #expect(result.outcome == .nameMismatch)
-        #expect(!result.canOpenSampleRecord)
+        #expect(!result.canOpenRecord)
     }
 
     @Test func missingNameNeverAgrees() {
@@ -68,7 +68,7 @@ struct StaffIdentityComparisonTests {
             record: sampleRecord()
         )
         #expect(result.outcome == .insufficientDetails)
-        #expect(!result.canOpenSampleRecord)
+        #expect(!result.canOpenRecord)
     }
 
     @Test func noValidNICNeverAgreesEvenWithMatchingName() {
@@ -86,7 +86,7 @@ struct StaffIdentityComparisonTests {
         )
         #expect(result.outcome == .recordNotFound)
         #expect(result.record == nil)
-        #expect(!result.canOpenSampleRecord)
+        #expect(!result.canOpenRecord)
     }
 
     @Test func ocrLetterODoesNotGetChangedIntoZero() {
@@ -105,15 +105,19 @@ struct StaffIdentityComparisonTests {
         #expect(result.outcome == .recordNotFound)
     }
 
-    @Test func demoLookupReturnsOnlyItsFixture() async throws {
-        let lookup = DemoStaffDonorIdentityLookup()
-        let found = try await lookup.findRecord(nicNumber: sampleNIC)
-        let unknown = try await lookup.findRecord(nicNumber: "200112345678")
-
-        #expect(found?.profile == DonorDemoData.profile)
-        #expect(found?.donationRecords.count == DonorDemoData.records.count)
-        #expect(found?.name == DonorDemoData.profile.displayName)
-        #expect(unknown == nil)
+    @Test func firestoreFieldsCanBeUsedForStaffComparison() throws {
+        let decoded = try FirestoreDonorRecordDecoder.decode(fields: [
+            "nationalIdentityNumber": sampleNIC,
+            "displayName": DonorTestFixtures.profile.displayName,
+            "address": sampleAddress,
+            "bloodGroup": "A+",
+            "donations": [] as [[String: Any]]
+        ], recordID: "DM-248013")
+        let result = StaffIdentityComparison.evaluate(
+            scanned: fields(), record: decoded.record
+        )
+        #expect(result.outcome == .allFieldsAgree)
+        #expect(result.record?.profile.donorRecordID == "DM-248013")
     }
 
     private func fields(
@@ -127,10 +131,10 @@ struct StaffIdentityComparisonTests {
     private func sampleRecord() -> StaffDonorIdentityRecord {
         .init(
             nicNumber: sampleNIC,
-            name: DonorDemoData.profile.displayName,
+            name: DonorTestFixtures.profile.displayName,
             address: sampleAddress,
-            profile: DonorDemoData.profile,
-            donationRecords: DonorDemoData.records
+            profile: DonorTestFixtures.profile,
+            donationRecords: DonorTestFixtures.records
         )
     }
 }

@@ -13,7 +13,7 @@ final class DonationLocationStore: ObservableObject {
 
     @Published private(set) var locations: [DonationLocation]
 
-    init(locations: [DonationLocation] = DonationLocationCatalog.locations) {
+    init(locations: [DonationLocation] = []) {
         self.locations = Self.uniqueValidLocations(locations)
     }
 

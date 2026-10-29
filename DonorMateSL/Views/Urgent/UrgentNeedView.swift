@@ -60,9 +60,7 @@ struct UrgentNeedView: View {
             ScreenScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     HStack(spacing: 8) {
-                        Text(urgentNeed.isDemonstration
-                            ? "DEMO REQUEST"
-                            : (presentation.isActive ? "URGENT" : "NOT ACTIVE"))
+                        Text(presentation.isActive ? "ALERT" : "NOT ACTIVE")
                             .font(.system(size: 12, weight: .bold))
                             .foregroundStyle(Color("DonorRed"))
                             .padding(.horizontal, 10)
@@ -133,7 +131,7 @@ struct UrgentNeedView: View {
                             title: "Request status",
                             value: presentation.isActive
                                 ? (urgentNeed.isDemonstration
-                                    ? "Demonstration only · Not a live request"
+                                    ? "Not a live donation request"
                                     : "Active · Confirm with the blood bank")
                                 : "Unavailable"
                         )
@@ -184,9 +182,7 @@ struct UrgentNeedView: View {
 
                     NeutralMessageCard(
                         systemImage: "info.circle.fill",
-                        title: urgentNeed.isDemonstration
-                            ? "Demonstration request"
-                            : "Request source",
+                        title: "Request source",
                         detail: urgentNeed.sourceText,
                         style: .compact,
                         iconForeground: Color("InfoBlue")
@@ -255,53 +251,4 @@ struct UrgentNeedView: View {
         }
         .buttonStyle(.plain)
     }
-}
-
-private struct UrgentNeedPreview: View {
-
-    let readiness: DonationReadinessState
-
-    private var urgentNeed: UrgentBloodNeed {
-        UrgentBloodNeedCatalog.urgentNeeds[0]
-    }
-
-    private var location: DonationLocation {
-        DonationLocationCatalog.location(for: urgentNeed.locationID) ??
-            DonationLocation(
-                id: urgentNeed.locationID,
-                name: "Matara Blood Bank",
-                type: .bloodBank,
-                latitude: 5.9497,
-                longitude: 80.5428,
-                detail: "Location details unavailable"
-            )
-    }
-
-    var body: some View {
-        NavigationStack {
-            UrgentNeedView(
-                urgentNeed: urgentNeed,
-                location: location,
-                presentation: UrgentNeedPresentationBuilder.presentation(
-                    for: urgentNeed,
-                    linkState: .linked(profile: DonorDemoData.profile),
-                    readiness: readiness,
-                    currentDate: urgentNeed.publishedAt.addingTimeInterval(3_600)
-                ),
-                distanceText: "2.8 km",
-                isSaved: false,
-                onDirections: {},
-                onSave: {},
-                onRemind: {}
-            )
-        }
-    }
-}
-
-#Preview("Ready - Screen 27") {
-    UrgentNeedPreview(readiness: .ready)
-}
-
-#Preview("Waiting - Screen 28") {
-    UrgentNeedPreview(readiness: .notReady(daysRemaining: 17))
 }

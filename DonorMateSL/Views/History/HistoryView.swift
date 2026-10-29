@@ -191,10 +191,10 @@ struct HistoryView: View {
             InfoMessageCard(
                 systemImage: "info.circle.fill",
                 title: donorRecordsStore.isVerified
-                    ? "Connected donor records" : "Demonstration records",
+                    ? "Connected donor records" : "Unverified donor records",
                 detail: donorRecordsStore.isVerified
                     ? "Records supplied by an authorised donor-record service."
-                    : "These records are for demonstration and are not verified blood-bank records."
+                    : "These records have not yet been officially verified. Confirm details with the blood bank."
             )
 
             Spacer()
@@ -390,48 +390,4 @@ struct HistoryView: View {
                 alignment: .leading
             )
     }
-}
-
-#Preview("Linked Demo History") {
-    HistoryView(
-        donorRecordsStore:
-            DonorRecordsStore(
-                linkState: .linked(
-                    profile:
-                        DonorDemoData.profile
-                ),
-                records:
-                    DonorDemoData.records
-            ),
-        onConnectDonorRecord: {
-            print(
-                "Connect Donor Record tapped"
-            )
-        }
-    )
-}
-
-#Preview("Unlinked History") {
-    HistoryView(
-        donorRecordsStore:
-            DonorRecordsStore(),
-        onConnectDonorRecord: {
-            print(
-                "Connect Donor Record tapped"
-            )
-        }
-    )
-}
-
-#Preview("Linked Empty History") {
-    HistoryView(
-        donorRecordsStore:
-            DonorRecordsStore(
-                linkState: .linked(
-                    profile:
-                        DonorDemoData.profile
-                ),
-                records: []
-            )
-    )
 }

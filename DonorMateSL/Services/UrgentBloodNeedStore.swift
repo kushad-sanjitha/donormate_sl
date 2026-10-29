@@ -13,7 +13,7 @@ final class UrgentBloodNeedStore: ObservableObject {
 
     @Published private(set) var needs: [UrgentBloodNeed]
 
-    init(needs: [UrgentBloodNeed] = UrgentBloodNeedCatalog.urgentNeeds) {
+    init(needs: [UrgentBloodNeed] = []) {
         self.needs = Self.validUniqueNeeds(needs)
     }
 

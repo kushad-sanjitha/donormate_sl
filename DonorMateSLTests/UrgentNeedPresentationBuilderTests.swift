@@ -12,7 +12,7 @@ import Testing
 struct UrgentNeedPresentationBuilderTests {
 
     private var need: UrgentBloodNeed {
-        UrgentBloodNeedCatalog.urgentNeeds[0]
+        DonorTestFixtures.urgentNeed
     }
 
     private var activeDate: Date {
@@ -47,6 +47,7 @@ struct UrgentNeedPresentationBuilderTests {
         #expect(result.state == .ready)
         #expect(result.canOfferDonationActions)
         #expect(result.matchText == "A+ match")
+        #expect(result.requestTitle == "A+ blood request")
         #expect(result.statusTitle.contains("waiting period"))
         #expect(result.statusDetail.contains("staff"))
     }
@@ -139,4 +140,3 @@ struct UrgentNeedPresentationBuilderTests {
         #expect(!result.canOfferDonationActions)
     }
 }
-

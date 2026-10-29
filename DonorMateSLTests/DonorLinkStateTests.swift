@@ -42,7 +42,7 @@ struct DonorLinkStateTests {
 
         store.replaceLinkedData(
             profile: profile,
-            records: DonorDemoData.records
+            records: DonorTestFixtures.records
         )
 
         let linkedProfile =
@@ -160,7 +160,7 @@ struct DonorLinkStateTests {
                 bloodGroup: "A+",
                 reportedDonationCount: 6
             ),
-            records: DonorDemoData.records
+            records: DonorTestFixtures.records
         )
 
         store.unlink()

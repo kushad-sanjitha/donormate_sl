@@ -53,7 +53,7 @@ nonisolated struct StaffIdentityComparison: Sendable {
     let record: StaffDonorIdentityRecord?
     let outcome: StaffComparisonOutcome
 
-    var canOpenSampleRecord: Bool {
+    var canOpenRecord: Bool {
         record != nil && (outcome == .allFieldsAgree || outcome == .addressNeedsReview)
     }
 
