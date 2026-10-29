@@ -143,7 +143,9 @@ struct StaffWorkspaceView: View {
                     }
                 }
             }
-            .padding(compact ? 18 : 28)
+            .padding(.horizontal, compact ? 18 : 28)
+            .padding(.top, compact ? 18 : 28)
+            .padding(.bottom, compact ? 110 : 28)
             .frame(maxWidth: 1020, alignment: .leading)
             .frame(maxWidth: .infinity, alignment: .top)
         }

@@ -24,7 +24,7 @@ nonisolated enum StaffTextRecognitionError: LocalizedError, Equatable, Sendable 
         case .imageTooLarge:
             return "This image is too large. Choose a smaller photo and try again."
         case .noReadableText:
-            return "No readable text was found. Check the lighting and try again."
+            return "No clear English identity details were found. Try a clearer image."
         case .recognitionFailed:
             return "The identity card could not be read. Please try another image."
         }
@@ -50,7 +50,6 @@ nonisolated enum StaffTextRecognitionService {
     static func recognize(images: [Data]) async throws -> [StaffRecognizedTextLine] {
         try validate(images)
 
-        
         let worker = Task.detached(priority: .userInitiated) {
             try Self.recognizeOnBackgroundThread(images: images)
         }
@@ -60,11 +59,11 @@ nonisolated enum StaffTextRecognitionService {
             worker.cancel()
         }
 
-        let readableLines = StaffScanTextPolicy.cleaned(lines)
-        guard !readableLines.isEmpty else {
+        let englishFields = StaffEnglishNICTextPolicy.extract(from: lines)
+        guard !englishFields.isEmpty else {
             throw StaffTextRecognitionError.noReadableText
         }
-        return readableLines
+        return englishFields
     }
 
     private static func recognizeOnBackgroundThread(
@@ -76,8 +75,9 @@ nonisolated enum StaffTextRecognitionService {
             try Task.checkCancellation()
             let request = VNRecognizeTextRequest()
             request.recognitionLevel = .accurate
-           
+
             request.usesLanguageCorrection = false
+            request.recognitionLanguages = ["en-US"]
 
             do {
                 try VNImageRequestHandler(data: data, options: [:]).perform([request])
@@ -87,13 +87,12 @@ nonisolated enum StaffTextRecognitionService {
 
             for observation in request.results ?? [] {
                 guard let candidate = observation.topCandidates(1).first else { continue }
-                lines.append(StaffRecognizedTextLine(
+                lines.append(.init(
                     text: candidate.string,
                     confidence: candidate.confidence
                 ))
             }
         }
-
         return lines
     }
 }

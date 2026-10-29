@@ -170,13 +170,13 @@ struct StaffScanReviewView: View {
     var body: some View {
         StaffPageHeading(
             eyebrow: "Identity verification",
-            title: "Card text ready",
-            subtitle: "Check the text below against the original identity card."
+            title: "Details captured",
+            subtitle: "Review the captured details against the original identity card."
         )
 
         StaffPanel {
             VStack(alignment: .leading, spacing: 14) {
-                Label("Text captured", systemImage: "checkmark.circle.fill")
+                Label("Identity details", systemImage: "text.viewfinder")
                     .font(.headline)
                     .foregroundStyle(Color("TextPrimary"))
 
@@ -197,7 +197,7 @@ struct StaffScanReviewView: View {
         }
 
         StaffNotice(
-            message: "The card has not been verified. Review all identity details before comparing them with an official donor record."
+            message: "Text recognition may contain errors and does not verify identity. Compare these details with the original card and official donor record."
         )
 
         StaffActionButton(title: "Scan Again", action: onScanAgain)

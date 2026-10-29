@@ -56,4 +56,5 @@ struct StaffTextRecognitionServiceTests {
             #expect(!text.contains("Vision"))
         }
     }
+
 }
