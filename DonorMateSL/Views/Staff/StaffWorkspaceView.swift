@@ -11,8 +11,12 @@ struct StaffWorkspaceView: View {
     let staff: StaffIdentity
     let onExit: () -> Void
 
+    @Environment(\.scenePhase) private var scenePhase
     @State private var navigation = StaffNavigation()
-    @State private var showScannerUnavailable = false
+    @State private var scan = StaffScanSession()
+    @State private var scanErrorMessage: String?
+    @State private var scanGeneration = UUID()
+    @State private var recognitionTask: Task<Void, Never>?
 
     var body: some View {
         GeometryReader { geometry in
@@ -21,9 +25,9 @@ struct StaffWorkspaceView: View {
                     StaffSidebar(
                         staff: staff,
                         active: navigation.section,
-                        onDashboard: { navigation.showDashboard() },
+                        onDashboard: showDashboard,
                         onVerify: { navigation.showVerificationInstructions() },
-                        onExit: onExit
+                        onExit: signOut
                     )
                     .frame(width: 250)
                     Divider()
@@ -43,10 +47,19 @@ struct StaffWorkspaceView: View {
             }
         }
         .background(Color("BackgroundPrimary"))
-        .alert("Scanner unavailable", isPresented: $showScannerUnavailable) {
-            Button("OK", role: .cancel) {}
+        .alert("Scan could not be completed", isPresented: Binding(
+            get: { scanErrorMessage != nil },
+            set: { if !$0 { scanErrorMessage = nil } }
+        )) {
+            Button("OK", role: .cancel) { scanErrorMessage = nil }
         } message: {
-            Text("The document scanner is not available yet. Please try again later.")
+            Text(scanErrorMessage ?? "Please try again.")
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .background {
+                invalidatePendingScan()
+                scan.reset()
+            }
         }
     }
 
@@ -57,7 +70,7 @@ struct StaffWorkspaceView: View {
                 if newValue == StaffSection.verifyDonor.rawValue {
                     navigation.showVerificationInstructions()
                 } else {
-                    navigation.showDashboard()
+                    showDashboard()
                 }
             }
         )
@@ -71,7 +84,7 @@ struct StaffWorkspaceView: View {
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(Color("TextPrimary"))
                     Spacer()
-                    Button("Sign Out", action: onExit)
+                    Button("Sign Out", action: signOut)
                         .font(.system(size: 13, weight: .bold))
                         .foregroundStyle(Color("DonorRed"))
                         .accessibilityHint("Ends this staff session")
@@ -83,7 +96,7 @@ struct StaffWorkspaceView: View {
             } else {
                 ScreenNavigationHeader(
                     title: "Verify Donor",
-                    onBack: { navigation.showDashboard() }
+                    onBack: handleBack
                 )
             }
 
@@ -102,16 +115,108 @@ struct StaffWorkspaceView: View {
                     )
 
                 case .verifyDonor:
-                    StaffScanInstructionsView(
-                        onOpenScanner: { showScannerUnavailable = true },
-                        onBack: { navigation.showDashboard() }
-                    )
+                    switch scan.stage {
+                    case .instructions:
+                        StaffScanInstructionsView(
+                            onOpenScanner: { scan.showCapture() },
+                            onBack: showDashboard
+                        )
+
+                    case .capture:
+                        StaffScanCaptureView(
+                            onCaptured: processImages,
+                            onBack: { scan.reset() },
+                            onError: { scanErrorMessage = $0 }
+                        )
+
+                    case .processing:
+                        StaffScanProcessingView()
+
+                    case .review:
+                        if let result = scan.result {
+                            StaffScanReviewView(
+                                result: result,
+                                onScanAgain: resetForAnotherScan,
+                                onFinish: showDashboard
+                            )
+                        }
+                    }
                 }
             }
-            .padding(compact ? 18 : 28)
+            .padding(.horizontal, compact ? 18 : 28)
+            .padding(.top, compact ? 18 : 28)
+            .padding(.bottom, compact ? 110 : 28)
             .frame(maxWidth: 1020, alignment: .leading)
             .frame(maxWidth: .infinity, alignment: .top)
         }
         .background(Color("BackgroundPrimary"))
+    }
+
+    private func processImages(_ images: [Data], source: StaffScanSource) {
+        do {
+            try StaffTextRecognitionService.validate(images)
+        } catch {
+            scanErrorMessage = (error as? LocalizedError)?.errorDescription
+                ?? "Please choose another image and try again."
+            return
+        }
+
+        guard scan.beginProcessing() else { return }
+        recognitionTask?.cancel()
+        let generation = UUID()
+        scanGeneration = generation
+
+        recognitionTask = Task {
+            defer {
+                if scanGeneration == generation { recognitionTask = nil }
+            }
+            do {
+                let lines = try await StaffTextRecognitionService.recognize(images: images)
+                guard !Task.isCancelled, scanGeneration == generation else { return }
+                if !scan.complete(source: source, lines: lines) {
+                    scanErrorMessage = StaffTextRecognitionError.noReadableText.localizedDescription
+                }
+            } catch {
+                guard !Task.isCancelled, scanGeneration == generation else { return }
+                scan.failProcessing()
+                scanErrorMessage = (error as? LocalizedError)?.errorDescription
+                    ?? "The card could not be read. Please try again."
+            }
+        }
+    }
+
+    private func resetForAnotherScan() {
+        invalidatePendingScan()
+        scan.showCapture()
+    }
+
+    private func showDashboard() {
+        invalidatePendingScan()
+        scan.reset()
+        navigation.showDashboard()
+    }
+
+    private func signOut() {
+        invalidatePendingScan()
+        scan.reset()
+        onExit()
+    }
+
+    private func handleBack() {
+        switch scan.stage {
+        case .instructions:
+            showDashboard()
+        case .capture:
+            scan.reset()
+        case .processing, .review:
+            resetForAnotherScan()
+        }
+    }
+
+    private func invalidatePendingScan() {
+        scanGeneration = UUID()
+        recognitionTask?.cancel()
+        recognitionTask = nil
+        scanErrorMessage = nil
     }
 }

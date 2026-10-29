@@ -82,6 +82,27 @@ struct StaffPageHeading: View {
     }
 }
 
+struct StaffActionButtonLabel: View {
+    let title: String
+    var primary = true
+
+    var body: some View {
+        Text(title)
+            .font(.system(size: 15, weight: .bold))
+            .foregroundStyle(primary ? Color.white : Color("TextPrimary"))
+            .frame(maxWidth: .infinity, minHeight: 48)
+            .padding(.horizontal, 8)
+            .background(primary ? Color("DonorRed") : Color("SurfacePrimary"))
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .overlay {
+                if !primary {
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color("BorderPrimary"), lineWidth: 1)
+                }
+            }
+    }
+}
+
 struct StaffActionButton: View {
     let title: String
     var primary = true
@@ -89,19 +110,7 @@ struct StaffActionButton: View {
 
     var body: some View {
         Button(action: action) {
-            Text(title)
-                .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(primary ? Color.white : Color("TextPrimary"))
-                .frame(maxWidth: .infinity, minHeight: 48)
-                .padding(.horizontal, 8)
-                .background(primary ? Color("DonorRed") : Color("SurfacePrimary"))
-                .clipShape(RoundedRectangle(cornerRadius: 14))
-                .overlay {
-                    if !primary {
-                        RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color("BorderPrimary"), lineWidth: 1)
-                    }
-                }
+            StaffActionButtonLabel(title: title, primary: primary)
         }
         .buttonStyle(.plain)
     }
