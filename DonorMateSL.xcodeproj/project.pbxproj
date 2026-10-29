@@ -544,6 +544,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DonorMateSL/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "DonorMate uses the camera to scan a donor's identity card during staff verification.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "DonorMate uses Face ID to protect access to your personal donor information.";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "DonorMate uses your location in the background to notify you when you enter the area around a donation location where you enabled a nearby alert.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "DonorMate uses your location to find nearby blood donation camps and blood banks and calculate distance.";
@@ -581,6 +582,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DonorMateSL/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "DonorMate uses the camera to scan a donor's identity card during staff verification.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "DonorMate uses Face ID to protect access to your personal donor information.";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "DonorMate uses your location in the background to notify you when you enter the area around a donation location where you enabled a nearby alert.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "DonorMate uses your location to find nearby blood donation camps and blood banks and calculate distance.";

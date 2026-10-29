@@ -65,7 +65,7 @@ struct StaffScanInstructionsView: View {
             }
         }
 
-        StaffActionButton(title: "Open Camera", action: onOpenScanner)
+        StaffActionButton(title: "Continue to Scan", action: onOpenScanner)
         StaffActionButton(title: "Back to Dashboard", primary: false, action: onBack)
 
         StaffNotice(
